@@ -54,11 +54,13 @@ namespace ItLinksBot
                              reloadOnChange: true)
                 .Build();
 #endif
-            var optionsBuilder = new DbContextOptionsBuilder<ITLinksContext>();
-            string connectionString = string.Format("Data Source={0}", config["DBName"]);
+            var optionsBuilder = new DbContextOptionsBuilder<DbContext>();
+
+            var connectionString = config
+                        .GetConnectionString("DefaultConnection");
             optionsBuilder.UseSqlite(connectionString);
-            var context = new ITLinksContext(optionsBuilder.Options);
-            context.Database.EnsureCreated();
+            var context = new ITLinksContext();
+            context.Database.Migrate();
             TelegramAPI bot = new TelegramAPI(config["BotApiKey"]);
             while (true)
             {
