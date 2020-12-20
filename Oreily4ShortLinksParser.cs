@@ -55,7 +55,7 @@ namespace ItLinksBot
             }
         }
         public string FormatDigestPost(Digest digest) {
-            return string.Format("{0}\n{1}\n{2}",digest.DigestName,digest.DigestDescription,digest.DigestURL);
+            return string.Format("<b>{0}</b>\n{1}\n{2}",digest.DigestName,digest.DigestDescription,digest.DigestURL);
         }
         public string FormatLinkPost(Link link)
         {

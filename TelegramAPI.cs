@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 namespace ItLinksBot
 {
-    class TelegramAPI
+    public class TelegramAPI
     {
         readonly string _botKey;
         public TelegramAPI(string BotKey)

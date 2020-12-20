@@ -4,7 +4,6 @@ using ItLinksBot.Data;
 using ItLinksBot.Models;
 using System.Linq;
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Configuration;
 
 namespace ItLinksBot
@@ -26,7 +25,7 @@ namespace ItLinksBot
             };
         }
     }
-    public class Utils
+    public static class Utils
     {
         public static DateTime UnixTimeStampToDateTime(int unixTimeStamp)
         {
@@ -44,18 +43,24 @@ namespace ItLinksBot
         {
 #if DEBUG
             IConfiguration config = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.debug.json", true, true)
+                .AddJsonFile("appsettings.debug.json",
+                             optional: true,
+                             reloadOnChange: true)
                 .Build();
 #else
             IConfiguration config = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", true, true)
+                .AddJsonFile("appsettings.json",
+                             optional: true,
+                             reloadOnChange: true)
                 .Build();
 #endif
-            var optionsBuilder = new DbContextOptionsBuilder<ITLinksContext>();
-            string connectionString = string.Format("Data Source={0}", config["DBName"]);
+            var optionsBuilder = new DbContextOptionsBuilder<DbContext>();
+
+            var connectionString = config
+                        .GetConnectionString("DefaultConnection");
             optionsBuilder.UseSqlite(connectionString);
-            var context = new ITLinksContext(optionsBuilder.Options);
-            context.Database.EnsureCreated();
+            var context = new ITLinksContext();
+            context.Database.Migrate();
             TelegramAPI bot = new TelegramAPI(config["BotApiKey"]);
             while (true)
             {
@@ -71,129 +76,78 @@ namespace ItLinksBot
                 }
                 //persisting entities change
                 context.SaveChanges();
-                //re-create with do until
-                bool childError = false;
+
+                bool botTimeout;
                 do
                 {
-                    foreach (TelegramChannel tg in context.TelegramChannels)
+                    botTimeout = false;
+                    foreach (TelegramChannel tgChannel in context.TelegramChannels)
                     {
-
-                        var parser = ParserFactory.Setup(tg.Provider);
                         //Finishing any unfinished previouslt digests
                         var unfinishedLinks = context.Links.Where(l => l.Digest == context.DigestPosts.OrderBy(d => d.PostDate).Last().Digest && !context.LinkPosts.Select(lp => lp.Link).Contains(l));
                         foreach (var unfinishedLink in unfinishedLinks)
                         {
-                            var linkResult = bot.SendMessage(tg.ChannelName, parser.FormatLinkPost(unfinishedLink));
-                            var linkStatus = JObject.Parse(linkResult);
-                            if ((bool)linkStatus["ok"])
+                            LinkPost linkPost = QueueProcessor.AddLinkPost(tgChannel, unfinishedLink, bot);
+                            if (linkPost != null)
                             {
-                                context.LinkPosts.Add(
-                                    new LinkPost
-                                    {
-                                        Channel = tg,
-                                        Link = unfinishedLink,
-                                        TelegramMessageID = (int)linkStatus["result"]["message_id"],
-                                        PostDate = Utils.UnixTimeStampToDateTime((int)linkStatus["result"]["date"]),
-                                        PostLink = string.Format("https://t.me/{0}/{1}", (string)linkStatus["result"]["chat"]["username"], (string)linkStatus["result"]["message_id"]),
-                                        PostText = (string)linkStatus["result"]["text"]
-                                    }
-                                    );
-                                childError = false;
-                            }
-                            else if ((int)linkStatus["error_code"] == 429)
-                            {
-                                //"Too Many Requests"
-                                childError = true;
-                                break;
+                                context.LinkPosts.Add(linkPost);
                             }
                             else
                             {
-                                childError = true;
-                                Console.WriteLine(linkResult);
+                                botTimeout = true;
+                                break;
                             }
                         }
-                        if (childError)
+                        if (botTimeout)
                         {
-                            System.Threading.Thread.Sleep(1000 * 60 * 2);
                             Console.WriteLine("Waiting 2 minutes");
+                            System.Threading.Thread.Sleep(1000 * 60 * 2);
                             break;
                         }
-                        //Posting new digests
-                        var digests = context.Digests.Where(d => d.Provider == tg.Provider && !context.DigestPosts.Select(dp => dp.Digest).Contains(d)).OrderBy(d => d.DigestDay);
+                        //Posting new digests, not posted yet
+                        var digests = context.Digests.Where(d => d.Provider == tgChannel.Provider && !context.DigestPosts.Select(dp => dp.Digest).Contains(d)).OrderBy(d => d.DigestDay);
                         foreach (Digest digest in digests)
                         {
-                            var result = bot.SendMessage(tg.ChannelName, parser.FormatDigestPost(digest));
-                            var status = JObject.Parse(result);
-
-                            if ((bool)status["ok"])
+                            DigestPost digestPost = QueueProcessor.AddDigestPost(tgChannel, digest, bot);
+                            if(digestPost != null)
                             {
-                                context.DigestPosts.Add(
-                                    new DigestPost
-                                    {
-                                        Channel = tg,
-                                        Digest = digest,
-                                        TelegramMessageID = (int)status["result"]["message_id"],
-                                        PostDate = Utils.UnixTimeStampToDateTime((int)status["result"]["date"]),
-                                        PostLink = string.Format("https://t.me/{0}/{1}", (string)status["result"]["chat"]["username"], (string)status["result"]["message_id"]),
-                                        PostText = (string)status["result"]["text"]
-                                    }
-                                    );
-                                var links = context.Links.Where(l => l.Digest == digest);
-                                foreach (var link in links)
-                                {
-                                    var linkResult = bot.SendMessage(tg.ChannelName, parser.FormatLinkPost(link));
-                                    var linkStatus = JObject.Parse(linkResult);
-                                    if ((bool)linkStatus["ok"])
-                                    {
-                                        context.LinkPosts.Add(
-                                            new LinkPost
-                                            {
-                                                Channel = tg,
-                                                Link = link,
-                                                TelegramMessageID = (int)linkStatus["result"]["message_id"],
-                                                PostDate = Utils.UnixTimeStampToDateTime((int)linkStatus["result"]["date"]),
-                                                PostLink = string.Format("https://t.me/{0}/{1}", (string)linkStatus["result"]["chat"]["username"], (string)linkStatus["result"]["message_id"]),
-                                                PostText = (string)linkStatus["result"]["text"]
-                                            }
-                                            );
-                                    }
-                                    else if ((int)linkStatus["error_code"] == 429)
-                                    {
-                                        //"Too Many Requests"
-                                        childError = true;
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine(linkResult);
-                                    }
-                                }
-                            }
-                            else if ((int)status["error_code"] == 429)
-                            {
-                                //"Too Many Requests"
-                                break;
+                                context.DigestPosts.Add(digestPost);
                             }
                             else
                             {
-                                Console.WriteLine(result);
+                                botTimeout = true;
+                                break;
                             }
 
-                            if (childError)
+                            var links = context.Links.Where(l => l.Digest == digest);
+                            foreach (var link in links)
+                            {
+                                LinkPost linkPost = QueueProcessor.AddLinkPost(tgChannel, link, bot);
+                                if (linkPost != null)
+                                {
+                                    context.LinkPosts.Add(linkPost);
+                                }
+                                else
+                                {
+                                    botTimeout = true;
+                                    break;
+                                }
+                            }
+                            if (botTimeout)
                             {
                                 break;
                             }
                         }
-                        //Console.WriteLine(result);
-                        if (childError) 
+                        if (botTimeout) 
                         {
-                            System.Threading.Thread.Sleep(1000 * 60 * 2);
+                            context.SaveChanges();
                             Console.WriteLine("Waiting 2 minutes");
+                            System.Threading.Thread.Sleep(1000 * 60 * 2);
                             break; 
                         }
                     }
                     
-                } while (childError);
+                } while (botTimeout);
                 context.SaveChanges();
                 Console.WriteLine("Waiting 60 minutes");
                 System.Threading.Thread.Sleep(1000 * 60 * 60);
