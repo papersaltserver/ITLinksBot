@@ -8,7 +8,7 @@ using System.Collections.Generic;
 //using Microsoft.Extensions.Configuration.FileExtensions;
 //using Microsoft.Extensions.Configuration.Json;
 
-namespace ItLinksBot
+namespace ItLinksBot.Providers
 {
     class Oreily4ShortLinksParser : IParser
     {

@@ -5,6 +5,7 @@ using ItLinksBot.Models;
 using System.Linq;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
+using ItLinksBot.Providers;
 
 namespace ItLinksBot
 {
@@ -62,6 +63,13 @@ namespace ItLinksBot
             var context = new ITLinksContext();
             context.Database.Migrate();
             TelegramAPI bot = new TelegramAPI(config["BotApiKey"]);
+            //
+            var nparser = new ChangelogParser(null);
+            List<Digest> ndigests = new List<Digest>();
+            List<Link> nlinks = new List<Link>();
+            nparser.GetCurrentDigests(out ndigests, out nlinks);
+            return;
+            //
             while (true)
             {
                 foreach (Provider prov in context.Providers)
