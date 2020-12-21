@@ -12,6 +12,7 @@ namespace ItLinksBot.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int LinkID { get; set; }
         public string URL { get; set; }
+        public string Title { get; set; }
         public string Description { get; set; }
         public Digest Digest { get; set; }
     }

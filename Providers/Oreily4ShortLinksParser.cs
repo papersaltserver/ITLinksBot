@@ -47,6 +47,7 @@ namespace ItLinksBot.Providers
                         links.Add(new Link
                         {
                             URL = linkTag.GetAttributeValue("href", "Not found"),
+                            Title = linkTag.InnerText,
                             Description = HttpUtility.HtmlDecode(listItem.InnerText),
                             Digest = currentDigest
                         });
@@ -59,7 +60,7 @@ namespace ItLinksBot.Providers
         }
         public string FormatLinkPost(Link link)
         {
-            return string.Format("{0}\n{1}", link.Description, link.URL);
+            return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
         }
     }
 }
