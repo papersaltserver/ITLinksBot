@@ -23,7 +23,7 @@ namespace ItLinksBot.Providers
             var feed = SyndicationFeed.Load(reader);
             digests = new List<Digest>();
             links = new List<Link>();
-            foreach (var feedItem in feed.Items)
+            foreach (var feedItem in feed.Items.Take(50))
             {
                 var feedElementContent = feedItem.ElementExtensions.ReadElementExtensions<string>("encoded", "http://purl.org/rss/1.0/modules/content/").FirstOrDefault();
                 Digest currentDigest = new Digest
