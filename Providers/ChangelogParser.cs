@@ -24,7 +24,7 @@ namespace ItLinksBot.Providers
 
         public string FormatLinkPost(Link link)
         {
-            return string.Format("{0}\n{1}", link.Description, link.URL);
+            return string.Format("<strong>{0}</strong>\n{1}\n{2}", link.Title, link.Description, link.URL);
         }
 
         public void GetCurrentDigests(out List<Digest> digests, out List<Link> links)
@@ -62,7 +62,8 @@ namespace ItLinksBot.Providers
                     links.Add(new Link
                     {
                         URL = href,
-                        Description = $"<strong>{title}</strong>\n{description}",
+                        Title = title,
+                        Description = description,
                         Digest = currentDigest
                     });
                 }
