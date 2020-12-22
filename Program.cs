@@ -23,6 +23,7 @@ namespace ItLinksBot
             {
                 "O'Reily Four Short Links" => new Oreily4ShortLinksParser(provider),
                 "Changelog Weekly" => new ChangelogParser(provider),
+                "TLDR" => new TLDRparser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
