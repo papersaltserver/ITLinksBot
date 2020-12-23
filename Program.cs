@@ -6,6 +6,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using ItLinksBot.Providers;
+using Serilog;
 
 namespace ItLinksBot
 {
@@ -57,6 +58,16 @@ namespace ItLinksBot
                              reloadOnChange: true)
                 .Build();
 #endif
+            /*Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.Console()
+                .WriteTo.File("logs\\links-bot-log.txt", rollingInterval: RollingInterval.Day)
+                .CreateLogger();*/
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(config)
+                .CreateLogger();
+
+            Log.Information("Started bot");
             var optionsBuilder = new DbContextOptionsBuilder<DbContext>();
 
             var connectionString = config
@@ -81,8 +92,12 @@ namespace ItLinksBot
                     var parser = ParserFactory.Setup(prov);
                     parser.GetCurrentDigests(out digests, out links);
                     //saving links to entities
-                    context.Digests.AddRange(digests.Except(context.Digests, new DigestComparer()));
-                    context.Links.AddRange(links.Except(context.Links, new LinkComparer()));
+                    var newDigests = digests.Except(context.Digests, new DigestComparer());
+                    context.Digests.AddRange(newDigests);
+                    Log.Information($"Found {newDigests.Count()} new digests for newsletter {prov.ProviderName}");
+                    var newLinks = links.Except(context.Links, new LinkComparer());
+                    context.Links.AddRange(newLinks);
+                    Log.Information($"Found {newLinks.Count()} new links for newsletter {prov.ProviderName}");
                     //persisting entities change
                     context.SaveChanges();
                 }
@@ -95,6 +110,7 @@ namespace ItLinksBot
                     {
                         //Finishing any unfinished previouslt digests
                         var unfinishedLinks = context.Links.Where(l => l.Digest == context.DigestPosts.Where(d => d.Channel == tgChannel).OrderBy(d => d.PostDate).Last().Digest && !context.LinkPosts.Select(lp => lp.Link).Contains(l));
+                        if(unfinishedLinks.Any()) Log.Information($"Found {unfinishedLinks.Count()} unfinished links for the latest digest in {tgChannel.Provider.ProviderName}");
                         foreach (var unfinishedLink in unfinishedLinks)
                         {
                             LinkPost linkPost = QueueProcessor.AddLinkPost(tgChannel, unfinishedLink, bot);
@@ -110,12 +126,13 @@ namespace ItLinksBot
                         }
                         if (botTimeout)
                         {
-                            Console.WriteLine("Waiting 2 minutes");
-                            System.Threading.Thread.Sleep(1000 * 60 * 2);
+                            Log.Information("Sleeping for 1 minute for Telegram cooldown");
+                            System.Threading.Thread.Sleep(1000 * 60 * 1);
                             break;
                         }
                         //Posting new digests, not posted yet
                         var digests = context.Digests.Where(d => d.Provider == tgChannel.Provider && !context.DigestPosts.Select(dp => dp.Digest).Contains(d)).OrderBy(d => d.DigestDay);
+                        if (digests.Any()) Log.Information($"Found {digests.Count()} new digests to post in {tgChannel.ChannelName}");
                         foreach (Digest digest in digests)
                         {
                             DigestPost digestPost = QueueProcessor.AddDigestPost(tgChannel, digest, bot);
@@ -151,7 +168,7 @@ namespace ItLinksBot
                         if (botTimeout) 
                         {
                             context.SaveChanges();
-                            Console.WriteLine("Waiting 1 minute");
+                            Log.Information("Sleeping for 1 minute for Telegram cooldown");
                             System.Threading.Thread.Sleep(1000 * 60 * 1);
                             break; 
                         }
@@ -159,7 +176,7 @@ namespace ItLinksBot
                     context.SaveChanges();
                 } while (botTimeout);
                 context.SaveChanges();
-                Console.WriteLine("Waiting 60 minutes");
+                Log.Information("Nothing to post. Sleeping for 1 hour");
                 System.Threading.Thread.Sleep(1000 * 60 * 60);
             }
         }

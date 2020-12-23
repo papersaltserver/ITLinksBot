@@ -1,6 +1,7 @@
 ﻿using System;
 using ItLinksBot.Models;
 using Newtonsoft.Json.Linq;
+using Serilog;
 
 namespace ItLinksBot
 {
@@ -32,6 +33,7 @@ namespace ItLinksBot
             }
             else
             {
+                Log.Error("Error from posting message to Telegram API {botPostResult}", botPostResult);
                 throw new Exception($"Unknown service response: {botPostResult}");
             }
         }
@@ -60,6 +62,7 @@ namespace ItLinksBot
             }
             else
             {
+                Log.Error("Error from posting message to Telegram API {linkPostResult}",linkPostResult);
                 throw new Exception($"Unknown service response: {linkPostResult}");
             }
         }
