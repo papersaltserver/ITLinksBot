@@ -17,15 +17,16 @@ namespace ItLinksBot.Providers
         {
             _oreilyProvider = provider;
         }
-        public void GetCurrentDigests(out List<Digest> digests, out List<Link> links)
+        public List<Digest> GetCurrentDigests()
         {
+            List<Digest> digests = new List<Digest>();
             var reader = XmlReader.Create(_oreilyProvider.DigestURL);
             var feed = SyndicationFeed.Load(reader);
-            digests = new List<Digest>();
-            links = new List<Link>();
+            //digests = new List<Digest>();
+            //links = new List<Link>();
             foreach (var feedItem in feed.Items.Take(50))
             {
-                var feedElementContent = feedItem.ElementExtensions.ReadElementExtensions<string>("encoded", "http://purl.org/rss/1.0/modules/content/").FirstOrDefault();
+                //var feedElementContent = feedItem.ElementExtensions.ReadElementExtensions<string>("encoded", "http://purl.org/rss/1.0/modules/content/").FirstOrDefault();
                 Digest currentDigest = new Digest
                 {
                     DigestDay = feedItem.PublishDate.DateTime,
@@ -36,7 +37,7 @@ namespace ItLinksBot.Providers
                 };
                 digests.Add(currentDigest);
 
-                var htmlLinks = new HtmlDocument();
+                /*var htmlLinks = new HtmlDocument();
                 htmlLinks.LoadHtml(feedElementContent);
                 var listItmesArray = htmlLinks.DocumentNode.Descendants("li");
                 foreach (var listItem in listItmesArray)
@@ -52,8 +53,35 @@ namespace ItLinksBot.Providers
                             Digest = currentDigest
                         });
                     }
+                }*/
+            }
+            return digests;
+        }
+        public List<Link> GetDigestLinks(Digest digest)
+        {
+            List<Link> links = new List<Link>();
+            var reader = XmlReader.Create(_oreilyProvider.DigestURL);
+            var feed = SyndicationFeed.Load(reader);
+            var digestNode = feed.Items.Where(n => n.Title.Text == digest.DigestName && n.Links[0].Uri.AbsoluteUri == digest.DigestURL).SingleOrDefault();
+            var feedElementContent = digestNode.ElementExtensions.ReadElementExtensions<string>("encoded", "http://purl.org/rss/1.0/modules/content/").FirstOrDefault();
+            var htmlLinks = new HtmlDocument();
+            htmlLinks.LoadHtml(feedElementContent);
+            var listItmesArray = htmlLinks.DocumentNode.Descendants("li");
+            foreach (var listItem in listItmesArray)
+            {
+                var linkTag = listItem.Descendants("a").FirstOrDefault();
+                if (linkTag != null)
+                {
+                    links.Add(new Link
+                    {
+                        URL = linkTag.GetAttributeValue("href", "Not found"),
+                        Title = linkTag.InnerText,
+                        Description = HttpUtility.HtmlDecode(listItem.InnerText),
+                        Digest = digest
+                    });
                 }
             }
+            return links;
         }
         public string FormatDigestPost(Digest digest) {
             return string.Format("<b>{0}</b>\n{1}\n{2}",digest.DigestName,digest.DigestDescription,digest.DigestURL);

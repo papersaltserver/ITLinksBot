@@ -12,7 +12,8 @@ namespace ItLinksBot
 {
     public interface IParser
     {
-        void GetCurrentDigests(out List<Digest> digests, out List<Link> links);
+        List<Digest> GetCurrentDigests();
+        List<Link> GetDigestLinks(Digest digest);
         string FormatDigestPost(Digest digest);
         string FormatLinkPost(Link link);
     }
@@ -58,11 +59,6 @@ namespace ItLinksBot
                              reloadOnChange: true)
                 .Build();
 #endif
-            /*Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.Console()
-                .WriteTo.File("logs\\links-bot-log.txt", rollingInterval: RollingInterval.Day)
-                .CreateLogger();*/
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(config)
                 .CreateLogger();
@@ -76,25 +72,26 @@ namespace ItLinksBot
             var context = new ITLinksContext();
             context.Database.Migrate();
             TelegramAPI bot = new TelegramAPI(config["BotApiKey"]);
-            //
-            //var nparser = new ChangelogParser(context.Providers.Where(p=>p.ProviderID==2).FirstOrDefault());
-            //List<Digest> ndigests = new List<Digest>();
-            //List<Link> nlinks = new List<Link>();
-            //nparser.GetCurrentDigests(out ndigests, out nlinks);
-            //return;
-            //
+
             while (true)
             {
                 foreach (Provider prov in context.Providers)
                 {
-                    List<Digest> digests = new List<Digest>();
-                    List<Link> links = new List<Link>();
                     var parser = ParserFactory.Setup(prov);
-                    parser.GetCurrentDigests(out digests, out links);
-                    //saving links to entities
+                    List<Digest> digests = parser.GetCurrentDigests();
+                    //saving digests to entities
                     var newDigests = digests.Except(context.Digests, new DigestComparer());
                     context.Digests.AddRange(newDigests);
                     Log.Information($"Found {newDigests.Count()} new digests for newsletter {prov.ProviderName}");
+
+                    //getting and savint only new links to entities
+                    List<Link> links = new List<Link>();
+                    foreach(var dgst in newDigests)
+                    {
+                        var linksInCurrentDigest = parser.GetDigestLinks(dgst);
+                        links.AddRange(linksInCurrentDigest);
+                    }
+                    
                     var newLinks = links.Except(context.Links, new LinkComparer());
                     context.Links.AddRange(newLinks);
                     Log.Information($"Found {newLinks.Count()} new links for newsletter {prov.ProviderName}");
