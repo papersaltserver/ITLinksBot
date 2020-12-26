@@ -27,10 +27,10 @@ namespace ItLinksBot.Providers
             return string.Format("<strong>{0}</strong>\n{1}\n{2}", link.Title, link.Description, link.URL);
         }
 
-        public void GetCurrentDigests(out List<Digest> digests, out List<Link> links)
+        public List<Digest> GetCurrentDigests()
         {
-            digests = new List<Digest>();
-            links = new List<Link>();
+            var digests = new List<Digest>();
+            //links = new List<Link>();
             HttpClient httpClient = new HttpClient();
             var archiveContent = httpClient.GetAsync(_chagelogProvider.DigestURL).Result;
             var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
@@ -49,6 +49,7 @@ namespace ItLinksBot.Providers
                     Provider = _chagelogProvider
                 };
                 digests.Add(currentDigest);
+                /*
                 var digestContent = httpClient.GetAsync(digestUrl).Result;
                 var linksHtml = new HtmlDocument();
                 linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
@@ -66,8 +67,33 @@ namespace ItLinksBot.Providers
                         Description = description,
                         Digest = currentDigest
                     });
-                }
+                }*/
             }
+            return digests;
+        }
+        public List<Link> GetDigestLinks(Digest digest)
+        {
+            List<Link> links = new List<Link>();
+            HttpClient httpClient = new HttpClient();
+            var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
+            var linksHtml = new HtmlDocument();
+            linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
+            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@class='news_item']");
+            foreach (var link in linksInDigest)
+            {
+                var titleNode = link.SelectSingleNode(".//h2[@class='news_item-title']");
+                var title = titleNode.InnerText;
+                var href = titleNode.Descendants("a").FirstOrDefault().GetAttributeValue("href", "Not found");
+                var description = link.SelectSingleNode(".//div[@class='news_item-content']").InnerText;
+                links.Add(new Link
+                {
+                    URL = href,
+                    Title = title,
+                    Description = description,
+                    Digest = digest
+                });
+            }
+            return links;
         }
     }
 }
