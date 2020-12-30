@@ -165,7 +165,7 @@ namespace ItLinksBot
                         if (botTimeout) 
                         {
                             context.SaveChanges();
-                            Log.Information("Sleeping for 1 minute for Telegram cooldown");
+                            Log.Information("Sleeping for 1 minute for Telegram cooldown - throttling not working");
                             System.Threading.Thread.Sleep(1000 * 60 * 1);
                             break; 
                         }
