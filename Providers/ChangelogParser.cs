@@ -7,6 +7,7 @@ using HtmlAgilityPack;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using Serilog;
 
 namespace ItLinksBot.Providers
 {
@@ -32,7 +33,15 @@ namespace ItLinksBot.Providers
             var digests = new List<Digest>();
             //links = new List<Link>();
             HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_chagelogProvider.DigestURL).Result;
+            HttpResponseMessage archiveContent;
+            try
+            {
+                archiveContent = httpClient.GetAsync(_chagelogProvider.DigestURL).Result;
+            }catch (Exception e)
+            {
+                Log.Error("Error getting Changelog digest list: {exception}", e.Message);
+                return null;
+            }
             var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
