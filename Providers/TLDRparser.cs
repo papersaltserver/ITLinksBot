@@ -31,7 +31,6 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests()
         {
             List<Digest> digests = new List<Digest>();
-            //links = new List<Link>();
             HttpClient httpClient = new HttpClient();
             var archiveContent = httpClient.GetAsync(_tldrProvider.DigestURL).Result;
             var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
@@ -50,24 +49,6 @@ namespace ItLinksBot.Providers
                     Provider = _tldrProvider
                 };
                 digests.Add(currentDigest);
-                /*var digestContent = httpClient.GetAsync(digestUrl).Result;
-                var linksHtml = new HtmlDocument();
-                linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
-                var linksInDigest = linksHtml.DocumentNode.SelectNodes("//tr[@eo-body]//table[@eo-block='code']");
-                foreach (var link in linksInDigest)
-                {
-                    var titleNode = link.SelectSingleNode(".//div/span/a");
-                    var title = titleNode.InnerText;
-                    var href = titleNode.GetAttributeValue("href", "Not found");
-                    var description = link.SelectSingleNode(".//div/span/span").InnerText;
-                    links.Add(new Link
-                    {
-                        URL = href,
-                        Title = title,
-                        Description = description,
-                        Digest = currentDigest
-                    });
-                }*/
             }
             return digests;
         }

@@ -26,6 +26,7 @@ namespace ItLinksBot
                 "O'Reily Four Short Links" => new Oreily4ShortLinksParser(provider),
                 "Changelog Weekly" => new ChangelogParser(provider),
                 "TLDR" => new TLDRparser(provider),
+                "React Newsletter" => new ReactNewsletterParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
