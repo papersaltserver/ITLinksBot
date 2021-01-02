@@ -31,7 +31,6 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests()
         {
             var digests = new List<Digest>();
-            //links = new List<Link>();
             HttpClient httpClient = new HttpClient();
             HttpResponseMessage archiveContent;
             try
@@ -58,25 +57,6 @@ namespace ItLinksBot.Providers
                     Provider = _chagelogProvider
                 };
                 digests.Add(currentDigest);
-                /*
-                var digestContent = httpClient.GetAsync(digestUrl).Result;
-                var linksHtml = new HtmlDocument();
-                linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
-                var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@class='news_item']");
-                foreach(var link in linksInDigest)
-                {
-                    var titleNode = link.SelectSingleNode(".//h2[@class='news_item-title']");
-                    var title = titleNode.InnerText;
-                    var href = titleNode.Descendants("a").FirstOrDefault().GetAttributeValue("href", "Not found");
-                    var description = link.SelectSingleNode(".//div[@class='news_item-content']").InnerText;
-                    links.Add(new Link
-                    {
-                        URL = href,
-                        Title = title,
-                        Description = description,
-                        Digest = currentDigest
-                    });
-                }*/
             }
             return digests;
         }
