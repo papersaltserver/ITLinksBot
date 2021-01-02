@@ -55,8 +55,6 @@ namespace ItLinksBot
         private static void Throttle()
         {
             var maxPerPeriod = 20;
-            //If you utilize multiple accounts, you can throttle per account. If not, don't use this:
-            //var keyPrefix = "a_unique_id_for_the_basis_of_throttling";
             var intervalPeriod = 1*60*1000;//5 minutes
             var sleepInterval = 5000;//period to "sleep" before trying again (if the limits have been reached)
             var recentTransactions = MemoryCache.Default.Count();

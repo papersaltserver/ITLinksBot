@@ -5,8 +5,6 @@ using System.Linq;
 using HtmlAgilityPack;
 using System.Web;
 using System.Collections.Generic;
-//using Microsoft.Extensions.Configuration.FileExtensions;
-//using Microsoft.Extensions.Configuration.Json;
 
 namespace ItLinksBot.Providers
 {
@@ -22,11 +20,8 @@ namespace ItLinksBot.Providers
             List<Digest> digests = new List<Digest>();
             var reader = XmlReader.Create(_oreilyProvider.DigestURL);
             var feed = SyndicationFeed.Load(reader);
-            //digests = new List<Digest>();
-            //links = new List<Link>();
             foreach (var feedItem in feed.Items.Take(50))
             {
-                //var feedElementContent = feedItem.ElementExtensions.ReadElementExtensions<string>("encoded", "http://purl.org/rss/1.0/modules/content/").FirstOrDefault();
                 Digest currentDigest = new Digest
                 {
                     DigestDay = feedItem.PublishDate.DateTime,
@@ -36,24 +31,6 @@ namespace ItLinksBot.Providers
                     Provider = _oreilyProvider
                 };
                 digests.Add(currentDigest);
-
-                /*var htmlLinks = new HtmlDocument();
-                htmlLinks.LoadHtml(feedElementContent);
-                var listItmesArray = htmlLinks.DocumentNode.Descendants("li");
-                foreach (var listItem in listItmesArray)
-                {
-                    var linkTag = listItem.Descendants("a").FirstOrDefault();
-                    if (linkTag != null)
-                    {
-                        links.Add(new Link
-                        {
-                            URL = linkTag.GetAttributeValue("href", "Not found"),
-                            Title = linkTag.InnerText,
-                            Description = HttpUtility.HtmlDecode(listItem.InnerText),
-                            Digest = currentDigest
-                        });
-                    }
-                }*/
             }
             return digests;
         }

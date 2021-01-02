@@ -27,6 +27,7 @@ namespace ItLinksBot
                 "Changelog Weekly" => new ChangelogParser(provider),
                 "TLDR" => new TLDRparser(provider),
                 "React Newsletter" => new ReactNewsletterParser(provider),
+                "JavaScript Weekly" => new JavaScriptWeeklyParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
