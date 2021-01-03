@@ -73,6 +73,13 @@ namespace ItLinksBot.Providers
                 var titleNode = link.SelectSingleNode(".//h2[@class='news_item-title']");
                 var title = titleNode.InnerText;
                 var href = titleNode.Descendants("a").FirstOrDefault().GetAttributeValue("href", "Not found");
+                if (!href.Contains("://") && href.Contains("/"))
+                {
+                    var digestUrl = new Uri(digest.DigestURL);
+                    var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
+                    href = (new Uri(digestBase, href)).AbsoluteUri;
+                }
+                href = Utils.UnshortenLink(href);
                 var description = link.SelectSingleNode(".//div[@class='news_item-content']").InnerText;
                 links.Add(new Link
                 {

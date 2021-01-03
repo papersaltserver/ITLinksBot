@@ -37,7 +37,29 @@ namespace ItLinksBot
                 { "text", message }
             };
 
+            string json = JsonConvert.SerializeObject(requestBody, Newtonsoft.Json.Formatting.None,
+                            new JsonSerializerSettings
+                            {
+                                NullValueHandling = NullValueHandling.Ignore
+                            });
+            StringContent content = new StringContent(json, Encoding.UTF8, "application/json");
+            var resp = httpClient.PostAsync(urlString, content).Result;
+            return resp.Content.ReadAsStringAsync().Result;
+        }
 
+        public string UpdateMessage(string channel, int messageId, string newMessage)
+        {
+            Throttle();
+            string urlString = "https://api.telegram.org/bot{0}/editMessageText";
+            urlString = String.Format(urlString, _botKey);
+            HttpClient httpClient = new HttpClient();
+            Dictionary<string, string> requestBody = new Dictionary<string, string>
+            {
+                { "chat_id", channel },
+                { "parse_mode", "HTML" },
+                { "message_id", messageId.ToString() },
+                { "text", newMessage }
+            };
             string json = JsonConvert.SerializeObject(requestBody, Newtonsoft.Json.Formatting.None,
                             new JsonSerializerSettings
                             {

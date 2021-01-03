@@ -5,6 +5,7 @@ using System.Linq;
 using HtmlAgilityPack;
 using System.Web;
 using System.Collections.Generic;
+using System;
 
 namespace ItLinksBot.Providers
 {
@@ -49,9 +50,18 @@ namespace ItLinksBot.Providers
                 var linkTag = listItem.Descendants("a").FirstOrDefault();
                 if (linkTag != null)
                 {
+                    var href = linkTag.GetAttributeValue("href", "Not found");
+                    if (!href.Contains("://") && href.Contains("/"))
+                    {
+                        var digestUrl = new Uri(digest.DigestURL);
+                        var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
+                        href = (new Uri(digestBase, href)).AbsoluteUri;
+                    }
+                    href = Utils.UnshortenLink(href);
+
                     links.Add(new Link
                     {
-                        URL = linkTag.GetAttributeValue("href", "Not found"),
+                        URL = href,
                         Title = linkTag.InnerText,
                         Description = HttpUtility.HtmlDecode(listItem.InnerText),
                         Digest = digest
