@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using ItLinksBot.Providers;
 using Serilog;
+using System.Net;
 
 namespace ItLinksBot
 {
@@ -41,6 +42,58 @@ namespace ItLinksBot
             dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
             return dtDateTime;
         }
+        public static string UnshortenLink(string linkUrl)
+        {
+            HttpWebRequest req;
+            try
+            {
+                req = (HttpWebRequest)WebRequest.Create(linkUrl);
+            }
+            catch (Exception)
+            {
+                Log.Warning("Malformed URL {url}", linkUrl);
+                return linkUrl;
+            }
+            req.AllowAutoRedirect = false;
+            string realUrl = linkUrl;
+            while (true)
+            {
+                try
+                {
+                    var resp = (HttpWebResponse)req.GetResponse();
+                    if (resp.StatusCode == HttpStatusCode.Ambiguous ||
+                    resp.StatusCode == HttpStatusCode.MovedPermanently ||
+                    resp.StatusCode == HttpStatusCode.Found ||
+                    resp.StatusCode == HttpStatusCode.RedirectMethod ||
+                    resp.StatusCode == HttpStatusCode.RedirectKeepVerb)
+                    {
+                        if (!resp.Headers["Location"].Contains("://"))
+                        {
+                            //var digestUrl = new Uri(link.Digest.DigestURL);
+                            var baseRedirUri = new Uri(req.RequestUri.Scheme + "://" + req.RequestUri.Authority);
+                            realUrl = (new Uri(baseRedirUri, resp.Headers["Location"])).AbsoluteUri;
+                            //linkToAnalyze = (new Uri(digestBase, link.URL)).AbsoluteUri;
+                        }
+                        else
+                        {
+                            realUrl = resp.Headers["Location"];
+                        }
+                        req = (HttpWebRequest)WebRequest.Create(realUrl);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.Warning("Problem {exception} with link {original} which leads to {realUrl} ", e.Message, linkUrl, realUrl);
+                    break;
+                }
+                
+            }
+            return realUrl;
+        }
     }
 
     class Program
@@ -74,7 +127,6 @@ namespace ItLinksBot
             var context = new ITLinksContext();
             context.Database.Migrate();
             TelegramAPI bot = new TelegramAPI(config["BotApiKey"]);
-
             while (true)
             {
                 foreach (Provider prov in context.Providers)

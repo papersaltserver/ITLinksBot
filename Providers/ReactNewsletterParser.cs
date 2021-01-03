@@ -70,6 +70,14 @@ namespace ItLinksBot.Providers
                 var title = link.InnerText;
                 var href = link.SelectSingleNode(".//a")?.GetAttributeValue("href", "Not found");
                 if (href == null) continue;
+                if (!href.Contains("://") && href.Contains("/"))
+                {
+                    var digestUrl = new Uri(digest.DigestURL);
+                    var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
+                    href = (new Uri(digestBase, href)).AbsoluteUri;
+                }
+                href = Utils.UnshortenLink(href);
+
                 var sibling = link.NextSibling;
                                 
                 var siblingTextSb = new StringBuilder();
@@ -108,7 +116,7 @@ namespace ItLinksBot.Providers
 
                 links.Add(new Link
                 {
-                    URL = href,
+                    URL = Utils.UnshortenLink(href),
                     Title = title,
                     Description = descriptionNode.InnerHtml.Trim(),
                     Digest = digest

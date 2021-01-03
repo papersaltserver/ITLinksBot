@@ -65,6 +65,13 @@ namespace ItLinksBot.Providers
                 var titleNode = link.SelectSingleNode(".//div/span/a");
                 var title = titleNode.InnerText;
                 var href = titleNode.GetAttributeValue("href", "Not found");
+                if (!href.Contains("://") && href.Contains("/"))
+                {
+                    var digestUrl = new Uri(digest.DigestURL);
+                    var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
+                    href = (new Uri(digestBase, href)).AbsoluteUri;
+                }
+                href = Utils.UnshortenLink(href);
                 var description = link.SelectSingleNode(".//div/span/span").InnerText;
                 links.Add(new Link
                 {
