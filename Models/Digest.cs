@@ -33,7 +33,7 @@ namespace ItLinksBot.Models
                 return false;
 
             //Check whether the products' properties are equal.
-            return x.DigestName == y.DigestName;
+            return x.DigestURL == y.DigestURL;
         }
 
         // If Equals() returns true for a pair of objects
@@ -45,10 +45,10 @@ namespace ItLinksBot.Models
             if (d is null) return 0;
 
             //Get hash code for the Name field if it is not null.
-            int hashDigestName = d.DigestName == null ? 0 : d.DigestName.GetHashCode();
+            int hashDigestUrl = d.DigestURL == null ? 0 : d.DigestURL.GetHashCode();
 
             //Calculate the hash code for the product.
-            return hashDigestName;
+            return hashDigestUrl;
         }
     }
 }

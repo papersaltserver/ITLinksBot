@@ -60,6 +60,12 @@ namespace ItLinksBot.Providers
             }
             return digests;
         }
+
+        public Digest GetDigestDetails(Digest digest)
+        {
+            return digest;
+        }
+
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new List<Link>();
