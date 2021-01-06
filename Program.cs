@@ -239,8 +239,9 @@ namespace ItLinksBot
                             System.Threading.Thread.Sleep(1000 * 60 * 1);
                             break; 
                         }
+                        //save after each successfull post session
+                        context.SaveChanges();
                     }
-                    context.SaveChanges();
                 } while (botTimeout);
                 context.SaveChanges();
                 Log.Information("Nothing to post. Sleeping for 1 hour");
