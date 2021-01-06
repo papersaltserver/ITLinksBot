@@ -14,6 +14,7 @@ namespace ItLinksBot
     public interface IParser
     {
         List<Digest> GetCurrentDigests();
+        Digest GetDigestDetails(Digest digest);
         List<Link> GetDigestLinks(Digest digest);
         string FormatDigestPost(Digest digest);
         string FormatLinkPost(Link link);
@@ -29,6 +30,7 @@ namespace ItLinksBot
                 "TLDR" => new TLDRparser(provider),
                 "React Newsletter" => new ReactNewsletterParser(provider),
                 "JavaScript Weekly" => new JavaScriptWeeklyParser(provider),
+                "Smashing Email Newsletter" => new SmashingEmailParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
@@ -79,6 +81,7 @@ namespace ItLinksBot
                             realUrl = resp.Headers["Location"];
                         }
                         req = (HttpWebRequest)WebRequest.Create(realUrl);
+                        req.AllowAutoRedirect = false;
                     }
                     else
                     {
@@ -135,22 +138,35 @@ namespace ItLinksBot
                     List<Digest> digests = parser.GetCurrentDigests();
                     //saving digests to entities
                     var newDigests = digests.Except(context.Digests, new DigestComparer());
+                    //parse digests which do not have info in digest itself
+                    if(newDigests.Any() && newDigests.First().DigestDay == new DateTime(1900, 1, 1))
+                    {
+                        var tempDigests = new List<Digest>();
+                        foreach(var digest in newDigests)
+                        {
+                            tempDigests.Add(parser.GetDigestDetails(digest));
+                        }
+                        newDigests = tempDigests;
+                    }
                     context.Digests.AddRange(newDigests);
                     Log.Information($"Found {newDigests.Count()} new digests for newsletter {prov.ProviderName}");
 
-                    //getting and savint only new links to entities
-                    List<Link> links = new List<Link>();
-                    foreach(var dgst in newDigests)
+                    //getting and saving only new links to entities
+                    if (newDigests.Any())
                     {
-                        var linksInCurrentDigest = parser.GetDigestLinks(dgst);
-                        links.AddRange(linksInCurrentDigest);
+                        List<Link> links = new List<Link>();
+                        foreach (var dgst in newDigests)
+                        {
+                            var linksInCurrentDigest = parser.GetDigestLinks(dgst);
+                            links.AddRange(linksInCurrentDigest);
+                        }
+
+                        var newLinks = links.Except(context.Links, new LinkComparer());
+                        context.Links.AddRange(newLinks);
+                        Log.Information($"Found {newLinks.Count()} new links for newsletter {prov.ProviderName}");
+                        //persisting entities change
+                        context.SaveChanges();
                     }
-                    
-                    var newLinks = links.Except(context.Links, new LinkComparer());
-                    context.Links.AddRange(newLinks);
-                    Log.Information($"Found {newLinks.Count()} new links for newsletter {prov.ProviderName}");
-                    //persisting entities change
-                    context.SaveChanges();
                 }
 
                 bool botTimeout;

@@ -55,7 +55,10 @@ namespace ItLinksBot.Providers
             }
             return digests;
         }
-
+        public Digest GetDigestDetails(Digest digest)
+        {
+            return digest;
+        }
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new List<Link>();
@@ -64,7 +67,7 @@ namespace ItLinksBot.Providers
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'Issue__Content')]//h3");
-            var acceptableTags = new String[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
+            var acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
             foreach (var link in linksInDigest)
             {
                 var title = link.InnerText;
@@ -79,15 +82,12 @@ namespace ItLinksBot.Providers
                 href = Utils.UnshortenLink(href);
 
                 var sibling = link.NextSibling;
-                                
-                var siblingTextSb = new StringBuilder();
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
                 
                 //copying nodes related to the current link to a new abstract node
                 while(sibling != null && sibling.Name.ToUpper() != "H3" && sibling.Name.ToUpper()!="H2" && sibling.Name.ToUpper() != "HR")
                 {
                     descriptionNode.AppendChild(sibling.Clone());
-                    siblingTextSb.AppendLine(sibling.InnerHtml);
                     sibling = sibling.NextSibling;
                 }
                 
