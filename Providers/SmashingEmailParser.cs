@@ -40,9 +40,7 @@ namespace ItLinksBot.Providers
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//ol[contains(@class,'internal__toc--newsletter')]/li/a").Take(50);
             foreach (var digestNode in digestsInArchive)
             {
-                //var relativePathNode = digestNode.SelectSingleNode(".//a");
                 var digestUrl = new Uri(baseUri, digestNode.GetAttributeValue("href", "Not found"));
-                //var digestDate = DateTime.Parse(HttpUtility.HtmlDecode(digestNode.InnerText).Split('—')[1].Trim());
                 var digestDate = new DateTime(1900,1,1);  //Smashing Magazine doesn't have this info in digest list, will populate later
                 var currentDigest = new Digest
                 {
@@ -55,7 +53,6 @@ namespace ItLinksBot.Providers
                 digests.Add(currentDigest);
             }
             return digests;
-            //throw new NotImplementedException();
         }
         public Digest GetDigestDetails(Digest digest)
         {
