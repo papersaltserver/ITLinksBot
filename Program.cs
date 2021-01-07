@@ -31,6 +31,7 @@ namespace ItLinksBot
                 "React Newsletter" => new ReactNewsletterParser(provider),
                 "JavaScript Weekly" => new JavaScriptWeeklyParser(provider),
                 "Smashing Email Newsletter" => new SmashingEmailParser(provider),
+                "Dev Awesome" => new DevAwesomeParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
