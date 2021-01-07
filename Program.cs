@@ -32,6 +32,7 @@ namespace ItLinksBot
                 "JavaScript Weekly" => new JavaScriptWeeklyParser(provider),
                 "Smashing Email Newsletter" => new SmashingEmailParser(provider),
                 "Dev Awesome" => new DevAwesomeParser(provider),
+                "CSS Weekly" => new CssWeeklyParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
