@@ -33,6 +33,7 @@ namespace ItLinksBot
                 "Smashing Email Newsletter" => new SmashingEmailParser(provider),
                 "Dev Awesome" => new DevAwesomeParser(provider),
                 "CSS Weekly" => new CssWeeklyParser(provider),
+                "programming digest" => new ProgrammingDigestParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
