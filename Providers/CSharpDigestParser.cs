@@ -4,20 +4,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ItLinksBot.Providers
 {
-    class ProgrammingDigestParser : IParser
+    class CSharpDigestParser : IParser
     {
-        private readonly Provider _programmingDigestProvider;
-        readonly Uri baseUri = new Uri("https://programmingdigest.net/");
-        public ProgrammingDigestParser(Provider provider)
+        private readonly Provider _cSharpDigestProvider;
+        readonly Uri baseUri = new Uri("https://csharpdigest.net/");
+        public CSharpDigestParser(Provider provider)
         {
-            _programmingDigestProvider = provider;
+            _cSharpDigestProvider = provider;
         }
-
         public string FormatDigestPost(Digest digest)
         {
             return string.Format("<b>{0} - {1}</b>\n{2}", digest.DigestName, digest.DigestDay.ToString("yyyy-MM-dd"), digest.DigestURL);
@@ -32,7 +29,7 @@ namespace ItLinksBot.Providers
         {
             List<Digest> digests = new List<Digest>();
             HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_programmingDigestProvider.DigestURL).Result;
+            var archiveContent = httpClient.GetAsync(_cSharpDigestProvider.DigestURL).Result;
             var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
@@ -54,7 +51,7 @@ namespace ItLinksBot.Providers
                     DigestName = urlNode.InnerText.Trim(),
                     DigestDescription = "", //no description for this digest
                     DigestURL = href,
-                    Provider = _programmingDigestProvider
+                    Provider = _cSharpDigestProvider
                 };
                 digests.Add(currentDigest);
             }

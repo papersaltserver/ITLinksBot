@@ -34,6 +34,7 @@ namespace ItLinksBot
                 "Dev Awesome" => new DevAwesomeParser(provider),
                 "CSS Weekly" => new CssWeeklyParser(provider),
                 "programming digest" => new ProgrammingDigestParser(provider),
+                "c# digest" => new CSharpDigestParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
