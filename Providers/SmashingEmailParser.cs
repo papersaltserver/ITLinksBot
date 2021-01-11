@@ -95,6 +95,17 @@ namespace ItLinksBot.Providers
                     }
                     parentNode.RemoveChild(node);
                 }
+                else
+                {
+                    var childNodes = node.SelectNodes("./*|./text()");
+                    if (childNodes != null)
+                    {
+                        foreach (var child in childNodes)
+                        {
+                            nodesToAnalyze.Enqueue(child);
+                        }
+                    }
+                }
             }
 
             var currentDigest = new Digest
