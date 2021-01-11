@@ -10,16 +10,15 @@ using System.Web;
 
 namespace ItLinksBot.Providers
 {
-    class JavaScriptWeeklyParser : IParser
+    class StatusCodeWeekly : IParser
     {
-        private readonly Provider _reactNewsletterProvider;
-        readonly Uri baseUri = new Uri("https://javascriptweekly.com/");
+        private readonly Provider _statusCodeWeeklyProvider;
+        readonly Uri baseUri = new Uri("https://weekly.statuscode.com/");
 
-        public JavaScriptWeeklyParser(Provider provider)
+        public StatusCodeWeekly(Provider provider)
         {
-            _reactNewsletterProvider = provider;
+            _statusCodeWeeklyProvider = provider;
         }
-
         public string FormatDigestPost(Digest digest)
         {
             return string.Format("<b>{0} - {1}</b>\n{2}", digest.DigestName, digest.DigestDay.ToString("yyyy-MM-dd"), digest.DigestURL);
@@ -34,7 +33,7 @@ namespace ItLinksBot.Providers
         {
             List<Digest> digests = new List<Digest>();
             HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_reactNewsletterProvider.DigestURL).Result;
+            var archiveContent = httpClient.GetAsync(_statusCodeWeeklyProvider.DigestURL).Result;
             var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
@@ -48,14 +47,15 @@ namespace ItLinksBot.Providers
                 {
                     DigestDay = digestDate,
                     DigestName = HttpUtility.HtmlDecode(relativePathNode.InnerText).Trim(),
-                    DigestDescription = "", //javascript weekly doesn't have description for digest itself
+                    DigestDescription = "", //statuscode weekly doesn't have description for digest itself
                     DigestURL = digestUrl.AbsoluteUri,
-                    Provider = _reactNewsletterProvider
+                    Provider = _statusCodeWeeklyProvider
                 };
                 digests.Add(currentDigest);
             }
             return digests;
         }
+
         public Digest GetDigestDetails(Digest digest)
         {
             return digest;
