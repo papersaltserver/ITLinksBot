@@ -21,7 +21,7 @@ namespace ItLinksBot.Providers
         }
         public string FormatDigestPost(Digest digest)
         {
-            return string.Format("<b>{0}</b>\n{1}", digest.DigestName, digest.DigestURL);
+            return string.Format("<b>{0} - {1}</b>\n{2}", digest.DigestName, digest.DigestDay.ToString("yyyy-MM-dd"), digest.DigestURL);
         }
 
         public string FormatLinkPost(Link link)
