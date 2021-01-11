@@ -10,16 +10,15 @@ using System.Web;
 
 namespace ItLinksBot.Providers
 {
-    class JavaScriptWeeklyParser : IParser
+    class DBWeeklyParser : IParser
     {
-        private readonly Provider _reactNewsletterProvider;
-        readonly Uri baseUri = new Uri("https://javascriptweekly.com/");
+        private readonly Provider _dbWeeklyProvider;
+        readonly Uri baseUri = new Uri("https://dbweekly.com/");
 
-        public JavaScriptWeeklyParser(Provider provider)
+        public DBWeeklyParser(Provider provider)
         {
-            _reactNewsletterProvider = provider;
+            _dbWeeklyProvider = provider;
         }
-
         public string FormatDigestPost(Digest digest)
         {
             return string.Format("<b>{0}</b>\n{1}", digest.DigestName, digest.DigestURL);
@@ -34,7 +33,7 @@ namespace ItLinksBot.Providers
         {
             List<Digest> digests = new List<Digest>();
             HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_reactNewsletterProvider.DigestURL).Result;
+            var archiveContent = httpClient.GetAsync(_dbWeeklyProvider.DigestURL).Result;
             var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
@@ -48,14 +47,15 @@ namespace ItLinksBot.Providers
                 {
                     DigestDay = digestDate,
                     DigestName = HttpUtility.HtmlDecode(relativePathNode.InnerText).Trim(),
-                    DigestDescription = "", //javascript weekly doesn't have description for digest itself
+                    DigestDescription = "", //db weekly doesn't have description for digest itself
                     DigestURL = digestUrl.AbsoluteUri,
-                    Provider = _reactNewsletterProvider
+                    Provider = _dbWeeklyProvider
                 };
                 digests.Add(currentDigest);
             }
             return digests;
         }
+
         public Digest GetDigestDetails(Digest digest)
         {
             return digest;
