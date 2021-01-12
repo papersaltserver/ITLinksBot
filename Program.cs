@@ -38,6 +38,7 @@ namespace ItLinksBot
                 "DB Weekly" => new DBWeeklyParser(provider),
                 "StatusCode Weekly" => new StatusCodeWeeklyParser(provider),
                 "Awesome SysAdmin Newsletter" => new AwesomeSysAdminParser(provider),
+                "SRE Weekly" => new SREWeeklyParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
