@@ -36,7 +36,8 @@ namespace ItLinksBot
                 "programming digest" => new ProgrammingDigestParser(provider),
                 "c# digest" => new CSharpDigestParser(provider),
                 "DB Weekly" => new DBWeeklyParser(provider),
-                "StatusCode Weekly" => new StatusCodeWeekly(provider),
+                "StatusCode Weekly" => new StatusCodeWeeklyParser(provider),
+                "Awesome SysAdmin Newsletter" => new AwesomeSysAdminParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }

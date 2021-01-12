@@ -10,12 +10,12 @@ using System.Web;
 
 namespace ItLinksBot.Providers
 {
-    class StatusCodeWeekly : IParser
+    class StatusCodeWeeklyParser : IParser
     {
         private readonly Provider _statusCodeWeeklyProvider;
         readonly Uri baseUri = new Uri("https://weekly.statuscode.com/");
 
-        public StatusCodeWeekly(Provider provider)
+        public StatusCodeWeeklyParser(Provider provider)
         {
             _statusCodeWeeklyProvider = provider;
         }
@@ -46,7 +46,7 @@ namespace ItLinksBot.Providers
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
-                    DigestName = HttpUtility.HtmlDecode(relativePathNode.InnerText).Trim(),
+                    DigestName = relativePathNode.InnerText.Trim(),
                     DigestDescription = "", //statuscode weekly doesn't have description for digest itself
                     DigestURL = digestUrl.AbsoluteUri,
                     Provider = _statusCodeWeeklyProvider
