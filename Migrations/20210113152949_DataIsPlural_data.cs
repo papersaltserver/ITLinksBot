@@ -2,7 +2,7 @@
 
 namespace ItLinksBot.Migrations
 {
-    public partial class BetterDevLink_data : Migration
+    public partial class DataIsPlural_data : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -14,9 +14,9 @@ namespace ItLinksBot.Migrations
                     "DigestURL" },
                 values: new object[,] {
                     {
-                        16,
-                        "Better Dev Link",
-                        "https://betterdev.link/issues"
+                        17,
+                        "Data Is Plural",
+                        "https://tinyletter.com/data-is-plural/archive"
                     }
                 }
                 );
@@ -30,9 +30,9 @@ namespace ItLinksBot.Migrations
                 values: new object[,]
                 {
                     {
-                        16,
-                        "-1001288785667",
-                        16
+                        17,
+                        "-1001286825034",
+                        17
                     }
                 }
                 );
@@ -43,12 +43,12 @@ namespace ItLinksBot.Migrations
             migrationBuilder.DeleteData(
                 table: "Providers",
                 keyColumn: "ProviderID",
-                keyValue: 16
+                keyValue: 17
                 );
             migrationBuilder.DeleteData(
                 table: "TelegramChannels",
                 keyColumn: "ChannelID",
-                keyValue: 16
+                keyValue: 17
                 );
         }
     }

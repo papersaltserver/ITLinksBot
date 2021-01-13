@@ -41,6 +41,7 @@ namespace ItLinksBot
                 "SRE Weekly" => new SREWeeklyParser(provider),
                 "Inside Cryptocurrency" => new InsideCryptocurrencyParser(provider),
                 "Better Dev Link" => new BetterDevLinkParser(provider),
+                "Data Is Plural" => new DataIsPluralParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
@@ -167,13 +168,13 @@ namespace ItLinksBot
                         {
                             var linksInCurrentDigest = parser.GetDigestLinks(dgst);
                             links.AddRange(linksInCurrentDigest);
+                            //persisting entities change
+                            context.SaveChanges();
                         }
 
                         var newLinks = links.Except(context.Links, new LinkComparer());
                         context.Links.AddRange(newLinks);
                         Log.Information($"Found {newLinks.Count()} new links for newsletter {prov.ProviderName}");
-                        //persisting entities change
-                        context.SaveChanges();
                     }
                 }
 
