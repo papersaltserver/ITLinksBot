@@ -39,6 +39,7 @@ namespace ItLinksBot
                 "StatusCode Weekly" => new StatusCodeWeeklyParser(provider),
                 "Awesome SysAdmin Newsletter" => new AwesomeSysAdminParser(provider),
                 "SRE Weekly" => new SREWeeklyParser(provider),
+                "Inside Cryptocurrency" => new InsideCryptocurrencyParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
@@ -188,30 +189,32 @@ namespace ItLinksBot
                         if(unfinishedLinks.Any()) Log.Information($"Found {unfinishedLinks.Count()} unfinished links for the latest digest in {tgChannel.Provider.ProviderName}");
                         foreach (var unfinishedLink in unfinishedLinks)
                         {
-                            LinkPost linkPost = QueueProcessor.AddLinkPost(tgChannel, unfinishedLink, bot);
-                            if (linkPost != null)
+                            List<LinkPost> linkPost = QueueProcessor.AddLinkPost(tgChannel, unfinishedLink, bot);
+                            context.LinkPosts.AddRange(linkPost);
+                            /*if (linkPost != null)
                             {
-                                context.LinkPosts.Add(linkPost);
+                                context.LinkPosts.AddRange(linkPost);
                             }
                             else
                             {
                                 botTimeout = true;
                                 break;
-                            }
+                            }*/
                         }
-                        if (botTimeout)
+                        /*if (botTimeout)
                         {
                             Log.Information("Sleeping for 1 minute for Telegram cooldown");
                             System.Threading.Thread.Sleep(1000 * 60 * 1);
                             break;
-                        }
+                        }*/
                         //Posting new digests, not posted yet
                         var digests = context.Digests.Where(d => d.Provider == tgChannel.Provider && !context.DigestPosts.Select(dp => dp.Digest).Contains(d)).OrderBy(d => d.DigestDay);
                         if (digests.Any()) Log.Information($"Found {digests.Count()} new digests to post in {tgChannel.ChannelName}");
                         foreach (Digest digest in digests)
                         {
-                            DigestPost digestPost = QueueProcessor.AddDigestPost(tgChannel, digest, bot);
-                            if(digestPost != null)
+                            List<DigestPost> digestPost = QueueProcessor.AddDigestPost(tgChannel, digest, bot);
+                            context.DigestPosts.AddRange(digestPost);
+                            /*if(digestPost != null)
                             {
                                 context.DigestPosts.Add(digestPost);
                             }
@@ -219,13 +222,14 @@ namespace ItLinksBot
                             {
                                 botTimeout = true;
                                 break;
-                            }
+                            }*/
 
                             var links = context.Links.Where(l => l.Digest == digest);
                             foreach (var link in links)
                             {
-                                LinkPost linkPost = QueueProcessor.AddLinkPost(tgChannel, link, bot);
-                                if (linkPost != null)
+                                List<LinkPost> linkPost = QueueProcessor.AddLinkPost(tgChannel, link, bot);
+                                context.LinkPosts.AddRange(linkPost);
+                                /*if (linkPost != null)
                                 {
                                     context.LinkPosts.Add(linkPost);
                                 }
@@ -233,20 +237,20 @@ namespace ItLinksBot
                                 {
                                     botTimeout = true;
                                     break;
-                                }
+                                }*/
                             }
-                            if (botTimeout)
+                            /*if (botTimeout)
                             {
                                 break;
-                            }
+                            }*/
                         }
-                        if (botTimeout) 
+                        /*if (botTimeout) 
                         {
                             context.SaveChanges();
                             Log.Information("Sleeping for 1 minute for Telegram cooldown - throttling not working");
                             System.Threading.Thread.Sleep(1000 * 60 * 1);
                             break; 
-                        }
+                        }*/
                         //save after each successfull post session
                         context.SaveChanges();
                     }
