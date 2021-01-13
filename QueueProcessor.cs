@@ -133,8 +133,6 @@ namespace ItLinksBot
                     var secondsToSleep = (int)botPostObject["parameters"]["retry_after"];
                     Log.Information($"Sleeping {secondsToSleep + 2} seconds before retrying to send to {tgChannel.ChannelName} again");
                     System.Threading.Thread.Sleep((secondsToSleep + 2)*1000);
-                    //"Too Many Requests"
-                    //return null;
                 }
                 else
                 {
@@ -143,32 +141,6 @@ namespace ItLinksBot
                 }
             }
             return responses;
-            /*
-            var botPostResult = bot.SendMessage(tgChannel.ChannelName, message);
-            var botPostObject = JObject.Parse(botPostResult);
-
-            if ((bool)botPostObject["ok"])
-            {
-                return new DigestPost
-                {
-                    Channel = tgChannel,
-                    Digest = digest,
-                    TelegramMessageID = (int)botPostObject["result"]["message_id"],
-                    PostDate = Utils.UnixTimeStampToDateTime((int)botPostObject["result"]["date"]),
-                    PostLink = string.Format("https://t.me/{0}/{1}", (string)botPostObject["result"]["chat"]["username"], (string)botPostObject["result"]["message_id"]),
-                    PostText = (string)botPostObject["result"]["text"]
-                };
-            }
-            else if ((int)botPostObject["error_code"] == 429)
-            {
-                //"Too Many Requests"
-                return null;
-            }
-            else
-            {
-                Log.Error("Error from posting message to Telegram API {botPostResult}", botPostResult);
-                throw new Exception($"Unknown service response: {botPostResult}");
-            }*/
         }
 
         public static List<LinkPost> AddLinkPost(TelegramChannel tgChannel, Link link, TelegramAPI bot)
@@ -202,8 +174,6 @@ namespace ItLinksBot
                     var secondsToSleep = (int)linkPostObject["parameters"]["retry_after"];
                     Log.Information($"Sleeping {secondsToSleep + 2} seconds before retrying to send to {tgChannel.ChannelName} again");
                     System.Threading.Thread.Sleep((secondsToSleep + 2)*1000);
-                    //"Too Many Requests"
-                    //return null;
                 }
                 else
                 {
