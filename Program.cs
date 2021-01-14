@@ -43,6 +43,7 @@ namespace ItLinksBot
                 "Better Dev Link" => new BetterDevLinkParser(provider),
                 "Data Is Plural" => new DataIsPluralParser(provider),
                 "Software Lead Weekly" => new SoftwareLeadWeeklyParser(provider),
+                "Tech Productivity" => new TechProductivityParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
@@ -84,12 +85,20 @@ namespace ItLinksBot
                     {
                         if (!resp.Headers["Location"].Contains("://"))
                         {
-                            var baseRedirUri = new Uri(req.RequestUri.Scheme + "://" + req.RequestUri.Authority);
-                            realUrl = (new Uri(baseRedirUri, resp.Headers["Location"])).AbsoluteUri;
+                            //var baseRedirUri = new Uri(req.RequestUri.Scheme + "://" + req.RequestUri.Authority);
+                            realUrl = (new Uri(req.RequestUri, resp.Headers["Location"])).AbsoluteUri;
+                            if (realUrl == req.RequestUri.AbsoluteUri)
+                            {
+                                break;
+                            }
                         }
                         else
                         {
                             realUrl = resp.Headers["Location"];
+                            if(realUrl == req.RequestUri.AbsoluteUri)
+                            {
+                                break;
+                            }
                         }
                         req = (HttpWebRequest)WebRequest.Create(realUrl);
                         req.AllowAutoRedirect = false;
