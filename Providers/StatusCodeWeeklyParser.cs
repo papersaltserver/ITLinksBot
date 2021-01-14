@@ -84,14 +84,11 @@ namespace ItLinksBot.Providers
                 href = Utils.UnshortenLink(href);
                 var sibling = link.SelectSingleNode(".//span[@class='mainlink']").NextSibling;
 
-                var siblingTextSb = new StringBuilder();
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
-
                 //copying nodes related to the current link to a new abstract node
                 while (sibling != null)
                 {
                     descriptionNode.AppendChild(sibling.Clone());
-                    siblingTextSb.AppendLine(sibling.InnerHtml);
                     sibling = sibling.NextSibling;
                 }
 
