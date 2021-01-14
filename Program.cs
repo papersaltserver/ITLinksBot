@@ -42,6 +42,7 @@ namespace ItLinksBot
                 "Inside Cryptocurrency" => new InsideCryptocurrencyParser(provider),
                 "Better Dev Link" => new BetterDevLinkParser(provider),
                 "Data Is Plural" => new DataIsPluralParser(provider),
+                "Software Lead Weekly" => new SoftwareLeadWeeklyParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
@@ -67,6 +68,7 @@ namespace ItLinksBot
                 Log.Warning("Malformed URL {url}", linkUrl);
                 return linkUrl;
             }
+            req.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75";
             req.AllowAutoRedirect = false;
             string realUrl = linkUrl;
             while (true)
@@ -91,6 +93,7 @@ namespace ItLinksBot
                         }
                         req = (HttpWebRequest)WebRequest.Create(realUrl);
                         req.AllowAutoRedirect = false;
+                        req.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75";
                     }
                     else
                     {
@@ -157,24 +160,27 @@ namespace ItLinksBot
                         }
                         newDigests = tempDigests;
                     }
-                    context.Digests.AddRange(newDigests);
+                    //context.Digests.AddRange(newDigests);
                     Log.Information($"Found {newDigests.Count()} new digests for newsletter {prov.ProviderName}");
 
                     //getting and saving only new links to entities
                     if (newDigests.Any())
                     {
-                        List<Link> links = new List<Link>();
+                        int totalLinks = 0;
                         foreach (var dgst in newDigests)
                         {
-                            var linksInCurrentDigest = parser.GetDigestLinks(dgst);
-                            links.AddRange(linksInCurrentDigest);
+                            //List<Link> links = new List<Link>();
+                            List<Link> linksInCurrentDigest = parser.GetDigestLinks(dgst);
+                            //links.AddRange(linksInCurrentDigest);
+                            var newLinks = linksInCurrentDigest.Except(context.Links, new LinkComparer());
+                            context.Digests.Add(dgst);
+                            context.Links.AddRange(newLinks);
+                            Log.Information($"Found {newLinks.Count()} new links for newsletter {prov.ProviderName} in digest {dgst.DigestName}");
                             //persisting entities change
                             context.SaveChanges();
+                            totalLinks += 1 + linksInCurrentDigest.Count;
                         }
-
-                        var newLinks = links.Except(context.Links, new LinkComparer());
-                        context.Links.AddRange(newLinks);
-                        Log.Information($"Found {newLinks.Count()} new links for newsletter {prov.ProviderName}");
+                        Log.Information($"Total number of objects to post: {totalLinks}");
                     }
                 }
 

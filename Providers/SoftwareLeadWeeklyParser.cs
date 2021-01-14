@@ -10,14 +10,14 @@ using System.Web;
 
 namespace ItLinksBot.Providers
 {
-    class InsideCryptocurrencyParser : IParser
+    class SoftwareLeadWeeklyParser : IParser
     {
-        private readonly Provider _insideCryptocurrencyProvider;
-        readonly Uri baseUri = new Uri("https://inside.com/");
+        private readonly Provider _softwareLeadWeeklyDigest;
+        readonly Uri baseUri = new Uri("https://softwareleadweekly.com/");
 
-        public InsideCryptocurrencyParser(Provider provider)
+        public SoftwareLeadWeeklyParser(Provider provider)
         {
-            _insideCryptocurrencyProvider = provider;
+            _softwareLeadWeeklyDigest = provider;
         }
         public string FormatDigestPost(Digest digest)
         {
@@ -33,27 +33,31 @@ namespace ItLinksBot.Providers
         {
             List<Digest> digests = new List<Digest>();
             HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_insideCryptocurrencyProvider.DigestURL).Result;
+            var archiveContent = httpClient.GetAsync(_softwareLeadWeeklyDigest.DigestURL).Result;
             var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//table[contains(@class,'table')]//tr").Take(50);
+            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@class='table-issue']").Take(50);
             foreach (var digestNode in digestsInArchive)
             {
-                var dateNode = digestNode.SelectSingleNode("./td[1]");
-                var digestDate = DateTime.Parse(dateNode.InnerText.Trim());
-                var linkNode = digestNode.SelectSingleNode("./td[2]/a");
+                var dateNode = digestNode.SelectSingleNode(".//p[@class='text-table-issue']");
+                string[] dateArray = dateNode.InnerText.Trim().Split(" ");
+                Regex rgx = new Regex("[^0-9]");
+                dateArray[0] = rgx.Replace(dateArray[0], "");
+                string fixedDate = string.Join(" ", dateArray);
+                var digestDate = DateTime.Parse(fixedDate);
+                var linkNode = digestNode.SelectSingleNode(".//p[@class='title-table-issue']/a");
                 var digestName = linkNode.InnerText.Trim();
                 var digestHref = linkNode.GetAttributeValue("href", "Not found");
                 var digestUrl = new Uri(baseUri, digestHref);
-                
+
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
                     DigestName = digestName,
-                    DigestDescription = "", //no description there
+                    DigestDescription = "", //no description available
                     DigestURL = digestUrl.AbsoluteUri,
-                    Provider = _insideCryptocurrencyProvider
+                    Provider = _softwareLeadWeeklyDigest
                 };
                 digests.Add(currentDigest);
             }
@@ -72,19 +76,14 @@ namespace ItLinksBot.Providers
             var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'column-content')]");
-            var acceptableTags = new String[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
+            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@id='app']/div/div/div/div/div");
+            var acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
             foreach (var link in linksInDigest)
             {
-                var linkNode = link.SelectSingleNode(".//comment()[. = ' STORY FOOTER : START ']/following-sibling::p/a");
-                if (linkNode == null)
-                {
-                    linkNode = link.SelectSingleNode("../div[contains(@class,'column-share')]//p[1]/a");
-                }
-
+                var linkNode = link.SelectSingleNode("./a[@class='post-title' or @class='mention']");
+                var title = linkNode.InnerText.Trim(); //this digest doesn't have separate header
                 var href = linkNode?.GetAttributeValue("href", "Not found");
                 if (href == null) continue;
-                
                 if (!href.Contains("://") && href.Contains("/"))
                 {
                     var digestUrl = new Uri(digest.DigestURL);
@@ -93,9 +92,16 @@ namespace ItLinksBot.Providers
                 }
                 href = Utils.UnshortenLink(href);
 
-                var descriptionNodeOriginal = link.SelectSingleNode(".//div[contains(@class,'story-body')]");
+                var sibling = linkNode.NextSibling;
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
-                descriptionNode.AppendChild(descriptionNodeOriginal.Clone());
+
+                //copying nodes related to the current link to a new abstract node
+                while (sibling != null && sibling.Name.ToUpper() != "B")
+                {
+                    descriptionNode.AppendChild(sibling.Clone());
+                    sibling = sibling.NextSibling;
+                }
+
                 //removing all the tags not allowed by telegram
                 var nodesToAnalyze = new Queue<HtmlNode>(descriptionNode.ChildNodes);
                 while (nodesToAnalyze.Count > 0)
@@ -134,7 +140,7 @@ namespace ItLinksBot.Providers
                 links.Add(new Link
                 {
                     URL = href,
-                    Title = "", //no separate title
+                    Title = title,
                     Description = normalizedDescription,
                     Digest = digest
                 });
