@@ -14,6 +14,7 @@ namespace ItLinksBot.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ProviderID { get; set; }
         public string ProviderName { get; set; }
+        public bool ProviderEnabled { get; set; }
         public string DigestURL { get; set; }
     }
 }
