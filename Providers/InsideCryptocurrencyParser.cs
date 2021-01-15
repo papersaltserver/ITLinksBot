@@ -129,8 +129,10 @@ namespace ItLinksBot.Providers
                         }
                     }
                 }
-                string normalizedDescription = Regex.Replace(descriptionNode.InnerHtml.Trim(), "( )\\1+", "$1");
-                normalizedDescription = Regex.Replace(normalizedDescription, @"[\r\n]{3,}", "\n\n");
+                string normalizedDescription = Regex.Replace(descriptionNode.InnerHtml.Trim(), "( )\\1+", "$1", RegexOptions.Singleline);
+                normalizedDescription = normalizedDescription.Replace("\t", "");
+                normalizedDescription = normalizedDescription.Replace("\r", "");
+                normalizedDescription = Regex.Replace(normalizedDescription, @"[\n]{3,}", "\n\n", RegexOptions.Singleline);
                 links.Add(new Link
                 {
                     URL = href,

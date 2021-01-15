@@ -10,12 +10,12 @@ using System.Web;
 
 namespace ItLinksBot.Providers
 {
-    class TechProductivityParser : IParser
+    class ArtificialIntelligenceParser : IParser
     {
         private readonly Provider _digest;
-        readonly Uri baseUri = new Uri("https://techproductivity.co/");
+        readonly Uri baseUri = new Uri("https://www.getrevue.co/");
 
-        public TechProductivityParser(Provider provider)
+        public ArtificialIntelligenceParser(Provider provider)
         {
             _digest = provider;
         }
@@ -37,18 +37,17 @@ namespace ItLinksBot.Providers
             var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//ul[contains(@class,'archive')]//li/a").Take(50);
+            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//section[@id='issues']/div[@id='issues-covers' or @id='issues-holder']//a").Take(50);
             foreach (var digestNode in digestsInArchive)
             {
-                var digestDate = new DateTime(1900,1,1);
-                var digestName = digestNode.InnerText.Trim();
+                var digestDate = new DateTime(1900, 1, 1);
                 var digestHref = digestNode.GetAttributeValue("href", "Not found");
                 var digestUrl = new Uri(baseUri, digestHref);
 
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
-                    DigestName = digestName,
+                    DigestName = "", //will be added during next request
                     DigestDescription = "", //description will be added later
                     DigestURL = digestUrl.AbsoluteUri,
                     Provider = _digest
@@ -64,10 +63,12 @@ namespace ItLinksBot.Providers
             var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
             var digestDetails = new HtmlDocument();
             digestDetails.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
-            var titleText = digestDetails.DocumentNode.SelectSingleNode("//div[contains(text(), 'Issue #')]").InnerText.Trim();
-            var dateText = HttpUtility.HtmlDecode(titleText).Split('•')[1].Trim();
-            var digestDate = DateTime.Parse(dateText);
-            var descriptionNodeOriginal = digestDetails.DocumentNode.SelectSingleNode("(//*[contains(@class,'outlook-group-fix')]//div[p])[1]");
+            var dateNode = digestDetails.DocumentNode.SelectSingleNode("//section[@id='issue-display']//time");
+            var digestDate = DateTime.Parse(dateNode.GetAttributeValue("datetime", "not found"));
+            var nameNode = digestDetails.DocumentNode.SelectSingleNode("//section[@id='issue-display']/header/h1");
+            var nameText = nameNode.InnerText.Trim();
+
+            var descriptionNodeOriginal = digestDetails.DocumentNode.SelectSingleNode("//div[contains(@class,'introduction')]");
             string normalizedDescription;
             if (descriptionNodeOriginal != null)
             {
@@ -121,7 +122,7 @@ namespace ItLinksBot.Providers
             var currentDigest = new Digest
             {
                 DigestDay = digestDate,
-                DigestName = digest.DigestName,
+                DigestName = nameText,
                 DigestDescription = normalizedDescription,
                 DigestURL = digest.DigestURL,
                 Provider = _digest
@@ -136,24 +137,32 @@ namespace ItLinksBot.Providers
             var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("(//*[contains(@class,'outlook-group-fix')]//div[a or p])[position()>2 and position()<last()-2]/p/a|(//*[contains(@class,'outlook-group-fix')]//div[a or p])[position()>2 and position()<last()-2]/a");
+            HtmlNodeCollection linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@id='issue-frame']/div/div[position()>5]//div[contains(@class,'revue-p')]/../../../..|//div[@id='issue-frame']//body/div/div[position()>5]//div[contains(@class,'revue-p')]/../../../..|//div[contains(@class,'text-description')]//ul[contains(@class,'revue-ul')]/li/a");
             var acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
             foreach (var link in linksInDigest)
             {
-                var title = link.InnerText.Trim(); //this digest doesn't have separate header
-                var href = link.GetAttributeValue("href", "Not found");
-                if (href == null) continue;
+                HtmlNode linkNode;
+                if (link.Name.ToUpper() == "A")
+                {
+                    linkNode = link;
+                }
+                else
+                {
+                    linkNode = link.SelectSingleNode("./tr[2]//a|.//div[@class='link-title']//a");
+                }
+                if (linkNode == null) continue;
+                var title = linkNode.InnerText.Trim();
+                var href = linkNode.GetAttributeValue("href", "Not found");
+                if (href == "Not found") continue;
+
                 Uri uriHref = new Uri(baseUri, href);
                 href = Utils.UnshortenLink(href);
 
-                var sibling = link.NextSibling;
+                var descriptionNodeOriginal = link.SelectSingleNode(".//div[@class='revue-p']/..");
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
-
-                //copying nodes related to the current link to a new abstract node
-                while (sibling != null && sibling.Name.ToUpper() != "BR")
+                if(descriptionNodeOriginal != null)
                 {
-                    descriptionNode.AppendChild(sibling.Clone());
-                    sibling = sibling.NextSibling;
+                    descriptionNode.AppendChild(descriptionNodeOriginal.Clone());
                 }
 
                 //removing all the tags not allowed by telegram
