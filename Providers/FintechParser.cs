@@ -10,12 +10,12 @@ using System.Web;
 
 namespace ItLinksBot.Providers
 {
-    class ArtificialIntelligenceParser : IParser
+    class FintechParser : IParser
     {
         private readonly Provider _digest;
         readonly Uri baseUri = new Uri("https://www.getrevue.co/");
 
-        public ArtificialIntelligenceParser(Provider provider)
+        public FintechParser(Provider provider)
         {
             _digest = provider;
         }
@@ -160,7 +160,7 @@ namespace ItLinksBot.Providers
 
                 var descriptionNodeOriginal = link.SelectSingleNode(".//div[@class='revue-p']/..");
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
-                if(descriptionNodeOriginal != null)
+                if (descriptionNodeOriginal != null)
                 {
                     descriptionNode.AppendChild(descriptionNodeOriginal.Clone());
                 }

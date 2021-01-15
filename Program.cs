@@ -45,6 +45,7 @@ namespace ItLinksBot
                 "Software Lead Weekly" => new SoftwareLeadWeeklyParser(provider),
                 "Tech Productivity" => new TechProductivityParser(provider),
                 "Artificial Intelligence Weekly" => new ArtificialIntelligenceParser(provider),
+                "Fintech" => new FintechParser(provider),
                 "ProductiveGrowth" => new ProductiveGrowthParser(provider),
                 _ => throw new NotImplementedException(),
             };
