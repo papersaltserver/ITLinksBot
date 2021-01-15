@@ -44,6 +44,7 @@ namespace ItLinksBot
                 "Data Is Plural" => new DataIsPluralParser(provider),
                 "Software Lead Weekly" => new SoftwareLeadWeeklyParser(provider),
                 "Tech Productivity" => new TechProductivityParser(provider),
+                "Artificial Intelligence Weekly" => new ArtificialIntelligenceParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
@@ -159,8 +160,9 @@ namespace ItLinksBot
                     List<Digest> digests = parser.GetCurrentDigests();
                     //saving digests to entities
                     var newDigests = digests.Except(context.Digests, new DigestComparer());
+                    Log.Information($"Found {newDigests.Count()} new digests for newsletter {prov.ProviderName}");
                     //parse digests which do not have info in digest itself
-                    if(newDigests.Any() && newDigests.First().DigestDay == new DateTime(1900, 1, 1))
+                    if (newDigests.Any() && newDigests.First().DigestDay == new DateTime(1900, 1, 1))
                     {
                         var tempDigests = new List<Digest>();
                         foreach(var digest in newDigests)
@@ -170,7 +172,7 @@ namespace ItLinksBot
                         newDigests = tempDigests;
                     }
                     //context.Digests.AddRange(newDigests);
-                    Log.Information($"Found {newDigests.Count()} new digests for newsletter {prov.ProviderName}");
+                    
 
                     //getting and saving only new links to entities
                     if (newDigests.Any())
