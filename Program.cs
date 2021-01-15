@@ -154,7 +154,8 @@ namespace ItLinksBot
             TelegramAPI bot = new TelegramAPI(config["BotApiKey"]);
             while (true)
             {
-                foreach (Provider prov in context.Providers)
+                var activeProviders = context.Providers.Where(pr => pr.ProviderEnabled);
+                foreach (Provider prov in activeProviders)
                 {
                     var parser = ParserFactory.Setup(prov);
                     List<Digest> digests = parser.GetCurrentDigests();
