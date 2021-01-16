@@ -45,6 +45,7 @@ namespace ItLinksBot
                 "Software Lead Weekly" => new SoftwareLeadWeeklyParser(provider),
                 "Tech Productivity" => new TechProductivityParser(provider),
                 "Artificial Intelligence Weekly" => new ArtificialIntelligenceParser(provider),
+                "ProductiveGrowth" => new ProductiveGrowthParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
@@ -163,7 +164,7 @@ namespace ItLinksBot
                     var newDigests = digests.Except(context.Digests, new DigestComparer());
                     Log.Information($"Found {newDigests.Count()} new digests for newsletter {prov.ProviderName}");
                     //parse digests which do not have info in digest itself
-                    if (newDigests.Any() && newDigests.First().DigestDay == new DateTime(1900, 1, 1))
+                    /*if (newDigests.Any() && newDigests.First().DigestDay == new DateTime(1900, 1, 1))
                     {
                         var tempDigests = new List<Digest>();
                         foreach(var digest in newDigests)
@@ -171,7 +172,7 @@ namespace ItLinksBot
                             tempDigests.Add(parser.GetDigestDetails(digest));
                         }
                         newDigests = tempDigests;
-                    }
+                    }*/
                     //context.Digests.AddRange(newDigests);
                     
 
@@ -181,13 +182,16 @@ namespace ItLinksBot
                         int totalLinks = 0;
                         foreach (var dgst in newDigests)
                         {
-                            //List<Link> links = new List<Link>();
-                            List<Link> linksInCurrentDigest = parser.GetDigestLinks(dgst);
-                            //links.AddRange(linksInCurrentDigest);
+                            var fullDigest = dgst;
+                            if (fullDigest.DigestDay == new DateTime(1900, 1, 1))
+                            {
+                                fullDigest = parser.GetDigestDetails(dgst);
+                            }
+                            List<Link> linksInCurrentDigest = parser.GetDigestLinks(fullDigest);
                             var newLinks = linksInCurrentDigest.Except(context.Links, new LinkComparer());
-                            context.Digests.Add(dgst);
+                            context.Digests.Add(fullDigest);
                             context.Links.AddRange(newLinks);
-                            Log.Information($"Found {newLinks.Count()} new links for newsletter {prov.ProviderName} in digest {dgst.DigestName}");
+                            Log.Information($"Found {newLinks.Count()} new links for newsletter {prov.ProviderName} in digest {fullDigest.DigestName}");
                             //persisting entities change
                             context.SaveChanges();
                             totalLinks += 1 + linksInCurrentDigest.Count;
