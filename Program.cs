@@ -48,6 +48,7 @@ namespace ItLinksBot
                 "Fintech" => new FintechParser(provider),
                 "ProductiveGrowth" => new ProductiveGrowthParser(provider),
                 "Product" => new ProductParser(provider),
+                "Space" => new SpaceParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
