@@ -49,6 +49,7 @@ namespace ItLinksBot
                 "ProductiveGrowth" => new ProductiveGrowthParser(provider),
                 "Product" => new ProductParser(provider),
                 "Space" => new SpaceParser(provider),
+                "Tech Manager Weekly" => new TechManagerWeeklyParser(provider),
                 _ => throw new NotImplementedException(),
             };
         }
