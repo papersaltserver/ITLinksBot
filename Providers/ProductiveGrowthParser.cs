@@ -171,6 +171,7 @@ namespace ItLinksBot.Providers
                 if (digestSections.Count == 1)
                 {
                     sibling = section;
+                    descriptionNode.AppendChild(sibling.Clone());
                 }
                 else
                 {
