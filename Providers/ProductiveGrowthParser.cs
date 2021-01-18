@@ -235,6 +235,7 @@ namespace ItLinksBot.Providers
                     URL = href,
                     Title = "", //in this digest we post whole sections and not every has caption
                     Description = normalizedDescription,
+                    LinkOrder = i,
                     Digest = digest
                 });
             }

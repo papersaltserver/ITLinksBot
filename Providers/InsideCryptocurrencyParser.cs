@@ -74,8 +74,9 @@ namespace ItLinksBot.Providers
             linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'column-content')]");
             var acceptableTags = new String[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
-            foreach (var link in linksInDigest)
+            for (int i = 0; i < linksInDigest.Count; i++)
             {
+                HtmlNode link = linksInDigest[i];
                 var linkNode = link.SelectSingleNode(".//comment()[. = ' STORY FOOTER : START ']/following-sibling::p/a");
                 if (linkNode == null)
                 {
@@ -138,6 +139,7 @@ namespace ItLinksBot.Providers
                     URL = href,
                     Title = "", //no separate title
                     Description = normalizedDescription,
+                    LinkOrder = i,
                     Digest = digest
                 });
             }

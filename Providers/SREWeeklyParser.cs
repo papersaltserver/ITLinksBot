@@ -82,8 +82,9 @@ namespace ItLinksBot.Providers
             linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'sreweekly-entry')]");
             var acceptableTags = new String[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
-            foreach (var link in linksInDigest)
+            for (int i = 0; i < linksInDigest.Count; i++)
             {
+                HtmlNode link = linksInDigest[i];
                 var linkNode = link.SelectSingleNode(".//div[contains(@class,'sreweekly-title')]/a");
                 var title = linkNode.InnerText;
                 var href = linkNode?.GetAttributeValue("href", "Not found");
@@ -137,6 +138,7 @@ namespace ItLinksBot.Providers
                     URL = href,
                     Title = title,
                     Description = descriptionNode.InnerHtml,
+                    LinkOrder = i,
                     Digest = digest
                 });
             }
