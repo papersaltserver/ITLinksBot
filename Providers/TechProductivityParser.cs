@@ -145,7 +145,7 @@ namespace ItLinksBot.Providers
                 var href = link.GetAttributeValue("href", "Not found");
                 if (href == null) continue;
                 Uri uriHref = new Uri(baseUri, href);
-                href = Utils.UnshortenLink(href);
+                href = Utils.UnshortenLink(uriHref.AbsoluteUri);
 
                 var sibling = link.NextSibling;
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");

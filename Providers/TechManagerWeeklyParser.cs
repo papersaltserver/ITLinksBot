@@ -157,7 +157,7 @@ namespace ItLinksBot.Providers
                 if (href == "Not found") continue;
 
                 Uri uriHref = new Uri(baseUri, href);
-                href = Utils.UnshortenLink(href);
+                href = Utils.UnshortenLink(uriHref.AbsoluteUri);
 
                 var descriptionNodeOriginal = link.SelectSingleNode(".//div[@class='revue-p']/..");
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");

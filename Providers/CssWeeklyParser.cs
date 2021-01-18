@@ -80,14 +80,8 @@ namespace ItLinksBot.Providers
                 var description = String.Join("\n", descriptionNode);
 
                 var href = titleNode.GetAttributeValue("href", "Not found");
-
-                if (!href.Contains("://") && href.Contains("/"))
-                {
-                    var digestUrl = new Uri(digest.DigestURL);
-                    var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
-                    href = (new Uri(digestBase, href)).AbsoluteUri;
-                }
-                href = Utils.UnshortenLink(href);
+                Uri uriHref = new Uri(baseUri, href);
+                href = Utils.UnshortenLink(uriHref.AbsoluteUri);
 
                 links.Add(new Link
                 {

@@ -50,6 +50,7 @@ namespace ItLinksBot
                 "Product" => new ProductParser(provider),
                 "Space" => new SpaceParser(provider),
                 "Tech Manager Weekly" => new TechManagerWeeklyParser(provider),
+                "Timeless & Timely" => new TimelessAndTimely(provider),
                 _ => throw new NotImplementedException(),
             };
         }
