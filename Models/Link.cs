@@ -14,6 +14,7 @@ namespace ItLinksBot.Models
         public string URL { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
+        public int LinkOrder { get; set; }
         public Digest Digest { get; set; }
     }
 

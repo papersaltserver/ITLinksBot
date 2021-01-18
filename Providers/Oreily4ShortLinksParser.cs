@@ -48,9 +48,10 @@ namespace ItLinksBot.Providers
             var feedElementContent = digestNode.ElementExtensions.ReadElementExtensions<string>("encoded", "http://purl.org/rss/1.0/modules/content/").FirstOrDefault();
             var htmlLinks = new HtmlDocument();
             htmlLinks.LoadHtml(feedElementContent);
-            var listItmesArray = htmlLinks.DocumentNode.Descendants("li");
-            foreach (var listItem in listItmesArray)
+            var listItmesArray = htmlLinks.DocumentNode.Descendants("li").ToArray();
+            for(int i=0;i<listItmesArray.Length;i++)
             {
+                HtmlNode listItem = listItmesArray[i];
                 var linkTag = listItem.Descendants("a").FirstOrDefault();
                 if (linkTag != null)
                 {
@@ -68,6 +69,7 @@ namespace ItLinksBot.Providers
                         URL = href,
                         Title = linkTag.InnerText,
                         Description = HttpUtility.HtmlDecode(listItem.InnerText),
+                        LinkOrder = i,
                         Digest = digest
                     });
                 }

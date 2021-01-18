@@ -139,8 +139,9 @@ namespace ItLinksBot.Providers
             linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
             HtmlNodeCollection linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@id='issue-frame']/div/div[position()>5]//div[contains(@class,'revue-p')]/../../../..|//div[@id='issue-frame']//body/div/div[position()>5]//div[contains(@class,'revue-p')]/../../../..|//div[contains(@class,'text-description')]//ul[contains(@class,'revue-ul')]/li/a");
             var acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
-            foreach (var link in linksInDigest)
+            for (int i = 0; i < linksInDigest.Count; i++)
             {
+                HtmlNode link = linksInDigest[i];
                 HtmlNode linkNode;
                 if (link.Name.ToUpper() == "A")
                 {
@@ -156,7 +157,7 @@ namespace ItLinksBot.Providers
                 if (href == "Not found") continue;
 
                 Uri uriHref = new Uri(baseUri, href);
-                href = Utils.UnshortenLink(href);
+                href = Utils.UnshortenLink(uriHref.AbsoluteUri);
 
                 var descriptionNodeOriginal = link.SelectSingleNode(".//div[@class='revue-p']/..");
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
@@ -207,6 +208,7 @@ namespace ItLinksBot.Providers
                     URL = href,
                     Title = title,
                     Description = normalizedDescription,
+                    LinkOrder = i,
                     Digest = digest
                 });
             }

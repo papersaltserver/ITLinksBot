@@ -78,8 +78,9 @@ namespace ItLinksBot.Providers
             linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@id='app']/div/div/div/div/div");
             var acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
-            foreach (var link in linksInDigest)
+            for (int i = 0; i < linksInDigest.Count; i++)
             {
+                HtmlNode link = linksInDigest[i];
                 var linkNode = link.SelectSingleNode("./a[@class='post-title' or @class='mention']");
                 var title = linkNode.InnerText.Trim(); //this digest doesn't have separate header
                 var href = linkNode?.GetAttributeValue("href", "Not found");
@@ -144,6 +145,7 @@ namespace ItLinksBot.Providers
                     URL = href,
                     Title = title,
                     Description = normalizedDescription,
+                    LinkOrder = i,
                     Digest = digest
                 });
             }

@@ -45,7 +45,7 @@ namespace ItLinksBot
             StringContent content = new StringContent(json, Encoding.UTF8, "application/json");
             var resp = httpClient.PostAsync(urlString, content).Result;
             //dumb Telegram API doesn't guarantee message order when it is sent in batches, 500 ms should be enough to complete posting
-            //System.Threading.Thread.Sleep(5000);
+            System.Threading.Thread.Sleep(1000);
             return resp.Content.ReadAsStringAsync().Result;
         }
 

@@ -167,19 +167,7 @@ namespace ItLinksBot
                     //saving digests to entities
                     var newDigests = digests.Except(context.Digests, new DigestComparer());
                     Log.Information($"Found {newDigests.Count()} new digests for newsletter {prov.ProviderName}");
-                    //parse digests which do not have info in digest itself
-                    /*if (newDigests.Any() && newDigests.First().DigestDay == new DateTime(1900, 1, 1))
-                    {
-                        var tempDigests = new List<Digest>();
-                        foreach(var digest in newDigests)
-                        {
-                            tempDigests.Add(parser.GetDigestDetails(digest));
-                        }
-                        newDigests = tempDigests;
-                    }*/
-                    //context.Digests.AddRange(newDigests);
                     
-
                     //getting and saving only new links to entities
                     if (newDigests.Any())
                     {
@@ -187,6 +175,7 @@ namespace ItLinksBot
                         foreach (var dgst in newDigests)
                         {
                             var fullDigest = dgst;
+                            //parse digests which do not have info in digest itself
                             if (fullDigest.DigestDay == new DateTime(1900, 1, 1))
                             {
                                 fullDigest = parser.GetDigestDetails(dgst);
@@ -218,7 +207,7 @@ namespace ItLinksBot
                             List<DigestPost> digestPost = QueueProcessor.AddDigestPost(tgChannel, digest, bot);
                             context.DigestPosts.AddRange(digestPost);
 
-                            var links = context.Links.Where(l => l.Digest == digest);
+                            var links = context.Links.Where(l => l.Digest == digest).OrderBy(l => l.LinkOrder);
                             foreach (var link in links)
                             {
                                 List<LinkPost> linkPost = QueueProcessor.AddLinkPost(tgChannel, link, bot);

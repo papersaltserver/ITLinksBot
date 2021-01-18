@@ -128,8 +128,9 @@ namespace ItLinksBot.Providers
             linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'internal__content--newsletter')]/h3[not(@id='editorial')]");
             var acceptableTags = new String[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
-            foreach (var link in linksInDigest)
+            for (int i = 0; i < linksInDigest.Count; i++)
             {
+                HtmlNode link = linksInDigest[i];
                 var title = HttpUtility.HtmlDecode(link.InnerText);
                                 
                 var sibling = link.NextSibling;
@@ -192,6 +193,7 @@ namespace ItLinksBot.Providers
                     URL = href,
                     Title = title,
                     Description = descriptionNode.InnerHtml.Trim(),
+                    LinkOrder = i,
                     Digest = digest
                 });
             }
