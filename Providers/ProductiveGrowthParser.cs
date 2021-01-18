@@ -1,13 +1,11 @@
 ﻿using HtmlAgilityPack;
 using ItLinksBot.Models;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Web;
-using Serilog;
 
 namespace ItLinksBot.Providers
 {
@@ -74,8 +72,8 @@ namespace ItLinksBot.Providers
             var descriptionNode = HtmlNode.CreateNode("<div></div>");
 
             //copying nodes related to the current link to a new abstract node
-            while (sibling != null 
-                && sibling.Name.ToUpper() != "H3" 
+            while (sibling != null
+                && sibling.Name.ToUpper() != "H3"
                 //&& sibling.Name.ToUpper() != "DIV" 
                 && !sibling.ChildNodes.Where(ch => ch.Name.ToUpper() == "FORM" || ch.Name.ToUpper() == "HR").Any()
                 && !sibling.InnerText.ToUpper().Contains("HAVE FEEDBACK?"))
@@ -241,7 +239,7 @@ namespace ItLinksBot.Providers
                 });
             }
 
-            
+
 
             return links;
         }

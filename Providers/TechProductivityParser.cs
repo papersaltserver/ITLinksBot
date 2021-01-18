@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 
@@ -40,7 +39,7 @@ namespace ItLinksBot.Providers
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//ul[contains(@class,'archive')]//li/a").Take(50);
             foreach (var digestNode in digestsInArchive)
             {
-                var digestDate = new DateTime(1900,1,1);
+                var digestDate = new DateTime(1900, 1, 1);
                 var digestName = digestNode.InnerText.Trim();
                 var digestHref = digestNode.GetAttributeValue("href", "Not found");
                 var digestUrl = new Uri(baseUri, digestHref);

@@ -4,8 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web;
 
 namespace ItLinksBot.Providers
@@ -41,7 +39,7 @@ namespace ItLinksBot.Providers
             foreach (var digestNode in digestsInArchive)
             {
                 var digestUrl = new Uri(baseUri, digestNode.GetAttributeValue("href", "Not found"));
-                var digestDate = new DateTime(1900,1,1);  //Smashing Magazine doesn't have this info in digest list, will populate later
+                var digestDate = new DateTime(1900, 1, 1);  //Smashing Magazine doesn't have this info in digest list, will populate later
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
@@ -60,14 +58,14 @@ namespace ItLinksBot.Providers
             var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
             var digestDetails = new HtmlDocument();
             digestDetails.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
-            var digestName = HttpUtility.HtmlDecode(digestDetails.DocumentNode.SelectSingleNode("//h1[contains(@class,'header--indent')]").InnerText).Replace("\n"," ");
+            var digestName = HttpUtility.HtmlDecode(digestDetails.DocumentNode.SelectSingleNode("//h1[contains(@class,'header--indent')]").InnerText).Replace("\n", " ");
             var digestDate = DateTime.Parse(HttpUtility.HtmlDecode(digestDetails.DocumentNode.SelectSingleNode("//span[contains(@class,'header__title-desc')]").InnerText));
-            
+
             var sibling = digestDetails.DocumentNode.SelectSingleNode("//h3[@id='editorial']").NextSibling;
             var descriptionNode = HtmlNode.CreateNode("<div></div>");
 
             //copying nodes related to the current link to a new abstract node
-            while (sibling != null && sibling.Name.ToUpper() != "H3" && sibling.Name.ToUpper() != "OL" )
+            while (sibling != null && sibling.Name.ToUpper() != "H3" && sibling.Name.ToUpper() != "OL")
             {
                 descriptionNode.AppendChild(sibling.Clone());
                 sibling = sibling.NextSibling;
@@ -132,7 +130,7 @@ namespace ItLinksBot.Providers
             {
                 HtmlNode link = linksInDigest[i];
                 var title = HttpUtility.HtmlDecode(link.InnerText);
-                                
+
                 var sibling = link.NextSibling;
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
 

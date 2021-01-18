@@ -4,9 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Web;
 
 namespace ItLinksBot.Providers
 {
@@ -161,7 +159,7 @@ namespace ItLinksBot.Providers
 
                 var descriptionNodeOriginal = link.SelectSingleNode(".//div[@class='revue-p']/..");
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
-                if(descriptionNodeOriginal != null)
+                if (descriptionNodeOriginal != null)
                 {
                     descriptionNode.AppendChild(descriptionNodeOriginal.Clone());
                 }

@@ -5,8 +5,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web;
 
 namespace ItLinksBot.Providers
@@ -84,14 +82,14 @@ namespace ItLinksBot.Providers
 
                 var sibling = link.NextSibling;
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
-                
+
                 //copying nodes related to the current link to a new abstract node
-                while(sibling != null && sibling.Name.ToUpper() != "H3" && sibling.Name.ToUpper()!="H2" && sibling.Name.ToUpper() != "HR")
+                while (sibling != null && sibling.Name.ToUpper() != "H3" && sibling.Name.ToUpper() != "H2" && sibling.Name.ToUpper() != "HR")
                 {
                     descriptionNode.AppendChild(sibling.Clone());
                     sibling = sibling.NextSibling;
                 }
-                
+
                 //removing all the tags not allowed by telegram
                 var nodesToAnalyze = new Queue<HtmlNode>(descriptionNode.ChildNodes);
                 while (nodesToAnalyze.Count > 0)

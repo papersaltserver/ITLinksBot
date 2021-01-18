@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ItLinksBot.Models
 {
@@ -19,8 +15,8 @@ namespace ItLinksBot.Models
         public string PostLink { get; set; }
         public string PostText { get; set; }
         public Digest Digest { get; set; }
-        
-        
-        
+
+
+
     }
 }

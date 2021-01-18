@@ -1,12 +1,12 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
-using ItLinksBot.Data;
+﻿using ItLinksBot.Data;
 using ItLinksBot.Models;
-using System.Linq;
-using System.Collections.Generic;
-using Microsoft.Extensions.Configuration;
 using ItLinksBot.Providers;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Serilog;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 
 namespace ItLinksBot
@@ -102,7 +102,7 @@ namespace ItLinksBot
                         else
                         {
                             realUrl = resp.Headers["Location"];
-                            if(realUrl == req.RequestUri.AbsoluteUri)
+                            if (realUrl == req.RequestUri.AbsoluteUri)
                             {
                                 break;
                             }
@@ -121,7 +121,7 @@ namespace ItLinksBot
                     Log.Warning("Problem {exception} with link {original} which leads to {realUrl} ", e.Message, linkUrl, realUrl);
                     break;
                 }
-                
+
             }
             return realUrl;
         }
@@ -168,7 +168,7 @@ namespace ItLinksBot
                     //saving digests to entities
                     var newDigests = digests.Except(context.Digests, new DigestComparer());
                     Log.Information($"Found {newDigests.Count()} new digests for newsletter {prov.ProviderName}");
-                    
+
                     //getting and saving only new links to entities
                     if (newDigests.Any())
                     {

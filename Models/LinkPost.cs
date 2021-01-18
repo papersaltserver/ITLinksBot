@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
 
 namespace ItLinksBot.Models
 {
@@ -17,6 +15,6 @@ namespace ItLinksBot.Models
         public string PostLink { get; set; }
         public string PostText { get; set; }
         public Link Link { get; set; }
-        
+
     }
 }

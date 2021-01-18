@@ -1,13 +1,11 @@
-﻿using ItLinksBot.Models;
+﻿using HtmlAgilityPack;
+using ItLinksBot.Models;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using HtmlAgilityPack;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web;
-using Serilog;
 
 namespace ItLinksBot.Providers
 {
@@ -36,7 +34,8 @@ namespace ItLinksBot.Providers
             try
             {
                 archiveContent = httpClient.GetAsync(_chagelogProvider.DigestURL).Result;
-            }catch (Exception e)
+            }
+            catch (Exception e)
             {
                 Log.Error("Error getting Changelog digest list: {exception}", e.Message);
                 return null;

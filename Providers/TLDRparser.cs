@@ -4,8 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web;
 
 namespace ItLinksBot.Providers
@@ -37,12 +35,12 @@ namespace ItLinksBot.Providers
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@id='doc-container']//div[contains(@class, 'd-lg-none')]//a").Take(50);
-            foreach(var digestNode in digestsInArchive)
+            foreach (var digestNode in digestsInArchive)
             {
                 var digestUrl = new Uri(baseUri, digestNode.GetAttributeValue("href", "Not found"));
                 var currentDigest = new Digest
                 {
-                    DigestDay = DateTime.Parse(HttpUtility.HtmlDecode(digestNode.InnerText).Replace("Daily Update","")),
+                    DigestDay = DateTime.Parse(HttpUtility.HtmlDecode(digestNode.InnerText).Replace("Daily Update", "")),
                     DigestName = HttpUtility.HtmlDecode(digestNode.InnerText).Trim(),
                     DigestDescription = "", //tldr doesn't have description for digest itself
                     DigestURL = digestUrl.AbsoluteUri,

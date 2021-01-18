@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using ItLinksBot.Models;
+﻿using ItLinksBot.Models;
 using Newtonsoft.Json.Linq;
 using Serilog;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace ItLinksBot
 {
@@ -11,10 +11,11 @@ namespace ItLinksBot
     {
         private static string DecorateTelegramString(string message, bool isFirst, bool isLast)
         {
-            if(isFirst && isLast)
+            if (isFirst && isLast)
             {
                 return message;
-            }else if(isFirst && !isLast)
+            }
+            else if (isFirst && !isLast)
             {
                 return message + "[...]";
             }
@@ -28,7 +29,7 @@ namespace ItLinksBot
         {
             List<string> messageChunks = new List<string>();
             int telegramMessageLimit = tgMessageSizeLimit;
-            
+
             if (message.Length > telegramMessageLimit)
             {
                 int i = 0;
@@ -353,7 +354,7 @@ namespace ItLinksBot
                 {
                     var secondsToSleep = (int)botPostObject["parameters"]["retry_after"];
                     Log.Information($"Sleeping {secondsToSleep + 2} seconds before retrying to send to {tgChannel.ChannelName} again");
-                    System.Threading.Thread.Sleep((secondsToSleep + 2)*1000);
+                    System.Threading.Thread.Sleep((secondsToSleep + 2) * 1000);
                 }
                 else
                 {
@@ -372,7 +373,7 @@ namespace ItLinksBot
             var messageChunks = SplitMessageForTg(message);
 
             int j = 0;
-            while(j<messageChunks.Count)
+            while (j < messageChunks.Count)
             {
                 string chunk = messageChunks[j];
                 var linkPostResult = bot.SendMessage(tgChannel.ChannelName, chunk);
@@ -394,7 +395,7 @@ namespace ItLinksBot
                 {
                     var secondsToSleep = (int)linkPostObject["parameters"]["retry_after"];
                     Log.Information($"Sleeping {secondsToSleep + 2} seconds before retrying to send to {tgChannel.ChannelName} again");
-                    System.Threading.Thread.Sleep((secondsToSleep + 2)*1000);
+                    System.Threading.Thread.Sleep((secondsToSleep + 2) * 1000);
                 }
                 else
                 {

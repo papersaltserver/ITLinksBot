@@ -4,9 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Web;
 
 namespace ItLinksBot.Providers
 {
@@ -46,7 +44,7 @@ namespace ItLinksBot.Providers
                 var digestName = linkNode.InnerText.Trim();
                 var digestHref = linkNode.GetAttributeValue("href", "Not found");
                 var digestUrl = new Uri(baseUri, digestHref);
-                
+
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
@@ -85,7 +83,7 @@ namespace ItLinksBot.Providers
 
                 var href = linkNode?.GetAttributeValue("href", "Not found");
                 if (href == null) continue;
-                
+
                 if (!href.Contains("://") && href.Contains("/"))
                 {
                     var digestUrl = new Uri(digest.DigestURL);

@@ -4,8 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web;
 
 namespace ItLinksBot.Providers
@@ -63,7 +61,7 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new List<Link>();
-            
+
             HttpClient httpClient = new HttpClient();
             var preDigestContent = httpClient.GetAsync(digest.DigestURL).Result;
             var preIframe = new HtmlDocument();

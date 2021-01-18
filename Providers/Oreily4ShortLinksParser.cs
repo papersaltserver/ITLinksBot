@@ -1,11 +1,11 @@
-﻿using ItLinksBot.Models;
-using System.Xml;
-using System.ServiceModel.Syndication;
-using System.Linq;
-using HtmlAgilityPack;
-using System.Web;
-using System.Collections.Generic;
+﻿using HtmlAgilityPack;
+using ItLinksBot.Models;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.ServiceModel.Syndication;
+using System.Web;
+using System.Xml;
 
 namespace ItLinksBot.Providers
 {
@@ -49,7 +49,7 @@ namespace ItLinksBot.Providers
             var htmlLinks = new HtmlDocument();
             htmlLinks.LoadHtml(feedElementContent);
             var listItmesArray = htmlLinks.DocumentNode.Descendants("li").ToArray();
-            for(int i=0;i<listItmesArray.Length;i++)
+            for (int i = 0; i < listItmesArray.Length; i++)
             {
                 HtmlNode listItem = listItmesArray[i];
                 var linkTag = listItem.Descendants("a").FirstOrDefault();
@@ -76,8 +76,9 @@ namespace ItLinksBot.Providers
             }
             return links;
         }
-        public string FormatDigestPost(Digest digest) {
-            return string.Format("<b>{0}</b>\n{1}\n{2}",digest.DigestName,digest.DigestDescription,digest.DigestURL);
+        public string FormatDigestPost(Digest digest)
+        {
+            return string.Format("<b>{0}</b>\n{1}\n{2}", digest.DigestName, digest.DigestDescription, digest.DigestURL);
         }
         public string FormatLinkPost(Link link)
         {
