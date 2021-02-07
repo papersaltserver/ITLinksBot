@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using ItLinksBot.Models;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +20,15 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests()
         {
             List<Digest> digests = new List<Digest>();
-            var reader = XmlReader.Create(_oreilyProvider.DigestURL);
+            XmlReader reader;
+            try
+            {
+                reader = XmlReader.Create(_oreilyProvider.DigestURL);
+            } catch (Exception e)
+            {
+                Log.Error($"Error getting Oreily digest: {e.Message}");
+                return digests;
+            }
             var feed = SyndicationFeed.Load(reader);
             foreach (var feedItem in feed.Items.Take(50))
             {
