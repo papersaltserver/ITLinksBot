@@ -9,19 +9,11 @@ namespace ItLinksBot.Data
     {
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-#if DEBUG
             IConfigurationRoot configuration = new ConfigurationBuilder()
-                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                .AddJsonFile("appsettings.debug.json")
-                .Build();
+                        .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                        .AddJsonFile("./config/appsettings.json")
+                        .Build();
             optionsBuilder.UseSqlite(configuration.GetConnectionString("DefaultConnection"));
-#else
-            IConfigurationRoot configuration = new ConfigurationBuilder()
-            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-            .AddJsonFile("appsettings.json")
-            .Build();
-            optionsBuilder.UseSqlite(configuration.GetConnectionString("DefaultConnection"));
-#endif
         }
 
         public DbSet<Digest> Digests { get; set; }
