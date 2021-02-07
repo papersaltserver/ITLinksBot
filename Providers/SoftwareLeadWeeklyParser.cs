@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using ItLinksBot.Models;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,7 +32,15 @@ namespace ItLinksBot.Providers
         {
             List<Digest> digests = new List<Digest>();
             HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_softwareLeadWeeklyDigest.DigestURL).Result;
+            HttpResponseMessage archiveContent;
+            try
+            {
+                archiveContent = httpClient.GetAsync(_softwareLeadWeeklyDigest.DigestURL).Result;
+            }catch (Exception e)
+            {
+                Log.Error("Failed to get Software Leadership weekly: {exception}",e.Message);
+                return digests;
+            }
             var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
