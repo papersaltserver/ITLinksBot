@@ -368,7 +368,7 @@ namespace ItLinksBot
         public static List<LinkPost> AddLinkPost(TelegramChannel tgChannel, Link link, TelegramAPI bot)
         {
             var parser = ParserFactory.Setup(tgChannel.Provider);
-            string message = parser.FormatLinkPost(link).Replace("&nbsp;", " ");
+            string message = EscapeTgString(parser.FormatLinkPost(link));
             List<LinkPost> responses = new List<LinkPost>();
             var messageChunks = SplitMessageForTg(message);
 

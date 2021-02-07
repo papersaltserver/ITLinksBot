@@ -12,7 +12,7 @@ namespace ItLinksBot.Providers
     class ReactNewsletterParser : IParser
     {
         readonly Provider _reactNewsletterProvider;
-        readonly Uri baseUri = new Uri("https://ui.dev/");
+        readonly Uri baseUri = new Uri("https://reactnewsletter.com/");
         public ReactNewsletterParser(Provider provider)
         {
             _reactNewsletterProvider = provider;
@@ -35,17 +35,20 @@ namespace ItLinksBot.Providers
             var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//ul[contains(@class,'Newsletter__Issues')]/li").Take(50);
+            var allDigestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[contains(@class,'masonry')]//li/a");
+            var digestsInArchive = allDigestsInArchive.OrderByDescending(l => DateTime.Parse(l.SelectSingleNode(".//p[contains(@class,'text-gray')]").InnerText, new CultureInfo("en-US", false))).Take(10);
             foreach (var digestNode in digestsInArchive)
             {
-                var relativePathNode = digestNode.SelectSingleNode(".//a");
-                var digestUrl = new Uri(baseUri, relativePathNode.GetAttributeValue("href", "Not found"));
-                var digestDate = DateTime.Parse(digestNode.SelectSingleNode(".//h4").InnerText, new CultureInfo("en-US", false));
+                //var relativePathNode = digestNode.SelectSingleNode(".//a");
+                var digestUrl = new Uri(baseUri, digestNode.GetAttributeValue("href", "Not found"));
+                var digestDate = DateTime.Parse(digestNode.SelectSingleNode(".//p[contains(@class,'text-gray')]").InnerText, new CultureInfo("en-US", false));
+                var digestDescription = digestNode.SelectSingleNode("./p").InnerText;
+                var digestName = digestNode.SelectSingleNode(".//p[contains(@class,'text-xl')]").InnerText;
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
-                    DigestName = HttpUtility.HtmlDecode(relativePathNode.InnerText).Trim(),
-                    DigestDescription = HttpUtility.HtmlDecode(digestNode.SelectSingleNode(".//p").InnerText),
+                    DigestName = digestName,
+                    DigestDescription = digestDescription,
                     DigestURL = digestUrl.AbsoluteUri,
                     Provider = _reactNewsletterProvider
                 };
@@ -64,7 +67,7 @@ namespace ItLinksBot.Providers
             var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'Issue__Content')]//h3");
+            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'Content_container')]/div/h3");
             var acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
             for (int i = 0; i < linksInDigest.Count; i++)
             {
@@ -126,7 +129,7 @@ namespace ItLinksBot.Providers
 
                 links.Add(new Link
                 {
-                    URL = Utils.UnshortenLink(href),
+                    URL = href,
                     Title = title,
                     Description = descriptionNode.InnerHtml.Trim(),
                     LinkOrder = i,
