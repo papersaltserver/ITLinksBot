@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -11,12 +11,12 @@
 
   <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" Version="1.11.29" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.1">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.1">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.2">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -29,15 +29,30 @@
     <PackageReference Include="Serilog.Sinks.File" Version="4.1.0" />
     <PackageReference Include="System.Runtime.Caching" Version="5.0.0" />
     <PackageReference Include="System.ServiceModel.Syndication" Version="5.0.0" />
+    <PackageReference Include="xunit" Version="2.4.1" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="appsettings.debug.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <PropertyGroup>
+    <SourceFileDebug>appsettings.debug.json</SourceFileDebug>
+  </PropertyGroup>
+
+  <Target Name="CopyConfiguration" AfterTargets="PostBuildEvent">
+    <Copy Condition="'$(Configuration)'=='Debug'" SourceFiles="appsettings.debug.json" DestinationFiles="$(TargetDir)\config\appsettings.json"/>
+    <Copy Condition="'$(Configuration)'=='Release'" SourceFiles="appsettings.json" DestinationFiles="$(TargetDir)\config\appsettings.json"/>
+  </Target>
+
+  <Target Name="CopyConfigurationPublish" AfterTargets="Publish">
+    <Copy Condition="'$(Configuration)'=='Debug'" SourceFiles="appsettings.debug.json" DestinationFiles="$(PublishDir)\config\appsettings.json"/>
+    <Copy Condition="'$(Configuration)'=='Release'" SourceFiles="appsettings.json" DestinationFiles="$(PublishDir)\config\appsettings.json"/>
+  </Target>
 
 </Project>

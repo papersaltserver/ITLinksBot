@@ -132,19 +132,12 @@ namespace ItLinksBot
 
         static void Main(string[] args)
         {
-#if DEBUG
             IConfiguration config = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.debug.json",
+                .AddJsonFile("./config/appsettings.json",
                              optional: true,
                              reloadOnChange: true)
                 .Build();
-#else
-            IConfiguration config = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json",
-                             optional: true,
-                             reloadOnChange: true)
-                .Build();
-#endif
+
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(config)
                 .CreateLogger();
