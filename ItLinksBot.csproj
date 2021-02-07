@@ -46,12 +46,14 @@
   </PropertyGroup>
 
   <Target Name="CopyConfiguration" AfterTargets="PostBuildEvent">
-    <Copy Condition="'$(Configuration)'=='Debug'" SourceFiles="appsettings.debug.json" DestinationFiles="$(TargetDir)\config\appsettings.json"/>
+    <Copy Condition="'$(Configuration)'=='Debug' And Exists('appsettings.debug.json')" SourceFiles="appsettings.debug.json" DestinationFiles="$(TargetDir)\config\appsettings.json"/>
+    <Copy Condition="'$(Configuration)'=='Debug' And !Exists('appsettings.debug.json')" SourceFiles="appsettings.json" DestinationFiles="$(TargetDir)\config\appsettings.json"/>
     <Copy Condition="'$(Configuration)'=='Release'" SourceFiles="appsettings.json" DestinationFiles="$(TargetDir)\config\appsettings.json"/>
   </Target>
 
   <Target Name="CopyConfigurationPublish" AfterTargets="Publish">
-    <Copy Condition="'$(Configuration)'=='Debug'" SourceFiles="appsettings.debug.json" DestinationFiles="$(PublishDir)\config\appsettings.json"/>
+    <Copy Condition="'$(Configuration)'=='Debug' And Exists('appsettings.debug.json')" SourceFiles="appsettings.debug.json" DestinationFiles="$(PublishDir)\config\appsettings.json"/>
+    <Copy Condition="'$(Configuration)'=='Debug' And !Exists('appsettings.debug.json')" SourceFiles="appsettings.json" DestinationFiles="$(TargetDir)\config\appsettings.json"/>
     <Copy Condition="'$(Configuration)'=='Release'" SourceFiles="appsettings.json" DestinationFiles="$(PublishDir)\config\appsettings.json"/>
   </Target>
 
