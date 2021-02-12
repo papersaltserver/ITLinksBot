@@ -3,135 +3,55 @@ using ItLinksBot.Models;
 using ItLinksBot.Providers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 
 namespace ItLinksBot
 {
-    public interface IParser
-    {
-        List<Digest> GetCurrentDigests();
-        Digest GetDigestDetails(Digest digest);
-        List<Link> GetDigestLinks(Digest digest);
-        string FormatDigestPost(Digest digest);
-        string FormatLinkPost(Link link);
-    }
-    public static class ParserFactory
-    {
-        public static IParser Setup(Provider provider)
-        {
-            return provider.ProviderName switch
-            {
-                "O'Reily Four Short Links" => new Oreily4ShortLinksParser(provider),
-                "Changelog Weekly" => new ChangelogParser(provider),
-                "TLDR" => new TLDRparser(provider),
-                "React Newsletter" => new ReactNewsletterParser(provider),
-                "JavaScript Weekly" => new JavaScriptWeeklyParser(provider),
-                "Smashing Email Newsletter" => new SmashingEmailParser(provider),
-                "Dev Awesome" => new DevAwesomeParser(provider),
-                "CSS Weekly" => new CssWeeklyParser(provider),
-                "programming digest" => new ProgrammingDigestParser(provider),
-                "c# digest" => new CSharpDigestParser(provider),
-                "DB Weekly" => new DBWeeklyParser(provider),
-                "StatusCode Weekly" => new StatusCodeWeeklyParser(provider),
-                "Awesome SysAdmin Newsletter" => new AwesomeSysAdminParser(provider),
-                "SRE Weekly" => new SREWeeklyParser(provider),
-                "Inside Cryptocurrency" => new InsideCryptocurrencyParser(provider),
-                "Better Dev Link" => new BetterDevLinkParser(provider),
-                "Data Is Plural" => new DataIsPluralParser(provider),
-                "Software Lead Weekly" => new SoftwareLeadWeeklyParser(provider),
-                "Tech Productivity" => new TechProductivityParser(provider),
-                "Artificial Intelligence Weekly" => new ArtificialIntelligenceParser(provider),
-                "Fintech" => new FintechParser(provider),
-                "ProductiveGrowth" => new ProductiveGrowthParser(provider),
-                "Product" => new ProductParser(provider),
-                "Space" => new SpaceParser(provider),
-                "Tech Manager Weekly" => new TechManagerWeeklyParser(provider),
-                "Timeless & Timely" => new TimelessAndTimely(provider),
-                _ => throw new NotImplementedException(),
-            };
-        }
-    }
-    public static class Utils
-    {
-        public static DateTime UnixTimeStampToDateTime(int unixTimeStamp)
-        {
-            // Unix timestamp is seconds past epoch
-            DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
-            return dtDateTime;
-        }
-        public static string UnshortenLink(string linkUrl)
-        {
-            HttpWebRequest req;
-            try
-            {
-                req = (HttpWebRequest)WebRequest.Create(linkUrl);
-            }
-            catch (Exception)
-            {
-                Log.Warning("Malformed URL {url}", linkUrl);
-                return linkUrl;
-            }
-            req.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75";
-            req.AllowAutoRedirect = false;
-            string realUrl = linkUrl;
-            while (true)
-            {
-                try
-                {
-                    var resp = (HttpWebResponse)req.GetResponse();
-                    if (resp.StatusCode == HttpStatusCode.Ambiguous ||
-                    resp.StatusCode == HttpStatusCode.MovedPermanently ||
-                    resp.StatusCode == HttpStatusCode.Found ||
-                    resp.StatusCode == HttpStatusCode.RedirectMethod ||
-                    resp.StatusCode == HttpStatusCode.RedirectKeepVerb)
-                    {
-                        if (!resp.Headers["Location"].Contains("://"))
-                        {
-                            //var baseRedirUri = new Uri(req.RequestUri.Scheme + "://" + req.RequestUri.Authority);
-                            realUrl = (new Uri(req.RequestUri, resp.Headers["Location"])).AbsoluteUri;
-                            if (realUrl == req.RequestUri.AbsoluteUri)
-                            {
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            realUrl = resp.Headers["Location"];
-                            if (realUrl == req.RequestUri.AbsoluteUri)
-                            {
-                                break;
-                            }
-                        }
-                        req = (HttpWebRequest)WebRequest.Create(realUrl);
-                        req.AllowAutoRedirect = false;
-                        req.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75";
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                catch (Exception e)
-                {
-                    Log.Warning("Problem {exception} with link {original} which leads to {realUrl} ", e.Message, linkUrl, realUrl);
-                    break;
-                }
-
-            }
-            return realUrl;
-        }
-    }
-
     class Program
     {
-
-        static void Main(string[] args)
+        private static IServiceProvider serviceProvider;
+        private static void ConfigureServices()
         {
+            var services = new ServiceCollection();
+            services.AddScoped<IContentGetter, HtmlContentGetter>();
+            services.AddScoped<IContentNormalizer, DomNormlizer>();
+            services.AddScoped<ITextSanitizer, TextSanitizer>();
+            services.AddTransient<IParser, Oreily4ShortLinksParser>();
+            services.AddTransient<IParser, ChangelogParser>();
+            services.AddTransient<IParser, TLDRparser>();
+            services.AddTransient<IParser, ReactNewsletterParser>();
+            services.AddTransient<IParser, JavaScriptWeeklyParser>();
+            services.AddTransient<IParser, SmashingEmailParser>();
+            services.AddTransient<IParser, DevAwesomeParser>();
+            services.AddTransient<IParser, CssWeeklyParser>();
+            services.AddTransient<IParser, ProgrammingDigestParser>();
+            services.AddTransient<IParser, CSharpDigestParser>();
+            services.AddTransient<IParser, DBWeeklyParser>();
+            services.AddTransient<IParser, StatusCodeWeeklyParser>();
+            services.AddTransient<IParser, AwesomeSysAdminParser>();
+            services.AddTransient<IParser, SREWeeklyParser>();
+            services.AddTransient<IParser, InsideCryptocurrencyParser>();
+            services.AddTransient<IParser, BetterDevLinkParser>();
+            services.AddTransient<IParser, DataIsPluralParser>();
+            services.AddTransient<IParser, SoftwareLeadWeeklyParser>();
+            services.AddTransient<IParser, TechProductivityParser>();
+            services.AddTransient<IParser, ArtificialIntelligenceParser>();
+            services.AddTransient<IParser, FintechParser>();
+            services.AddTransient<IParser, ProductiveGrowthParser>();
+            services.AddTransient<IParser, ProductParser>();
+            services.AddTransient<IParser, SpaceParser>();
+            services.AddTransient<IParser, TechManagerWeeklyParser>();
+            services.AddTransient<IParser, TimelessAndTimely>();
+            serviceProvider = services.BuildServiceProvider();
+        }
+        static void Main()
+        {
+            ConfigureServices();
+
             IConfiguration config = new ConfigurationBuilder()
                 .AddJsonFile("./config/appsettings.json",
                              optional: true,
@@ -151,13 +71,14 @@ namespace ItLinksBot
             var context = new ITLinksContext();
             context.Database.Migrate();
             TelegramAPI bot = new TelegramAPI(config["BotApiKey"]);
+            IEnumerable<IParser> serviceCollection = serviceProvider.GetServices<IParser>();
             while (true)
             {
                 var activeProviders = context.Providers.Where(pr => pr.ProviderEnabled);
                 foreach (Provider prov in activeProviders)
                 {
-                    var parser = ParserFactory.Setup(prov);
-                    List<Digest> digests = parser.GetCurrentDigests();
+                    var parser = serviceCollection.FirstOrDefault(p => p.CurrentProvider == prov.ProviderName);
+                    List<Digest> digests = parser.GetCurrentDigests(prov);
                     //saving digests to entities
                     var newDigests = digests.Except(context.Digests, new DigestComparer());
                     Log.Information($"Found {newDigests.Count()} new digests for newsletter {prov.ProviderName}");
@@ -198,13 +119,13 @@ namespace ItLinksBot
                         if (digests.Any()) Log.Information($"Found {digests.Count()} new digests to post in {tgChannel.ChannelName}");
                         foreach (Digest digest in digests)
                         {
-                            List<DigestPost> digestPost = QueueProcessor.AddDigestPost(tgChannel, digest, bot);
+                            List<DigestPost> digestPost = QueueProcessor.AddDigestPost(tgChannel, digest, bot, serviceProvider);
                             context.DigestPosts.AddRange(digestPost);
 
                             var links = context.Links.Where(l => l.Digest == digest).OrderBy(l => l.LinkOrder);
                             foreach (var link in links)
                             {
-                                List<LinkPost> linkPost = QueueProcessor.AddLinkPost(tgChannel, link, bot);
+                                List<LinkPost> linkPost = QueueProcessor.AddLinkPost(tgChannel, link, bot, serviceProvider);
                                 context.LinkPosts.AddRange(linkPost);
                             }
                             //save after each successfull digest post session

@@ -1,8 +1,8 @@
 ﻿using HtmlAgilityPack;
 using ItLinksBot.Models;
-using Serilog;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.ServiceModel.Syndication;
 using System.Web;
@@ -12,23 +12,22 @@ namespace ItLinksBot.Providers
 {
     class Oreily4ShortLinksParser : IParser
     {
-        readonly Provider _oreilyProvider;
-        public Oreily4ShortLinksParser(Provider provider)
+        private readonly IContentGetter contentGetter;
+        private readonly IContentNormalizer contentNormalizer;
+        private readonly ITextSanitizer textSanitizer;
+        public string CurrentProvider => "O'Reily Four Short Links";
+        readonly Uri baseUri = new Uri("https://www.oreilly.com/");
+        public Oreily4ShortLinksParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            _oreilyProvider = provider;
+            contentGetter = cg;
+            contentNormalizer = cn;
+            textSanitizer = ts;
         }
-        public List<Digest> GetCurrentDigests()
+        public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new List<Digest>();
-            XmlReader reader;
-            try
-            {
-                reader = XmlReader.Create(_oreilyProvider.DigestURL);
-            } catch (Exception e)
-            {
-                Log.Error($"Error getting Oreily digest: {e.Message}");
-                return digests;
-            }
+            var stringResult = contentGetter.GetContent(provider.DigestURL);
+            XmlReader reader = XmlReader.Create(new StringReader(stringResult));
             var feed = SyndicationFeed.Load(reader);
             foreach (var feedItem in feed.Items.Take(50))
             {
@@ -38,7 +37,7 @@ namespace ItLinksBot.Providers
                     DigestName = feedItem.Title.Text,
                     DigestDescription = feedItem.Summary.Text,
                     DigestURL = feedItem.Links[0].Uri.AbsoluteUri,
-                    Provider = _oreilyProvider
+                    Provider = provider
                 };
                 digests.Add(currentDigest);
             }
@@ -51,7 +50,7 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new List<Link>();
-            var reader = XmlReader.Create(_oreilyProvider.DigestURL);
+            var reader = XmlReader.Create(digest.Provider.DigestURL);
             var feed = SyndicationFeed.Load(reader);
             var digestNode = feed.Items.Where(n => n.Title.Text == digest.DigestName && n.Links[0].Uri.AbsoluteUri == digest.DigestURL).SingleOrDefault();
             var feedElementContent = digestNode.ElementExtensions.ReadElementExtensions<string>("encoded", "http://purl.org/rss/1.0/modules/content/").FirstOrDefault();
@@ -67,17 +66,18 @@ namespace ItLinksBot.Providers
                     var href = linkTag.GetAttributeValue("href", "Not found");
                     if (!href.Contains("://") && href.Contains("/"))
                     {
-                        var digestUrl = new Uri(digest.DigestURL);
-                        var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
-                        href = (new Uri(digestBase, href)).AbsoluteUri;
+                        href = (new Uri(baseUri, href)).AbsoluteUri;
                     }
                     href = Utils.UnshortenLink(href);
+
+                    var descriptionNode = contentNormalizer.NormalizeDom(listItem);
+                    var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
                     links.Add(new Link
                     {
                         URL = href,
                         Title = linkTag.InnerText,
-                        Description = HttpUtility.HtmlDecode(listItem.InnerText),
+                        Description = descriptionText,
                         LinkOrder = i,
                         Digest = digest
                     });

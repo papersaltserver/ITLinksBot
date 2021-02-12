@@ -4,18 +4,21 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net.Http;
-using System.Web;
 
 namespace ItLinksBot.Providers
 {
     class ReactNewsletterParser : IParser
     {
-        readonly Provider _reactNewsletterProvider;
+        private readonly IContentGetter contentGetter;
+        private readonly IContentNormalizer contentNormalizer;
+        private readonly ITextSanitizer textSanitizer;
+        public string CurrentProvider => "React Newsletter";
         readonly Uri baseUri = new Uri("https://reactnewsletter.com/");
-        public ReactNewsletterParser(Provider provider)
+        public ReactNewsletterParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            _reactNewsletterProvider = provider;
+            contentGetter = cg;
+            contentNormalizer = cn;
+            textSanitizer = ts;
         }
         public string FormatDigestPost(Digest digest)
         {
@@ -27,12 +30,10 @@ namespace ItLinksBot.Providers
             return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
         }
 
-        public List<Digest> GetCurrentDigests()
+        public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new List<Digest>();
-            HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_reactNewsletterProvider.DigestURL).Result;
-            var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
+            var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var allDigestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[contains(@class,'masonry')]//li/a");
@@ -42,15 +43,16 @@ namespace ItLinksBot.Providers
                 //var relativePathNode = digestNode.SelectSingleNode(".//a");
                 var digestUrl = new Uri(baseUri, digestNode.GetAttributeValue("href", "Not found"));
                 var digestDate = DateTime.Parse(digestNode.SelectSingleNode(".//p[contains(@class,'text-gray')]").InnerText, new CultureInfo("en-US", false));
-                var digestDescription = digestNode.SelectSingleNode("./p").InnerText;
+                var digestDescriptionNode = contentNormalizer.NormalizeDom(digestNode.SelectSingleNode("./p"));
+                var digestDescriptionText = textSanitizer.Sanitize(digestDescriptionNode.InnerHtml.Trim());
                 var digestName = digestNode.SelectSingleNode(".//p[contains(@class,'text-xl')]").InnerText;
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
                     DigestName = digestName,
-                    DigestDescription = digestDescription,
+                    DigestDescription = digestDescriptionText,
                     DigestURL = digestUrl.AbsoluteUri,
-                    Provider = _reactNewsletterProvider
+                    Provider = provider
                 };
                 digests.Add(currentDigest);
             }
@@ -63,12 +65,10 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new List<Link>();
-            HttpClient httpClient = new HttpClient();
-            var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
+            var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
-            linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
+            linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'Content_container')]/div/h3");
-            var acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
@@ -93,45 +93,14 @@ namespace ItLinksBot.Providers
                     sibling = sibling.NextSibling;
                 }
 
-                //removing all the tags not allowed by telegram
-                var nodesToAnalyze = new Queue<HtmlNode>(descriptionNode.ChildNodes);
-                while (nodesToAnalyze.Count > 0)
-                {
-                    var node = nodesToAnalyze.Dequeue();
-                    var parentNode = node.ParentNode;
-
-                    if (!acceptableTags.Contains(node.Name) && node.Name != "#text")
-                    {
-                        var childNodes = node.SelectNodes("./*|./text()");
-
-                        if (childNodes != null)
-                        {
-                            foreach (var child in childNodes)
-                            {
-                                nodesToAnalyze.Enqueue(child);
-                                parentNode.InsertBefore(child, node);
-                            }
-                        }
-                        parentNode.RemoveChild(node);
-                    }
-                    else
-                    {
-                        var childNodes = node.SelectNodes("./*|./text()");
-                        if (childNodes != null)
-                        {
-                            foreach (var child in childNodes)
-                            {
-                                nodesToAnalyze.Enqueue(child);
-                            }
-                        }
-                    }
-                }
+                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
+                var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
                 links.Add(new Link
                 {
                     URL = href,
                     Title = title,
-                    Description = descriptionNode.InnerHtml.Trim(),
+                    Description = descriptionText,
                     LinkOrder = i,
                     Digest = digest
                 });

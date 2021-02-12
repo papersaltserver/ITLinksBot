@@ -1,22 +1,25 @@
 ﻿using HtmlAgilityPack;
 using ItLinksBot.Models;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text.RegularExpressions;
 
 namespace ItLinksBot.Providers
 {
     class SoftwareLeadWeeklyParser : IParser
     {
-        private readonly Provider _softwareLeadWeeklyDigest;
+        private readonly IContentGetter contentGetter;
+        private readonly IContentNormalizer contentNormalizer;
+        private readonly ITextSanitizer textSanitizer;
+        public string CurrentProvider => "Software Lead Weekly";
         readonly Uri baseUri = new Uri("https://softwareleadweekly.com/");
 
-        public SoftwareLeadWeeklyParser(Provider provider)
+        public SoftwareLeadWeeklyParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            _softwareLeadWeeklyDigest = provider;
+            contentGetter = cg;
+            contentNormalizer = cn;
+            textSanitizer = ts;
         }
         public string FormatDigestPost(Digest digest)
         {
@@ -28,20 +31,10 @@ namespace ItLinksBot.Providers
             return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
         }
 
-        public List<Digest> GetCurrentDigests()
+        public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new List<Digest>();
-            HttpClient httpClient = new HttpClient();
-            HttpResponseMessage archiveContent;
-            try
-            {
-                archiveContent = httpClient.GetAsync(_softwareLeadWeeklyDigest.DigestURL).Result;
-            }catch (Exception e)
-            {
-                Log.Error("Failed to get Software Leadership weekly: {exception}",e.Message);
-                return digests;
-            }
-            var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
+            var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@class='table-issue']").Take(50);
@@ -64,7 +57,7 @@ namespace ItLinksBot.Providers
                     DigestName = digestName,
                     DigestDescription = "", //no description available
                     DigestURL = digestUrl.AbsoluteUri,
-                    Provider = _softwareLeadWeeklyDigest
+                    Provider = provider
                 };
                 digests.Add(currentDigest);
             }
@@ -79,12 +72,10 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new List<Link>();
-            HttpClient httpClient = new HttpClient();
-            var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
+            var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
-            linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
+            linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@id='app']/div/div/div/div/div");
-            var acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
@@ -109,44 +100,8 @@ namespace ItLinksBot.Providers
                     descriptionNode.AppendChild(sibling.Clone());
                     sibling = sibling.NextSibling;
                 }
-
-                //removing all the tags not allowed by telegram
-                var nodesToAnalyze = new Queue<HtmlNode>(descriptionNode.ChildNodes);
-                while (nodesToAnalyze.Count > 0)
-                {
-                    var node = nodesToAnalyze.Dequeue();
-                    var parentNode = node.ParentNode;
-
-                    if (!acceptableTags.Contains(node.Name) && node.Name != "#text")
-                    {
-                        var childNodes = node.SelectNodes("./*|./text()");
-
-                        if (childNodes != null)
-                        {
-                            foreach (var child in childNodes)
-                            {
-                                nodesToAnalyze.Enqueue(child);
-                                parentNode.InsertBefore(child, node);
-                            }
-                        }
-                        parentNode.RemoveChild(node);
-                    }
-                    else
-                    {
-                        var childNodes = node.SelectNodes("./*|./text()");
-                        if (childNodes != null)
-                        {
-                            foreach (var child in childNodes)
-                            {
-                                nodesToAnalyze.Enqueue(child);
-                            }
-                        }
-                    }
-                }
-                string normalizedDescription = Regex.Replace(descriptionNode.InnerHtml.Trim(), "( )\\1+", "$1", RegexOptions.Singleline);
-                normalizedDescription = normalizedDescription.Replace("\t", "");
-                normalizedDescription = normalizedDescription.Replace("\r", "");
-                normalizedDescription = Regex.Replace(normalizedDescription, @"[\n]{3,}", "\n\n", RegexOptions.Singleline);
+                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
+                string normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
                 links.Add(new Link
                 {
                     URL = href,

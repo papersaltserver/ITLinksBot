@@ -3,7 +3,6 @@ using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Web;
 
@@ -11,12 +10,17 @@ namespace ItLinksBot.Providers
 {
     class TechProductivityParser : IParser
     {
-        private readonly Provider _digest;
+        private readonly IContentGetter contentGetter;
+        private readonly IContentNormalizer contentNormalizer;
+        private readonly ITextSanitizer textSanitizer;
+        public string CurrentProvider => "Tech Productivity";
         readonly Uri baseUri = new Uri("https://techproductivity.co/");
 
-        public TechProductivityParser(Provider provider)
+        public TechProductivityParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            _digest = provider;
+            contentGetter = cg;
+            contentNormalizer = cn;
+            textSanitizer = ts;
         }
         public string FormatDigestPost(Digest digest)
         {
@@ -28,12 +32,10 @@ namespace ItLinksBot.Providers
             return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
         }
 
-        public List<Digest> GetCurrentDigests()
+        public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new List<Digest>();
-            HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_digest.DigestURL).Result;
-            var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
+            var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//ul[contains(@class,'archive')]//li/a").Take(50);
@@ -50,7 +52,7 @@ namespace ItLinksBot.Providers
                     DigestName = digestName,
                     DigestDescription = "", //description will be added later
                     DigestURL = digestUrl.AbsoluteUri,
-                    Provider = _digest
+                    Provider = provider
                 };
                 digests.Add(currentDigest);
             }
@@ -59,10 +61,9 @@ namespace ItLinksBot.Providers
 
         public Digest GetDigestDetails(Digest digest)
         {
-            HttpClient httpClient = new HttpClient();
-            var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
+            var digestContent = contentGetter.GetContent(digest.DigestURL);
             var digestDetails = new HtmlDocument();
-            digestDetails.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
+            digestDetails.LoadHtml(digestContent);
             var titleText = digestDetails.DocumentNode.SelectSingleNode("//div[contains(text(), 'Issue #')]").InnerText.Trim();
             var dateText = HttpUtility.HtmlDecode(titleText).Split('•')[1].Trim();
             var digestDate = DateTime.Parse(dateText);
@@ -70,47 +71,8 @@ namespace ItLinksBot.Providers
             string normalizedDescription;
             if (descriptionNodeOriginal != null)
             {
-                var descriptionNode = HtmlNode.CreateNode("<div></div>");
-                descriptionNode.AppendChild(descriptionNodeOriginal.Clone());
-
-                //removing all the tags not allowed by telegram
-                var acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
-                var nodesToAnalyze = new Queue<HtmlNode>(descriptionNode.ChildNodes);
-                while (nodesToAnalyze.Count > 0)
-                {
-                    var node = nodesToAnalyze.Dequeue();
-                    var parentNode = node.ParentNode;
-
-                    if (!acceptableTags.Contains(node.Name) && node.Name != "#text")
-                    {
-                        var childNodes = node.SelectNodes("./*|./text()");
-
-                        if (childNodes != null)
-                        {
-                            foreach (var child in childNodes)
-                            {
-                                nodesToAnalyze.Enqueue(child);
-                                parentNode.InsertBefore(child, node);
-                            }
-                        }
-                        parentNode.RemoveChild(node);
-                    }
-                    else
-                    {
-                        var childNodes = node.SelectNodes("./*|./text()");
-                        if (childNodes != null)
-                        {
-                            foreach (var child in childNodes)
-                            {
-                                nodesToAnalyze.Enqueue(child);
-                            }
-                        }
-                    }
-                }
-                normalizedDescription = Regex.Replace(descriptionNode.InnerHtml.Trim(), "( )\\1+", "$1", RegexOptions.Singleline);
-                normalizedDescription = normalizedDescription.Replace("\t", "");
-                normalizedDescription = normalizedDescription.Replace("\r", "");
-                normalizedDescription = Regex.Replace(normalizedDescription, @"[\n]{3,}", "\n\n", RegexOptions.Singleline);
+                var descriptionNode = contentNormalizer.NormalizeDom(descriptionNodeOriginal);
+                normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
             }
             else
             {
@@ -123,7 +85,7 @@ namespace ItLinksBot.Providers
                 DigestName = digest.DigestName,
                 DigestDescription = normalizedDescription,
                 DigestURL = digest.DigestURL,
-                Provider = _digest
+                Provider = digest.Provider
             };
             return currentDigest;
         }
@@ -131,12 +93,10 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new List<Link>();
-            HttpClient httpClient = new HttpClient();
-            var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
+            var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
-            linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
+            linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("(//*[contains(@class,'outlook-group-fix')]//div[a or p])[position()>2 and position()<last()-2]/p/a|(//*[contains(@class,'outlook-group-fix')]//div[a or p])[position()>2 and position()<last()-2]/a");
-            var acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
@@ -155,44 +115,8 @@ namespace ItLinksBot.Providers
                     descriptionNode.AppendChild(sibling.Clone());
                     sibling = sibling.NextSibling;
                 }
-
-                //removing all the tags not allowed by telegram
-                var nodesToAnalyze = new Queue<HtmlNode>(descriptionNode.ChildNodes);
-                while (nodesToAnalyze.Count > 0)
-                {
-                    var node = nodesToAnalyze.Dequeue();
-                    var parentNode = node.ParentNode;
-
-                    if (!acceptableTags.Contains(node.Name) && node.Name != "#text")
-                    {
-                        var childNodes = node.SelectNodes("./*|./text()");
-
-                        if (childNodes != null)
-                        {
-                            foreach (var child in childNodes)
-                            {
-                                nodesToAnalyze.Enqueue(child);
-                                parentNode.InsertBefore(child, node);
-                            }
-                        }
-                        parentNode.RemoveChild(node);
-                    }
-                    else
-                    {
-                        var childNodes = node.SelectNodes("./*|./text()");
-                        if (childNodes != null)
-                        {
-                            foreach (var child in childNodes)
-                            {
-                                nodesToAnalyze.Enqueue(child);
-                            }
-                        }
-                    }
-                }
-                string normalizedDescription = Regex.Replace(descriptionNode.InnerHtml.Trim(), "( )\\1+", "$1", RegexOptions.Singleline);
-                normalizedDescription = normalizedDescription.Replace("\t", "");
-                normalizedDescription = normalizedDescription.Replace("\r", "");
-                normalizedDescription = Regex.Replace(normalizedDescription, @"[\n]{3,}", "\n\n", RegexOptions.Singleline);
+                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
+                string normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
                 links.Add(new Link
                 {
                     URL = href,

@@ -3,18 +3,22 @@ using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 
 namespace ItLinksBot.Providers
 {
     class SREWeeklyParser : IParser
     {
-        private readonly Provider _sreWeeklyProvider;
+        private readonly IContentGetter contentGetter;
+        private readonly IContentNormalizer contentNormalizer;
+        private readonly ITextSanitizer textSanitizer;
+        public string CurrentProvider => "SRE Weekly";
         readonly Uri baseUri = new Uri("http://sreweekly.com/");
 
-        public SREWeeklyParser(Provider provider)
+        public SREWeeklyParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            _sreWeeklyProvider = provider;
+            contentGetter = cg;
+            contentNormalizer = cn;
+            textSanitizer = ts;
         }
         public string FormatDigestPost(Digest digest)
         {
@@ -26,12 +30,10 @@ namespace ItLinksBot.Providers
             return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
         }
 
-        public List<Digest> GetCurrentDigests()
+        public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new List<Digest>();
-            HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_sreWeeklyProvider.DigestURL).Result;
-            var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
+            var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//article").Take(50);
@@ -44,10 +46,11 @@ namespace ItLinksBot.Providers
                 var digestHref = linkNode.GetAttributeValue("href", "Not found");
                 var digestUrl = new Uri(baseUri, digestHref);
                 var descriptionNode = digestNode.SelectSingleNode(".//div[contains(@class,'entry-content')]/p");
+                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
                 string description;
                 if (descriptionNode != null)
                 {
-                    description = descriptionNode.InnerText.Trim();
+                    description = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
                 }
                 else
                 {
@@ -59,7 +62,7 @@ namespace ItLinksBot.Providers
                     DigestName = digestName,
                     DigestDescription = description,
                     DigestURL = digestUrl.AbsoluteUri,
-                    Provider = _sreWeeklyProvider
+                    Provider = provider
                 };
                 digests.Add(currentDigest);
             }
@@ -74,12 +77,11 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new List<Link>();
-            HttpClient httpClient = new HttpClient();
-            var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
+            var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
-            linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
+            linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'sreweekly-entry')]");
-            var acceptableTags = new String[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
+            //var acceptableTags = new String[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
@@ -95,47 +97,13 @@ namespace ItLinksBot.Providers
                 }
                 href = Utils.UnshortenLink(href);
                 var descriptionNodeOriginal = link.SelectSingleNode(".//div[contains(@class,'sreweekly-description')]");
-                var descriptionNode = HtmlNode.CreateNode("<div></div>");
-                descriptionNode.AppendChild(descriptionNodeOriginal.Clone());
-                //removing all the tags not allowed by telegram
-                var nodesToAnalyze = new Queue<HtmlNode>(descriptionNode.ChildNodes);
-                while (nodesToAnalyze.Count > 0)
-                {
-                    var node = nodesToAnalyze.Dequeue();
-                    var parentNode = node.ParentNode;
-
-                    if (!acceptableTags.Contains(node.Name) && node.Name != "#text")
-                    {
-                        var childNodes = node.SelectNodes("./*|./text()");
-
-                        if (childNodes != null)
-                        {
-                            foreach (var child in childNodes)
-                            {
-                                nodesToAnalyze.Enqueue(child);
-                                parentNode.InsertBefore(child, node);
-                            }
-                        }
-                        parentNode.RemoveChild(node);
-                    }
-                    else
-                    {
-                        var childNodes = node.SelectNodes("./*|./text()");
-                        if (childNodes != null)
-                        {
-                            foreach (var child in childNodes)
-                            {
-                                nodesToAnalyze.Enqueue(child);
-                            }
-                        }
-                    }
-                }
-
+                var descriptionNode = contentNormalizer.NormalizeDom(descriptionNodeOriginal);
+                var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
                 links.Add(new Link
                 {
                     URL = href,
                     Title = title,
-                    Description = descriptionNode.InnerHtml,
+                    Description = descriptionText,
                     LinkOrder = i,
                     Digest = digest
                 });

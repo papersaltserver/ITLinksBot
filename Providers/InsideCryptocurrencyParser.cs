@@ -3,19 +3,23 @@ using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text.RegularExpressions;
 
 namespace ItLinksBot.Providers
 {
     class InsideCryptocurrencyParser : IParser
     {
-        private readonly Provider _insideCryptocurrencyProvider;
+        private readonly IContentGetter contentGetter;
+        private readonly IContentNormalizer contentNormalizer;
+        private readonly ITextSanitizer textSanitizer;
+        public string CurrentProvider => "Inside Cryptocurrency";
         readonly Uri baseUri = new Uri("https://inside.com/");
 
-        public InsideCryptocurrencyParser(Provider provider)
+        public InsideCryptocurrencyParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            _insideCryptocurrencyProvider = provider;
+            contentGetter = cg;
+            contentNormalizer = cn;
+            textSanitizer = ts;
         }
         public string FormatDigestPost(Digest digest)
         {
@@ -27,12 +31,10 @@ namespace ItLinksBot.Providers
             return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
         }
 
-        public List<Digest> GetCurrentDigests()
+        public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new List<Digest>();
-            HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_insideCryptocurrencyProvider.DigestURL).Result;
-            var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
+            var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//table[contains(@class,'table')]//tr").Take(50);
@@ -51,7 +53,7 @@ namespace ItLinksBot.Providers
                     DigestName = digestName,
                     DigestDescription = "", //no description there
                     DigestURL = digestUrl.AbsoluteUri,
-                    Provider = _insideCryptocurrencyProvider
+                    Provider = provider
                 };
                 digests.Add(currentDigest);
             }
@@ -66,12 +68,10 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new List<Link>();
-            HttpClient httpClient = new HttpClient();
-            var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
+            var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
-            linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
+            linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'column-content')]");
-            var acceptableTags = new String[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
@@ -93,45 +93,9 @@ namespace ItLinksBot.Providers
                 href = Utils.UnshortenLink(href);
 
                 var descriptionNodeOriginal = link.SelectSingleNode(".//div[contains(@class,'story-body')]");
-                var descriptionNode = HtmlNode.CreateNode("<div></div>");
-                descriptionNode.AppendChild(descriptionNodeOriginal.Clone());
-                //removing all the tags not allowed by telegram
-                var nodesToAnalyze = new Queue<HtmlNode>(descriptionNode.ChildNodes);
-                while (nodesToAnalyze.Count > 0)
-                {
-                    var node = nodesToAnalyze.Dequeue();
-                    var parentNode = node.ParentNode;
+                var descriptionNode = contentNormalizer.NormalizeDom(descriptionNodeOriginal);
 
-                    if (!acceptableTags.Contains(node.Name) && node.Name != "#text")
-                    {
-                        var childNodes = node.SelectNodes("./*|./text()");
-
-                        if (childNodes != null)
-                        {
-                            foreach (var child in childNodes)
-                            {
-                                nodesToAnalyze.Enqueue(child);
-                                parentNode.InsertBefore(child, node);
-                            }
-                        }
-                        parentNode.RemoveChild(node);
-                    }
-                    else
-                    {
-                        var childNodes = node.SelectNodes("./*|./text()");
-                        if (childNodes != null)
-                        {
-                            foreach (var child in childNodes)
-                            {
-                                nodesToAnalyze.Enqueue(child);
-                            }
-                        }
-                    }
-                }
-                string normalizedDescription = Regex.Replace(descriptionNode.InnerHtml.Trim(), "( )\\1+", "$1", RegexOptions.Singleline);
-                normalizedDescription = normalizedDescription.Replace("\t", "");
-                normalizedDescription = normalizedDescription.Replace("\r", "");
-                normalizedDescription = Regex.Replace(normalizedDescription, @"[\n]{3,}", "\n\n", RegexOptions.Singleline);
+                string normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
                 links.Add(new Link
                 {
                     URL = href,

@@ -4,19 +4,23 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text.RegularExpressions;
 
 namespace ItLinksBot.Providers
 {
     class TimelessAndTimely : IParser
     {
-        private readonly Provider _digest;
+        private readonly IContentGetter contentGetter;
+        private readonly IContentNormalizer contentNormalizer;
+        private readonly ITextSanitizer textSanitizer;
+        public string CurrentProvider => "Timeless & Timely";
         readonly Uri baseUri = new Uri("https://productivegrowth.substack.com/");
 
-        public TimelessAndTimely(Provider provider)
+        public TimelessAndTimely(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            _digest = provider;
+            contentGetter = cg;
+            contentNormalizer = cn;
+            textSanitizer = ts;
         }
         public string FormatDigestPost(Digest digest)
         {
@@ -28,12 +32,10 @@ namespace ItLinksBot.Providers
             return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
         }
 
-        public List<Digest> GetCurrentDigests()
+        public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new List<Digest>();
-            HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_digest.DigestURL).Result;
-            var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
+            var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[contains(@class,'post-preview-content') and ./table/tr/td[position()=1 and not(contains(@class,'audience-lock'))]]").Take(5);
@@ -51,7 +53,7 @@ namespace ItLinksBot.Providers
                     DigestName = digestName, //will be added during next request
                     DigestDescription = "", //description will be added later
                     DigestURL = digestUrl.AbsoluteUri,
-                    Provider = _digest
+                    Provider = provider
                 };
                 digests.Add(currentDigest);
             }
@@ -60,10 +62,9 @@ namespace ItLinksBot.Providers
 
         public Digest GetDigestDetails(Digest digest)
         {
-            HttpClient httpClient = new HttpClient();
-            var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
+            var digestContent = contentGetter.GetContent(digest.DigestURL);
             var digestDetails = new HtmlDocument();
-            digestDetails.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
+            digestDetails.LoadHtml(digestContent);
             var dateNode = digestDetails.DocumentNode.SelectSingleNode("//div[@id='main']//script");
             var dateText = Regex.Match(dateNode.InnerText, "\"datePublished\".*?\"(.*?)\"").Groups[1].Value;
             var digestDate = DateTime.Parse(dateText);
@@ -74,7 +75,7 @@ namespace ItLinksBot.Providers
                 DigestName = digest.DigestName,
                 DigestDescription = "", //no special description
                 DigestURL = digest.DigestURL,
-                Provider = _digest
+                Provider = digest.Provider
             };
             return currentDigest;
         }
@@ -82,64 +83,17 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new List<Link>();
-            HttpClient httpClient = new HttpClient();
-            var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
+            var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
-            linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
+            linksHtml.LoadHtml(digestContent);
             var digestContentNode = linksHtml.DocumentNode.SelectSingleNode("//div[contains(@class,'body')]");
             if (digestContentNode == null)
             {
                 Log.Error("Digest '{digest}' beginning in Product Growth could not be found. Digest id {id}", digest.DigestName, digest.DigestId);
                 throw new NullReferenceException();
             }
-            var acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
-            var nodesProhibited = new string[] { "style", "script" };
-            var nodesNewLines = new string[] { "div", "p", "h1", "h2", "h3", "h4" };
-
-            var descriptionNode = HtmlNode.CreateNode("<div></div>");
-            descriptionNode.AppendChild(digestContentNode);
-            //removing all the tags not allowed by telegram
-            var nodesToAnalyze = new Queue<HtmlNode>(descriptionNode.ChildNodes);
-            while (nodesToAnalyze.Count > 0)
-            {
-                var node = nodesToAnalyze.Dequeue();
-                var parentNode = node.ParentNode;
-
-                if (!acceptableTags.Contains(node.Name) && node.Name != "#text")
-                {
-                    var childNodes = node.SelectNodes("./*|./text()");
-
-                    if (childNodes != null && !nodesProhibited.Contains(node.Name))
-                    {
-                        foreach (var child in childNodes)
-                        {
-                            nodesToAnalyze.Enqueue(child);
-                            parentNode.InsertBefore(child, node);
-                        }
-                    }
-                    if (nodesNewLines.Contains(node.Name))
-                    {
-                        parentNode.InsertBefore(HtmlNode.CreateNode("<br>"), node);
-                    }
-                    parentNode.RemoveChild(node);
-                }
-                else
-                {
-                    var childNodes = node.SelectNodes("./*|./text()");
-                    if (childNodes != null)
-                    {
-                        foreach (var child in childNodes)
-                        {
-                            nodesToAnalyze.Enqueue(child);
-                        }
-                    }
-                }
-            }
-            var normalizedDescription = descriptionNode.InnerHtml.Replace("<br>", "\n").Trim();
-            normalizedDescription = Regex.Replace(normalizedDescription, "( )\\1+", "$1", RegexOptions.Singleline);
-            normalizedDescription = normalizedDescription.Replace("\t", "");
-            normalizedDescription = normalizedDescription.Replace("\r", "");
-            normalizedDescription = Regex.Replace(normalizedDescription, @"[\n]{3,}", "\n\n", RegexOptions.Singleline);
+            var descriptionNode = contentNormalizer.NormalizeDom(digestContentNode);
+            var normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
             var href = $"{digest.DigestURL}#section0"; //href is fake there
 
