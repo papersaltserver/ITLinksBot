@@ -3,18 +3,21 @@ using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-
 
 namespace ItLinksBot.Providers
 {
     class CssWeeklyParser : IParser
     {
-        private readonly Provider _cssWeeklyProvider;
+        private readonly IContentGetter contentGetter;
+        private readonly IContentNormalizer contentNormalizer;
+        private readonly ITextSanitizer textSanitizer;
+        public string CurrentProvider => "CSS Weekly";
         readonly Uri baseUri = new Uri("https://css-weekly.com/");
-        public CssWeeklyParser(Provider provider)
+        public CssWeeklyParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            _cssWeeklyProvider = provider;
+            contentGetter = cg;
+            contentNormalizer = cn;
+            textSanitizer = ts;
         }
 
         public string FormatDigestPost(Digest digest)
@@ -27,12 +30,10 @@ namespace ItLinksBot.Providers
             return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
         }
 
-        public List<Digest> GetCurrentDigests()
+        public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new List<Digest>();
-            HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_cssWeeklyProvider.DigestURL).Result;
-            var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
+            var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//article").Take(50);
@@ -42,14 +43,18 @@ namespace ItLinksBot.Providers
                 var digestUrl = urlNode.GetAttributeValue("href", "Not found");
                 var dateNode = digestNode.SelectSingleNode(".//time");
                 var digestDate = DateTime.Parse(dateNode.GetAttributeValue("datetime", "not found"));
-                var descriptionText = String.Join("\n", digestNode.SelectNodes(".//ul//li").Select(li => li.InnerText));
+
+                var originalDescriptionNode = HtmlNode.CreateNode("<div></div>");
+                originalDescriptionNode.AppendChildren(digestNode.SelectNodes(".//ul//li"));
+                var descriptionNode = contentNormalizer.NormalizeDom(originalDescriptionNode);
+                var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
                     DigestName = urlNode.InnerText.Trim(),
                     DigestDescription = descriptionText,
                     DigestURL = digestUrl,
-                    Provider = _cssWeeklyProvider
+                    Provider = provider
                 };
                 digests.Add(currentDigest);
             }
@@ -65,19 +70,20 @@ namespace ItLinksBot.Providers
         {
             List<Link> links = new List<Link>();
 
-            HttpClient httpClient = new HttpClient();
-            var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
+            var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
-            linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
+            linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//article[contains(@class,'newsletter-article')]");
-            //var acceptableTags = new String[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
                 var titleNode = link.SelectSingleNode("./header//a");
                 var title = titleNode.InnerText.Trim();
-                var descriptionNode = link.SelectNodes("./p[position()<last()]").Select(art => art.InnerText);
-                var description = String.Join("\n", descriptionNode);
+                
+                var originalDescriptionNode = HtmlNode.CreateNode("<div></div>");
+                originalDescriptionNode.AppendChildren(link.SelectNodes("./p[position()<last()]"));
+                var descriptionNode = contentNormalizer.NormalizeDom(originalDescriptionNode);
+                var description = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
                 var href = titleNode.GetAttributeValue("href", "Not found");
                 Uri uriHref = new Uri(baseUri, href);

@@ -3,19 +3,23 @@ using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Web;
 
 namespace ItLinksBot.Providers
 {
     class SmashingEmailParser : IParser
     {
-        private readonly Provider _smashingEmailProvider;
+        private readonly IContentGetter contentGetter;
+        private readonly IContentNormalizer contentNormalizer;
+        private readonly ITextSanitizer textSanitizer;
+        public string CurrentProvider => "Smashing Email Newsletter";
         readonly Uri baseUri = new Uri("https://www.smashingmagazine.com/");
 
-        public SmashingEmailParser(Provider provider)
+        public SmashingEmailParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            _smashingEmailProvider = provider;
+            contentGetter = cg;
+            contentNormalizer = cn;
+            textSanitizer = ts;
         }
         public string FormatDigestPost(Digest digest)
         {
@@ -27,12 +31,10 @@ namespace ItLinksBot.Providers
             return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
         }
 
-        public List<Digest> GetCurrentDigests()
+        public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new List<Digest>();
-            HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_smashingEmailProvider.DigestURL).Result;
-            var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
+            var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//ol[contains(@class,'internal__toc--newsletter')]/li/a").Take(50);
@@ -46,7 +48,7 @@ namespace ItLinksBot.Providers
                     DigestName = HttpUtility.HtmlDecode(digestNode.InnerText).Trim(),
                     DigestDescription = "", //smashing magazine doesn't have description in digest list, will populate later
                     DigestURL = digestUrl.AbsoluteUri,
-                    Provider = _smashingEmailProvider
+                    Provider = provider
                 };
                 digests.Add(currentDigest);
             }
@@ -54,10 +56,9 @@ namespace ItLinksBot.Providers
         }
         public Digest GetDigestDetails(Digest digest)
         {
-            HttpClient httpClient = new HttpClient();
-            var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
+            var digestContent = contentGetter.GetContent(digest.DigestURL);
             var digestDetails = new HtmlDocument();
-            digestDetails.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
+            digestDetails.LoadHtml(digestContent);
             var digestName = HttpUtility.HtmlDecode(digestDetails.DocumentNode.SelectSingleNode("//h1[contains(@class,'header--indent')]").InnerText).Replace("\n", " ");
             var digestDate = DateTime.Parse(HttpUtility.HtmlDecode(digestDetails.DocumentNode.SelectSingleNode("//span[contains(@class,'header__title-desc')]").InnerText));
 
@@ -71,48 +72,16 @@ namespace ItLinksBot.Providers
                 sibling = sibling.NextSibling;
             }
 
-            //removing all the tags not allowed by telegram
-            var acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
-            var nodesToAnalyze = new Queue<HtmlNode>(descriptionNode.ChildNodes);
-            while (nodesToAnalyze.Count > 0)
-            {
-                var node = nodesToAnalyze.Dequeue();
-                var parentNode = node.ParentNode;
-
-                if (!acceptableTags.Contains(node.Name) && node.Name != "#text")
-                {
-                    var childNodes = node.SelectNodes("./*|./text()");
-
-                    if (childNodes != null)
-                    {
-                        foreach (var child in childNodes)
-                        {
-                            nodesToAnalyze.Enqueue(child);
-                            parentNode.InsertBefore(child, node);
-                        }
-                    }
-                    parentNode.RemoveChild(node);
-                }
-                else
-                {
-                    var childNodes = node.SelectNodes("./*|./text()");
-                    if (childNodes != null)
-                    {
-                        foreach (var child in childNodes)
-                        {
-                            nodesToAnalyze.Enqueue(child);
-                        }
-                    }
-                }
-            }
+            descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
+            string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
             var currentDigest = new Digest
             {
                 DigestDay = digestDate,
                 DigestName = digestName,
-                DigestDescription = descriptionNode.InnerHtml.Trim(),
+                DigestDescription = descriptionText,
                 DigestURL = digest.DigestURL,
-                Provider = _smashingEmailProvider
+                Provider = digest.Provider
             };
             return currentDigest;
         }
@@ -120,12 +89,10 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new List<Link>();
-            HttpClient httpClient = new HttpClient();
-            var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
+            var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
-            linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
+            linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'internal__content--newsletter')]/h3[not(@id='editorial')]");
-            var acceptableTags = new String[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
@@ -138,51 +105,16 @@ namespace ItLinksBot.Providers
                 while (sibling != null && sibling.Name.ToUpper() != "H3" && sibling.Name.ToUpper() != "H2" && sibling.GetAttributeValue("class", "not found").ToLower() != "promo-newsletter--newsletter")
                 {
                     descriptionNode.AppendChild(sibling.Clone());
-                    //siblingTextSb.AppendLine(sibling.InnerHtml);
                     sibling = sibling.NextSibling;
                 }
-
-                //removing all the tags not allowed by telegram
-                var nodesToAnalyze = new Queue<HtmlNode>(descriptionNode.ChildNodes);
-                while (nodesToAnalyze.Count > 0)
-                {
-                    var node = nodesToAnalyze.Dequeue();
-                    var parentNode = node.ParentNode;
-
-                    if (!acceptableTags.Contains(node.Name) && node.Name != "#text")
-                    {
-                        var childNodes = node.SelectNodes("./*|./text()");
-
-                        if (childNodes != null)
-                        {
-                            foreach (var child in childNodes)
-                            {
-                                nodesToAnalyze.Enqueue(child);
-                                parentNode.InsertBefore(child, node);
-                            }
-                        }
-                        parentNode.RemoveChild(node);
-                    }
-                    else
-                    {
-                        var childNodes = node.SelectNodes("./*|./text()");
-                        if (childNodes != null)
-                        {
-                            foreach (var child in childNodes)
-                            {
-                                nodesToAnalyze.Enqueue(child);
-                            }
-                        }
-                    }
-                }
+                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
+                string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
                 var href = descriptionNode.SelectSingleNode(".//a")?.GetAttributeValue("href", "Not found");
                 if (href == null) throw new NullReferenceException();
                 if (!href.Contains("://") && href.Contains("/"))
                 {
-                    var digestUrl = new Uri(digest.DigestURL);
-                    var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
-                    href = (new Uri(digestBase, href)).AbsoluteUri;
+                    href = (new Uri(baseUri, href)).AbsoluteUri;
                 }
                 href = Utils.UnshortenLink(href);
 
@@ -190,7 +122,7 @@ namespace ItLinksBot.Providers
                 {
                     URL = href,
                     Title = title,
-                    Description = descriptionNode.InnerHtml.Trim(),
+                    Description = descriptionText,
                     LinkOrder = i,
                     Digest = digest
                 });

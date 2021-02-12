@@ -3,18 +3,22 @@ using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Web;
 
 namespace ItLinksBot.Providers
 {
     public class TLDRparser : IParser
     {
-        readonly Provider _tldrProvider;
+        private readonly IContentGetter contentGetter;
+        private readonly IContentNormalizer contentNormalizer;
+        private readonly ITextSanitizer textSanitizer;
+        public string CurrentProvider => "TLDR";
         readonly Uri baseUri = new Uri("https://www.tldrnewsletter.com/");
-        public TLDRparser(Provider provider)
+        public TLDRparser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            _tldrProvider = provider;
+            contentGetter = cg;
+            contentNormalizer = cn;
+            textSanitizer = ts;
         }
         public string FormatDigestPost(Digest digest)
         {
@@ -26,12 +30,10 @@ namespace ItLinksBot.Providers
             return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
         }
 
-        public List<Digest> GetCurrentDigests()
+        public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new List<Digest>();
-            HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_tldrProvider.DigestURL).Result;
-            var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
+            var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@id='doc-container']//div[contains(@class, 'd-lg-none')]//a").Take(50);
@@ -44,7 +46,7 @@ namespace ItLinksBot.Providers
                     DigestName = HttpUtility.HtmlDecode(digestNode.InnerText).Trim(),
                     DigestDescription = "", //tldr doesn't have description for digest itself
                     DigestURL = digestUrl.AbsoluteUri,
-                    Provider = _tldrProvider
+                    Provider = provider
                 };
                 digests.Add(currentDigest);
             }
@@ -57,30 +59,32 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new List<Link>();
-            HttpClient httpClient = new HttpClient();
-            var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
+            var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
-            linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//tr[@eo-body]//table[@eo-block='code']");
+            linksHtml.LoadHtml(digestContent);
+            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//td[contains(@class,'container')]/div[contains(@class,'text-block')]/span/a//strong/../../..");
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
-                var titleNode = link.SelectSingleNode(".//div/span/a");
+                var titleNode = link.SelectSingleNode("./a");
+                if(titleNode == null)
+                {
+                    continue;
+                }
                 var title = titleNode.InnerText;
                 var href = titleNode.GetAttributeValue("href", "Not found");
                 if (!href.Contains("://") && href.Contains("/"))
                 {
-                    var digestUrl = new Uri(digest.DigestURL);
-                    var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
-                    href = (new Uri(digestBase, href)).AbsoluteUri;
+                    href = (new Uri(baseUri, href)).AbsoluteUri;
                 }
                 href = Utils.UnshortenLink(href);
-                var description = link.SelectSingleNode(".//div/span/span").InnerText;
+                var descriptionNode = contentNormalizer.NormalizeDom(link.SelectSingleNode("./span"));
+                var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
                 links.Add(new Link
                 {
                     URL = href,
                     Title = title,
-                    Description = description,
+                    Description = descriptionText,
                     LinkOrder = i,
                     Digest = digest
                 });

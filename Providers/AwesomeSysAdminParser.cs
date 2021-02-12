@@ -3,18 +3,22 @@ using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 
 namespace ItLinksBot.Providers
 {
     class AwesomeSysAdminParser : IParser
     {
-        private readonly Provider _awesomeSysAdminProvider;
+        private readonly IContentGetter contentGetter;
+        private readonly IContentNormalizer contentNormalizer;
+        private readonly ITextSanitizer textSanitizer;
+        public string CurrentProvider => "Awesome SysAdmin Newsletter";
         readonly Uri baseUri = new Uri("https://sysadmin.libhunt.com/");
 
-        public AwesomeSysAdminParser(Provider provider)
+        public AwesomeSysAdminParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            _awesomeSysAdminProvider = provider;
+            contentGetter = cg;
+            contentNormalizer = cn;
+            textSanitizer = ts;
         }
         public string FormatDigestPost(Digest digest)
         {
@@ -26,12 +30,10 @@ namespace ItLinksBot.Providers
             return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
         }
 
-        public List<Digest> GetCurrentDigests()
+        public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new List<Digest>();
-            HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_awesomeSysAdminProvider.DigestURL).Result;
-            var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
+            var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[contains(@class,'main-content')]//table/tr").Take(50);
@@ -49,7 +51,7 @@ namespace ItLinksBot.Providers
                     DigestName = digestName,
                     DigestDescription = "", //Awesome SysAdmin doesn't have description for digest itself
                     DigestURL = digestUrl.AbsoluteUri,
-                    Provider = _awesomeSysAdminProvider
+                    Provider = provider
                 };
                 digests.Add(currentDigest);
             }
@@ -64,12 +66,10 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new List<Link>();
-            HttpClient httpClient = new HttpClient();
-            var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
+            var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
-            linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//li[contains(@class,'story')]");
-            //var acceptableTags = new String[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
+            linksHtml.LoadHtml(digestContent);
+            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//li[contains(@class,'story') and not(@id='saashub-newsletter') and not(@id='sponsored')]");
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
@@ -84,10 +84,12 @@ namespace ItLinksBot.Providers
                 }
                 href = Utils.UnshortenLink(href);
                 var descritionNode = link.SelectSingleNode(".//p[contains(@class,'description')]");
+                descritionNode = contentNormalizer.NormalizeDom(descritionNode);
                 string description;
                 if (descritionNode != null)
                 {
-                    description = descritionNode.InnerText.Trim();
+                    description = descritionNode.InnerHtml.Trim();
+                    description = textSanitizer.Sanitize(description);
                 }
                 else
                 {

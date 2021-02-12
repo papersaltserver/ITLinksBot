@@ -1,8 +1,10 @@
 ﻿using ItLinksBot.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace ItLinksBot
@@ -324,9 +326,11 @@ namespace ItLinksBot
 
             return sb.ToString();
         }
-        public static List<DigestPost> AddDigestPost(TelegramChannel tgChannel, Digest digest, TelegramAPI bot)
+        public static List<DigestPost> AddDigestPost(TelegramChannel tgChannel, Digest digest, TelegramAPI bot, IServiceProvider serviceProvider)
         {
-            var parser = ParserFactory.Setup(tgChannel.Provider);
+            //var parser = ParserFactory.Setup(tgChannel.Provider, serviceProvider);
+            IEnumerable<IParser> serviceCollection = serviceProvider.GetServices<IParser>();
+            var parser = serviceCollection.FirstOrDefault(p => p.CurrentProvider == tgChannel.Provider.ProviderName);
             string message = EscapeTgString(parser.FormatDigestPost(digest));
             List<DigestPost> responses = new List<DigestPost>();
             var messageChunks = SplitMessageForTg(message);
@@ -365,9 +369,11 @@ namespace ItLinksBot
             return responses;
         }
 
-        public static List<LinkPost> AddLinkPost(TelegramChannel tgChannel, Link link, TelegramAPI bot)
+        public static List<LinkPost> AddLinkPost(TelegramChannel tgChannel, Link link, TelegramAPI bot, IServiceProvider serviceProvider)
         {
-            var parser = ParserFactory.Setup(tgChannel.Provider);
+            //var parser = ParserFactory.Setup(tgChannel.Provider, serviceProvider);
+            IEnumerable<IParser> serviceCollection = serviceProvider.GetServices<IParser>();
+            var parser = serviceCollection.FirstOrDefault(p => p.CurrentProvider == tgChannel.Provider.ProviderName);
             string message = EscapeTgString(parser.FormatLinkPost(link));
             List<LinkPost> responses = new List<LinkPost>();
             var messageChunks = SplitMessageForTg(message);

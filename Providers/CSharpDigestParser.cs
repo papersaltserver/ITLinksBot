@@ -3,17 +3,21 @@ using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 
 namespace ItLinksBot.Providers
 {
     class CSharpDigestParser : IParser
     {
-        private readonly Provider _cSharpDigestProvider;
+        private readonly IContentGetter contentGetter;
+        private readonly IContentNormalizer contentNormalizer;
+        private readonly ITextSanitizer textSanitizer;
+        public string CurrentProvider => "c# digest";
         readonly Uri baseUri = new Uri("https://csharpdigest.net/");
-        public CSharpDigestParser(Provider provider)
+        public CSharpDigestParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            _cSharpDigestProvider = provider;
+            contentGetter = cg;
+            contentNormalizer = cn;
+            textSanitizer = ts;
         }
         public string FormatDigestPost(Digest digest)
         {
@@ -25,12 +29,10 @@ namespace ItLinksBot.Providers
             return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
         }
 
-        public List<Digest> GetCurrentDigests()
+        public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new List<Digest>();
-            HttpClient httpClient = new HttpClient();
-            var archiveContent = httpClient.GetAsync(_cSharpDigestProvider.DigestURL).Result;
-            var stringResult = archiveContent.Content.ReadAsStringAsync().Result;
+            var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@class='main']/h3").Take(50);
@@ -51,7 +53,7 @@ namespace ItLinksBot.Providers
                     DigestName = urlNode.InnerText.Trim(),
                     DigestDescription = "", //no description for this digest
                     DigestURL = href,
-                    Provider = _cSharpDigestProvider
+                    Provider = provider
                 };
                 digests.Add(currentDigest);
             }
@@ -67,19 +69,18 @@ namespace ItLinksBot.Providers
         {
             List<Link> links = new List<Link>();
 
-            HttpClient httpClient = new HttpClient();
-            var digestContent = httpClient.GetAsync(digest.DigestURL).Result;
+            var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
-            linksHtml.LoadHtml(digestContent.Content.ReadAsStringAsync().Result);
+            linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'digest-article')]");
-            //var acceptableTags = new String[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
                 var titleNode = link.SelectSingleNode("./p[contains(@class,'title')]/a");
                 var title = titleNode.InnerText.Trim();
                 var descriptionNode = link.SelectSingleNode("./p[contains(@class,'description')]");
-                var description = descriptionNode.InnerText;
+                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
+                var description = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
                 var href = titleNode.GetAttributeValue("href", "Not found");
 
