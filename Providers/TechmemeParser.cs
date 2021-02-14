@@ -2,24 +2,28 @@
 using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace ItLinksBot.Providers
 {
-    class SREWeeklyParser : IParser
+    class TechmemeParser : IParser
     {
+        public string CurrentProvider => "Techmeme";
         private readonly IContentGetter contentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
-        public string CurrentProvider => "SRE Weekly";
-        readonly Uri baseUri = new Uri("http://sreweekly.com/");
+        readonly Uri baseUri = new Uri("https://us14.campaign-archive.com/");
 
-        public SREWeeklyParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
+        public TechmemeParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
             contentGetter = cg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
+
         public string FormatDigestPost(Digest digest)
         {
             return string.Format("<b>{0} - {1}</b>\n{2}\n{3}", digest.DigestName, digest.DigestDay.ToString("yyyy-MM-dd"), digest.DigestDescription, digest.DigestURL);
@@ -36,32 +40,24 @@ namespace ItLinksBot.Providers
             var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//article").Take(50);
+            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//li[contains(@class,'campaign')]").Take(5);
             foreach (var digestNode in digestsInArchive)
             {
-                var dateNode = digestNode.SelectSingleNode(".//div[contains(@class,'entry-date')]");
-                var digestDate = DateTime.Parse(dateNode.InnerText.Trim());
-                var linkNode = digestNode.SelectSingleNode(".//header//a");
-                var digestName = linkNode.InnerText.Trim();
-                var digestHref = linkNode.GetAttributeValue("href", "Not found");
-                var digestUrl = new Uri(baseUri, digestHref);
-                var descriptionNode = digestNode.SelectSingleNode(".//div[contains(@class,'entry-content')]/p");
-                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
-                string description;
-                if (descriptionNode != null)
-                {
-                    description = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-                }
-                else
-                {
-                    description = "";
-                }
+                var dateNode = digestNode.ChildNodes[0];
+                string dateText = dateNode.InnerText.Split('-')[0].Trim();
+                var digestDate = DateTime.Parse(dateText, new CultureInfo("en-US", false));
+                var hrefNode = digestNode.SelectSingleNode("./a");
+                var digestHref = hrefNode.GetAttributeValue("href", "Not found");
+                var digestName = hrefNode.InnerText.Trim();
+                //var digestUrl = new Uri(baseUri, digestHref);
+                var fullHref = Utils.UnshortenLink(digestHref);
+
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
-                    DigestName = digestName,
-                    DigestDescription = description,
-                    DigestURL = digestUrl.AbsoluteUri,
+                    DigestName = digestName, 
+                    DigestDescription = "", //Techmeme doesn't provide one
+                    DigestURL = fullHref,
                     Provider = provider
                 };
                 digests.Add(currentDigest);
@@ -80,24 +76,31 @@ namespace ItLinksBot.Providers
             var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'sreweekly-entry')]");
+            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'section')]/div[contains(@class,'story') and not(contains(@class,'sponsor'))]");
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
-                var linkNode = link.SelectSingleNode(".//div[contains(@class,'sreweekly-title')]/a");
-                var title = linkNode.InnerText;
-                var href = linkNode?.GetAttributeValue("href", "Not found");
-                if (href == null) continue;
+                var titleNode = link.SelectSingleNode(".//td/span[contains(@class,'title')][1]");
+                var title = titleNode.InnerText;
+                var href = titleNode.SelectSingleNode("./a").GetAttributeValue("href", "Not found");
                 if (!href.Contains("://") && href.Contains("/"))
                 {
-                    var digestUrl = new Uri(digest.DigestURL);
-                    var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
-                    href = (new Uri(digestBase, href)).AbsoluteUri;
+                    href = (new Uri(baseUri, href)).AbsoluteUri;
                 }
                 href = Utils.UnshortenLink(href);
-                var descriptionNodeOriginal = link.SelectSingleNode(".//div[contains(@class,'sreweekly-description')]");
-                var descriptionNode = contentNormalizer.NormalizeDom(descriptionNodeOriginal);
-                var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
+                var contentNodes = link.SelectNodes("./table[not(contains(@class,'leading_item'))]");
+                string descriptionText;
+                if (contentNodes != null)
+                {
+                    var descriptionNode = HtmlNode.CreateNode("<div></div>");
+                    descriptionNode.AppendChildren(contentNodes);
+                    descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
+                    descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
+                }else
+                {
+                    descriptionText = "";
+                }
+
                 links.Add(new Link
                 {
                     URL = href,
