@@ -77,9 +77,7 @@ namespace ItLinksBot.Providers
                 if (href == null) continue;
                 if (!href.Contains("://") && href.Contains("/"))
                 {
-                    var digestUrl = new Uri(digest.DigestURL);
-                    var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
-                    href = (new Uri(digestBase, href)).AbsoluteUri;
+                    href = (new Uri(baseUri, href)).AbsoluteUri;
                 }
                 href = Utils.UnshortenLink(href);
 

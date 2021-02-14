@@ -46,6 +46,7 @@ namespace ItLinksBot
             services.AddTransient<IParser, SpaceParser>();
             services.AddTransient<IParser, TechManagerWeeklyParser>();
             services.AddTransient<IParser, TimelessAndTimely>();
+            services.AddTransient<IParser, TechmemeParser>();
             serviceProvider = services.BuildServiceProvider();
         }
         static void Main()
