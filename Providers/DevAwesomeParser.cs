@@ -81,7 +81,7 @@ namespace ItLinksBot.Providers
                 var title = HttpUtility.HtmlDecode(titleNode.InnerText).Trim();
                 var descriptionNode = contentNormalizer.NormalizeDom(link.SelectSingleNode(".//p[2]"));
                 var description = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-                
+
 
                 var href = link.GetAttributeValue("href", "Not found");
                 Uri uriHref = new Uri(baseUri, href);

@@ -67,7 +67,7 @@ namespace ItLinksBot.Providers
             {
                 HtmlNode link = linksInDigest[i];
                 var titleNode = link.SelectSingleNode("./a");
-                if(titleNode == null)
+                if (titleNode == null)
                 {
                     continue;
                 }
