@@ -79,7 +79,7 @@ namespace ItLinksBot.Providers
                 HtmlNode link = linksInDigest[i];
                 var titleNode = link.SelectSingleNode("./header//a");
                 var title = titleNode.InnerText.Trim();
-                
+
                 var originalDescriptionNode = HtmlNode.CreateNode("<div></div>");
                 originalDescriptionNode.AppendChildren(link.SelectNodes("./p[position()<last()]"));
                 var descriptionNode = contentNormalizer.NormalizeDom(originalDescriptionNode);

@@ -4,8 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ItLinksBot.Providers
 {
@@ -55,7 +53,7 @@ namespace ItLinksBot.Providers
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
-                    DigestName = digestName, 
+                    DigestName = digestName,
                     DigestDescription = "", //Techmeme doesn't provide one
                     DigestURL = fullHref,
                     Provider = provider
@@ -85,7 +83,7 @@ namespace ItLinksBot.Providers
                 var href = titleNode.SelectSingleNode("./a").GetAttributeValue("href", "Not found");
                 if (!href.Contains("://") && href.Contains("/"))
                 {
-                    href = (new Uri(baseUri, href)).AbsoluteUri;
+                    href = new Uri(baseUri, href).AbsoluteUri;
                 }
                 href = Utils.UnshortenLink(href);
                 var contentNodes = link.SelectNodes("./table[not(contains(@class,'leading_item'))]");
@@ -96,7 +94,8 @@ namespace ItLinksBot.Providers
                     descriptionNode.AppendChildren(contentNodes);
                     descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
                     descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-                }else
+                }
+                else
                 {
                     descriptionText = "";
                 }
