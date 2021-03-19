@@ -1,5 +1,6 @@
 ﻿using Serilog;
 using System;
+using System.Linq;
 using System.Net;
 
 namespace ItLinksBot
@@ -15,7 +16,9 @@ namespace ItLinksBot
         }
         public static string UnshortenLink(string linkUrl)
         {
+            string[] exceptionList = new string[] { "techcrunch.com", "www.bloomberg.com", "www.washingtonpost.com" };
             HttpWebRequest req;
+            CookieContainer cookieContainer = new CookieContainer();
             try
             {
                 req = (HttpWebRequest)WebRequest.Create(linkUrl);
@@ -25,6 +28,12 @@ namespace ItLinksBot
                 Log.Warning("Malformed URL {url}", linkUrl);
                 return linkUrl;
             }
+            //if current url doesn't need to be unshortened
+            if (exceptionList.Contains(req.RequestUri.Host))
+            {
+                return linkUrl;
+            }
+            req.CookieContainer = cookieContainer;
             req.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75";
             req.AllowAutoRedirect = false;
             string realUrl = linkUrl;
@@ -41,23 +50,27 @@ namespace ItLinksBot
                     {
                         if (!resp.Headers["Location"].Contains("://"))
                         {
-                            //var baseRedirUri = new Uri(req.RequestUri.Scheme + "://" + req.RequestUri.Authority);
                             realUrl = (new Uri(req.RequestUri, resp.Headers["Location"])).AbsoluteUri;
-                            if (realUrl == req.RequestUri.AbsoluteUri)
-                            {
-                                break;
-                            }
                         }
                         else
                         {
                             realUrl = resp.Headers["Location"];
-                            if (realUrl == req.RequestUri.AbsoluteUri)
-                            {
-                                break;
-                            }
                         }
+
+                        if (realUrl == req.RequestUri.AbsoluteUri)
+                        {
+                            break;
+                        }
+
                         req = (HttpWebRequest)WebRequest.Create(realUrl);
+
+                        //if current url doesn't need to be unshortened
+                        if (exceptionList.Contains(req.RequestUri.Host))
+                        {
+                            return realUrl;
+                        }
                         req.AllowAutoRedirect = false;
+                        req.CookieContainer = cookieContainer;
                         req.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75";
                     }
                     else
