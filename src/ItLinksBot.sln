@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30804.86
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ItLinksBot", "ItLinksBot\ItLinksBot.csproj", "{922EBFE6-D3D7-40CC-80E3-7DAB33A998B4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ItLinksBot-UnitTest", "ItLinksBot-Test\ItLinksBot-UnitTest.csproj", "{092F284A-D559-45FF-B0BC-6D3CEE6C7646}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{922EBFE6-D3D7-40CC-80E3-7DAB33A998B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{922EBFE6-D3D7-40CC-80E3-7DAB33A998B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{922EBFE6-D3D7-40CC-80E3-7DAB33A998B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{922EBFE6-D3D7-40CC-80E3-7DAB33A998B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{092F284A-D559-45FF-B0BC-6D3CEE6C7646}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{092F284A-D559-45FF-B0BC-6D3CEE6C7646}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{092F284A-D559-45FF-B0BC-6D3CEE6C7646}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{092F284A-D559-45FF-B0BC-6D3CEE6C7646}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {915DA986-930F-4B79-963F-B09900392F0F}
+	EndGlobalSection
+EndGlobal
