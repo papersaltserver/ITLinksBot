@@ -37,20 +37,21 @@ namespace ItLinksBot.Providers
             var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//ul[contains(@class,'archive')]//li/a").Take(50);
+            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//li[contains(@class,'campaign')]").Take(5);
             foreach (var digestNode in digestsInArchive)
             {
                 var digestDate = new DateTime(1900, 1, 1);
-                var digestName = digestNode.InnerText.Trim();
-                var digestHref = digestNode.GetAttributeValue("href", "Not found");
-                var digestUrl = new Uri(baseUri, digestHref);
+                var hrefNode = digestNode.SelectSingleNode("./a");
+                var digestHref = hrefNode.GetAttributeValue("href", "Not found");
+                var digestName = hrefNode.InnerText.Trim();
+                var fullHref = Utils.UnshortenLink(digestHref);
 
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
                     DigestName = digestName,
                     DigestDescription = "", //description will be added later
-                    DigestURL = digestUrl.AbsoluteUri,
+                    DigestURL = fullHref,
                     Provider = provider
                 };
                 digests.Add(currentDigest);
