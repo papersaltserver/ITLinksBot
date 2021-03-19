@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using ItLinksBot.Models;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,7 +37,12 @@ namespace ItLinksBot.Providers
             string stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//section[@id='issues']/div[@id='issues-covers' or @id='issues-holder']//a").Take(50);
+            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//section[@id='issues']/div[@id='issues-covers' or @id='issues-holder']//a")?.Take(50);
+            if (digestsInArchive == null)
+            {
+                Log.Warning("No digests found in {providerName} archieve. Please check {providerUrl}", provider.ProviderName, provider.DigestURL);
+                return digests;
+            }
             foreach (var digestNode in digestsInArchive)
             {
                 var digestDate = new DateTime(1900, 1, 1);
