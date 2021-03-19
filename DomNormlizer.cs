@@ -8,7 +8,7 @@ namespace ItLinksBot
     {
         private string[] acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
         private string[] nodesProhibited = new string[] { "style", "script" };
-        private string[] nodesNewLines = new string[] { "div", "p", "h1", "h2", "h3", "h4" };
+        private string[] nodesNewLines = new string[] { "div", "p", "h1", "h2", "h3", "h4", "li", "td" };
         public HtmlNode NormalizeDom(HtmlNode originalNode, string[] localAcceptableTags, string[] localNodesProhibited, string[] localNodesNewLines)
         {
             acceptableTags = localAcceptableTags;
