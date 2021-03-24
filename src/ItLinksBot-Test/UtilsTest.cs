@@ -10,7 +10,7 @@ namespace ItLinksBot_Tests
         [InlineData(471999600)]
         public void UnixTimeStampToDateTimeTest(int timestamp)
         {
-            Assert.Equal(new DateTime(1984, 12, 16, 0, 0, 0, DateTimeKind.Utc), Utils.UnixTimeStampToDateTime(timestamp));
+            Assert.Equal(new DateTime(1984, 12, 15, 23, 0, 0, DateTimeKind.Utc).ToLocalTime(), Utils.UnixTimeStampToDateTime(timestamp));
         }
     }
 }
