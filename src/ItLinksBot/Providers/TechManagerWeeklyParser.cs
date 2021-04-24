@@ -12,7 +12,7 @@ namespace ItLinksBot.Providers
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "Tech Manager Weekly";
-        readonly Uri baseUri = new Uri("https://www.getrevue.co/");
+        readonly Uri baseUri = new("https://www.getrevue.co/");
 
         public TechManagerWeeklyParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
@@ -32,7 +32,7 @@ namespace ItLinksBot.Providers
 
         public List<Digest> GetCurrentDigests(Provider provider)
         {
-            List<Digest> digests = new List<Digest>();
+            List<Digest> digests = new();
             var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
@@ -91,7 +91,7 @@ namespace ItLinksBot.Providers
 
         public List<Link> GetDigestLinks(Digest digest)
         {
-            List<Link> links = new List<Link>();
+            List<Link> links = new();
             var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
@@ -114,7 +114,7 @@ namespace ItLinksBot.Providers
                 var href = linkNode.GetAttributeValue("href", "Not found");
                 if (href == "Not found") continue;
 
-                Uri uriHref = new Uri(baseUri, href);
+                Uri uriHref = new(baseUri, href);
                 href = Utils.UnshortenLink(uriHref.AbsoluteUri);
 
                 var descriptionNodeOriginal = link.SelectSingleNode(".//div[@class='revue-p']/..");

@@ -12,7 +12,7 @@ namespace ItLinksBot.Providers
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "programming digest";
-        readonly Uri baseUri = new Uri("https://programmingdigest.net/");
+        readonly Uri baseUri = new("https://programmingdigest.net/");
         public ProgrammingDigestParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
             contentGetter = cg;
@@ -32,7 +32,7 @@ namespace ItLinksBot.Providers
 
         public List<Digest> GetCurrentDigests(Provider provider)
         {
-            List<Digest> digests = new List<Digest>();
+            List<Digest> digests = new();
             var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
@@ -68,7 +68,7 @@ namespace ItLinksBot.Providers
 
         public List<Link> GetDigestLinks(Digest digest)
         {
-            List<Link> links = new List<Link>();
+            List<Link> links = new();
 
             var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();

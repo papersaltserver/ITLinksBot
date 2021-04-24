@@ -16,7 +16,7 @@ namespace ItLinksBot.Providers
         private readonly IContentGetter contentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
-        readonly Uri baseUri = new Uri("https://www.densediscovery.com/");
+        //readonly Uri baseUri = new("https://www.densediscovery.com/");
         public DenseDiscoveryParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
             contentGetter = cg;
@@ -36,7 +36,7 @@ namespace ItLinksBot.Providers
 
         public List<Digest> GetCurrentDigests(Provider provider)
         {
-            List<Digest> digests = new List<Digest>();
+            List<Digest> digests = new();
             var stringResult = contentGetter.GetContent(provider.DigestURL);
             XmlReader reader = XmlReader.Create(new StringReader(stringResult));
             var feed = SyndicationFeed.Load(reader);
@@ -65,14 +65,14 @@ namespace ItLinksBot.Providers
         {
             //Initial link leading to a decorated page with iframe, let's get actual link
             string stubContent = contentGetter.GetContent(digest.DigestURL);
-            HtmlDocument stubDocument = new HtmlDocument();
+            HtmlDocument stubDocument = new();
             stubDocument.LoadHtml(stubContent);
             HtmlNode iframeNode = stubDocument.DocumentNode.SelectSingleNode("//iframe[@id='iframe']");
             string realLink = iframeNode.GetAttributeValue("src", "not found");
 
             //getting real content
             string digestContent = contentGetter.GetContent(realLink);
-            HtmlDocument digestDocument = new HtmlDocument();
+            HtmlDocument digestDocument = new();
             digestDocument.LoadHtml(digestContent);
 
             //getting description of the digest
@@ -83,7 +83,7 @@ namespace ItLinksBot.Providers
             string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
             //very dirty hack to get date, may be broken any time, no way to get something more suitable so far
-            HttpClient imgClient = new HttpClient();
+            HttpClient imgClient = new();
             imgClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75");
             var imgContent = imgClient.GetAsync(realLink + "head.jpg").Result;
             var fileModifiedDate = imgContent.Content.Headers.LastModified.Value.DateTime;
@@ -101,18 +101,18 @@ namespace ItLinksBot.Providers
 
         public List<Link> GetDigestLinks(Digest digest)
         {
-            List<Link> links = new List<Link>();
+            List<Link> links = new();
             //this provider has many different sections with different content, so it should be processed separately
             //Initial link leading to a decorated page with iframe, let's get actual link
             string stubContent = contentGetter.GetContent(digest.DigestURL);
-            HtmlDocument stubDocument = new HtmlDocument();
+            HtmlDocument stubDocument = new();
             stubDocument.LoadHtml(stubContent);
             HtmlNode iframeNode = stubDocument.DocumentNode.SelectSingleNode("//iframe[@id='iframe']");
             string realLink = iframeNode.GetAttributeValue("src", "not found");
 
             //getting real content
             string digestContent = contentGetter.GetContent(realLink);
-            HtmlDocument digestDocument = new HtmlDocument();
+            HtmlDocument digestDocument = new();
             digestDocument.LoadHtml(digestContent);
 
             //Apps & Sites

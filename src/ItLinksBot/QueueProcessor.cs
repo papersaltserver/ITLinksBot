@@ -29,7 +29,7 @@ namespace ItLinksBot
         private const int tgMessageSizeLimit = 4080;
         private static List<string> SplitMessageForTg(string message)
         {
-            List<string> messageChunks = new List<string>();
+            List<string> messageChunks = new();
             int telegramMessageLimit = tgMessageSizeLimit;
 
             if (message.Length > telegramMessageLimit)
@@ -87,7 +87,7 @@ namespace ItLinksBot
         }
         private static string EscapeTgString(string originalString)
         {
-            StringBuilder sb = new StringBuilder(originalString);
+            StringBuilder sb = new(originalString);
             sb.Replace("&Agrave;", "&#192;");
             sb.Replace("&Aacute;", "&#193;");
             sb.Replace("&Acirc;", "&#194;");
@@ -332,7 +332,7 @@ namespace ItLinksBot
             IEnumerable<IParser> serviceCollection = serviceProvider.GetServices<IParser>();
             var parser = serviceCollection.FirstOrDefault(p => p.CurrentProvider == tgChannel.Provider.ProviderName);
             string message = EscapeTgString(parser.FormatDigestPost(digest));
-            List<DigestPost> responses = new List<DigestPost>();
+            List<DigestPost> responses = new();
             var messageChunks = SplitMessageForTg(message);
 
             int j = 0;
@@ -375,7 +375,7 @@ namespace ItLinksBot
             IEnumerable<IParser> serviceCollection = serviceProvider.GetServices<IParser>();
             var parser = serviceCollection.FirstOrDefault(p => p.CurrentProvider == tgChannel.Provider.ProviderName);
             string message = EscapeTgString(parser.FormatLinkPost(link));
-            List<LinkPost> responses = new List<LinkPost>();
+            List<LinkPost> responses = new();
             var messageChunks = SplitMessageForTg(message);
 
             int j = 0;

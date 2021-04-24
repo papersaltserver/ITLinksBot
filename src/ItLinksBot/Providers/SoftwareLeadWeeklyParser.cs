@@ -13,7 +13,7 @@ namespace ItLinksBot.Providers
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "Software Lead Weekly";
-        readonly Uri baseUri = new Uri("https://softwareleadweekly.com/");
+        readonly Uri baseUri = new("https://softwareleadweekly.com/");
 
         public SoftwareLeadWeeklyParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
@@ -33,7 +33,7 @@ namespace ItLinksBot.Providers
 
         public List<Digest> GetCurrentDigests(Provider provider)
         {
-            List<Digest> digests = new List<Digest>();
+            List<Digest> digests = new();
             var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
@@ -42,7 +42,7 @@ namespace ItLinksBot.Providers
             {
                 var dateNode = digestNode.SelectSingleNode(".//p[@class='text-table-issue']");
                 string[] dateArray = dateNode.InnerText.Trim().Split(" ");
-                Regex rgx = new Regex("[^0-9]");
+                Regex rgx = new("[^0-9]");
                 dateArray[0] = rgx.Replace(dateArray[0], "");
                 string fixedDate = string.Join(" ", dateArray);
                 var digestDate = DateTime.Parse(fixedDate);
@@ -71,7 +71,7 @@ namespace ItLinksBot.Providers
 
         public List<Link> GetDigestLinks(Digest digest)
         {
-            List<Link> links = new List<Link>();
+            List<Link> links = new();
             var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);

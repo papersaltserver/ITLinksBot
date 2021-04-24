@@ -3,18 +3,20 @@ using System;
 using ItLinksBot.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ItLinksBot.Migrations
 {
     [DbContext(typeof(ITLinksContext))]
-    partial class ITLinksContextModelSnapshot : ModelSnapshot
+    [Migration("20210320082513_BizzaroDevs_data")]
+    partial class BizzaroDevs_data
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "5.0.4");
+                .HasAnnotation("ProductVersion", "5.0.3");
 
             modelBuilder.Entity("ItLinksBot.Models.Digest", b =>
                 {

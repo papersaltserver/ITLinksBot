@@ -48,6 +48,7 @@ namespace ItLinksBot
             services.AddTransient<IParser, TimelessAndTimely>();
             services.AddTransient<IParser, TechmemeParser>();
             services.AddTransient<IParser, DenseDiscoveryParser>();
+            services.AddTransient<IParser, BizzaroDevsParser>();
             serviceProvider = services.BuildServiceProvider();
         }
         static void Main()
@@ -72,7 +73,7 @@ namespace ItLinksBot
             optionsBuilder.UseSqlite(connectionString);
             var context = new ITLinksContext();
             context.Database.Migrate();
-            TelegramAPI bot = new TelegramAPI(config["BotApiKey"]);
+            TelegramAPI bot = new(config["BotApiKey"]);
             IEnumerable<IParser> serviceCollection = serviceProvider.GetServices<IParser>();
             while (true)
             {

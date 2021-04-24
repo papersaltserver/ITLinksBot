@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using ItLinksBot.Models;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,7 @@ namespace ItLinksBot.Providers
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "Smashing Email Newsletter";
-        readonly Uri baseUri = new Uri("https://www.smashingmagazine.com/");
+        readonly Uri baseUri = new("https://www.smashingmagazine.com/");
 
         public SmashingEmailParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
@@ -33,7 +34,7 @@ namespace ItLinksBot.Providers
 
         public List<Digest> GetCurrentDigests(Provider provider)
         {
-            List<Digest> digests = new List<Digest>();
+            List<Digest> digests = new();
             var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
@@ -88,7 +89,7 @@ namespace ItLinksBot.Providers
 
         public List<Link> GetDigestLinks(Digest digest)
         {
-            List<Link> links = new List<Link>();
+            List<Link> links = new();
             var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
@@ -111,7 +112,10 @@ namespace ItLinksBot.Providers
                 string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
                 var href = descriptionNode.SelectSingleNode(".//a")?.GetAttributeValue("href", "Not found");
-                if (href == null) throw new NullReferenceException();
+                if (href == null) {
+                    Log.Warning("SmashingMagazin section {title} in digest {url} doesn't have links", title, digest.DigestURL);
+                    continue;
+                };
                 if (!href.Contains("://") && href.Contains("/"))
                 {
                     href = (new Uri(baseUri, href)).AbsoluteUri;

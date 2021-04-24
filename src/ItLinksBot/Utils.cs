@@ -10,7 +10,7 @@ namespace ItLinksBot
         public static DateTime UnixTimeStampToDateTime(int unixTimeStamp)
         {
             // Unix timestamp is seconds past epoch
-            DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            DateTime dtDateTime = new(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
             dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
             return dtDateTime;
         }
@@ -18,7 +18,7 @@ namespace ItLinksBot
         {
             string[] exceptionList = new string[] { "techcrunch.com", "www.bloomberg.com", "www.washingtonpost.com" };
             HttpWebRequest req;
-            CookieContainer cookieContainer = new CookieContainer();
+            CookieContainer cookieContainer = new();
             try
             {
                 req = (HttpWebRequest)WebRequest.Create(linkUrl);

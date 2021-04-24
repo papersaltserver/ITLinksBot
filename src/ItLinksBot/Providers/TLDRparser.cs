@@ -13,7 +13,7 @@ namespace ItLinksBot.Providers
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "TLDR";
-        readonly Uri baseUri = new Uri("https://www.tldrnewsletter.com/");
+        readonly Uri baseUri = new("https://tldr.tech/");
         public TLDRparser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
             contentGetter = cg;
@@ -32,12 +32,13 @@ namespace ItLinksBot.Providers
 
         public List<Digest> GetCurrentDigests(Provider provider)
         {
-            List<Digest> digests = new List<Digest>();
+            List<Digest> digests = new();
             var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@id='doc-container']//div[contains(@class, 'd-lg-none')]//a").Take(50);
-            foreach (var digestNode in digestsInArchive)
+            HtmlNodeCollection digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@id='doc-container']/div/div[contains(@class,'col-md-4')]/a");
+            var latestIssues = digestsInArchive.OrderByDescending(d => d.InnerText).Take(3);
+            foreach (var digestNode in latestIssues)
             {
                 var digestUrl = new Uri(baseUri, digestNode.GetAttributeValue("href", "Not found"));
                 var currentDigest = new Digest
@@ -58,11 +59,11 @@ namespace ItLinksBot.Providers
         }
         public List<Link> GetDigestLinks(Digest digest)
         {
-            List<Link> links = new List<Link>();
+            List<Link> links = new();
             var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//td[contains(@class,'container')]/div[contains(@class,'text-block')]/span/a//strong/../../..");
+            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@id='doc-container']//h3/../..");
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
@@ -78,7 +79,7 @@ namespace ItLinksBot.Providers
                     href = (new Uri(baseUri, href)).AbsoluteUri;
                 }
                 href = Utils.UnshortenLink(href);
-                var descriptionNode = contentNormalizer.NormalizeDom(link.SelectSingleNode("./span"));
+                var descriptionNode = contentNormalizer.NormalizeDom(link.SelectSingleNode("./div"));
                 var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
                 links.Add(new Link
                 {

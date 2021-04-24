@@ -13,7 +13,7 @@ namespace ItLinksBot.Providers
         private readonly IContentGetter contentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
-        readonly Uri baseUri = new Uri("https://us14.campaign-archive.com/");
+        readonly Uri baseUri = new("https://us14.campaign-archive.com/");
 
         public TechmemeParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
@@ -34,7 +34,7 @@ namespace ItLinksBot.Providers
 
         public List<Digest> GetCurrentDigests(Provider provider)
         {
-            List<Digest> digests = new List<Digest>();
+            List<Digest> digests = new();
             var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
@@ -70,7 +70,7 @@ namespace ItLinksBot.Providers
 
         public List<Link> GetDigestLinks(Digest digest)
         {
-            List<Link> links = new List<Link>();
+            List<Link> links = new();
             var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);

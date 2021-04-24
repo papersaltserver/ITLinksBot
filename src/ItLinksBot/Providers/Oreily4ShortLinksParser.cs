@@ -15,7 +15,7 @@ namespace ItLinksBot.Providers
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "O'Reily Four Short Links";
-        readonly Uri baseUri = new Uri("https://www.oreilly.com/");
+        readonly Uri baseUri = new("https://www.oreilly.com/");
         public Oreily4ShortLinksParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
             contentGetter = cg;
@@ -24,13 +24,13 @@ namespace ItLinksBot.Providers
         }
         public List<Digest> GetCurrentDigests(Provider provider)
         {
-            List<Digest> digests = new List<Digest>();
+            List<Digest> digests = new();
             var stringResult = contentGetter.GetContent(provider.DigestURL);
             XmlReader reader = XmlReader.Create(new StringReader(stringResult));
             var feed = SyndicationFeed.Load(reader);
             foreach (var feedItem in feed.Items.Take(50))
             {
-                Digest currentDigest = new Digest
+                Digest currentDigest = new()
                 {
                     DigestDay = feedItem.PublishDate.DateTime,
                     DigestName = feedItem.Title.Text,
@@ -48,7 +48,7 @@ namespace ItLinksBot.Providers
         }
         public List<Link> GetDigestLinks(Digest digest)
         {
-            List<Link> links = new List<Link>();
+            List<Link> links = new();
             var reader = XmlReader.Create(digest.Provider.DigestURL);
             var feed = SyndicationFeed.Load(reader);
             var digestNode = feed.Items.Where(n => n.Title.Text == digest.DigestName && n.Links[0].Uri.AbsoluteUri == digest.DigestURL).SingleOrDefault();

@@ -24,8 +24,8 @@ namespace ItLinksBot
             //Throttle();
             string urlString = "https://api.telegram.org/bot{0}/sendMessage";
             urlString = string.Format(urlString, _botKey);
-            HttpClient httpClient = new HttpClient();
-            Dictionary<string, string> requestBody = new Dictionary<string, string>
+            HttpClient httpClient = new();
+            Dictionary<string, string> requestBody = new()
             {
                 { "chat_id", Channel },
                 { "parse_mode", "HTML" },
@@ -37,7 +37,7 @@ namespace ItLinksBot
                             {
                                 NullValueHandling = NullValueHandling.Ignore
                             });
-            StringContent content = new StringContent(json, Encoding.UTF8, "application/json");
+            StringContent content = new(json, Encoding.UTF8, "application/json");
             var resp = httpClient.PostAsync(urlString, content).Result;
             //dumb Telegram API doesn't guarantee message order when it is sent in batches, 1s should be enough to complete posting
             System.Threading.Thread.Sleep(1000);
@@ -48,8 +48,8 @@ namespace ItLinksBot
         {
             string urlString = "https://api.telegram.org/bot{0}/editMessageText";
             urlString = String.Format(urlString, _botKey);
-            HttpClient httpClient = new HttpClient();
-            Dictionary<string, string> requestBody = new Dictionary<string, string>
+            HttpClient httpClient = new();
+            Dictionary<string, string> requestBody = new()
             {
                 { "chat_id", channel },
                 { "parse_mode", "HTML" },
@@ -61,7 +61,7 @@ namespace ItLinksBot
                             {
                                 NullValueHandling = NullValueHandling.Ignore
                             });
-            StringContent content = new StringContent(json, Encoding.UTF8, "application/json");
+            StringContent content = new(json, Encoding.UTF8, "application/json");
             var resp = httpClient.PostAsync(urlString, content).Result;
             return resp.Content.ReadAsStringAsync().Result;
         }
