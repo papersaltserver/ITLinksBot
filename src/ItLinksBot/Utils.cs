@@ -16,7 +16,7 @@ namespace ItLinksBot
         }
         public static string UnshortenLink(string linkUrl)
         {
-            string[] exceptionList = new string[] { "techcrunch.com", "www.bloomberg.com", "www.washingtonpost.com" };
+            string[] exceptionList = new string[] { "techcrunch.com", "www.bloomberg.com", "www.washingtonpost.com", "www.youtube.com" };
             HttpWebRequest req;
             CookieContainer cookieContainer = new();
             try

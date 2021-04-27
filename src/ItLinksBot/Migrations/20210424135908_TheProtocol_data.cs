@@ -2,7 +2,7 @@
 
 namespace ItLinksBot.Migrations
 {
-    public partial class BizzaroDevs_data : Migration
+    public partial class TheProtocol_data : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -14,9 +14,9 @@ namespace ItLinksBot.Migrations
                     "DigestURL" },
                 values: new object[,] {
                     {
-                        29,
-                        "Bizarro Devs",
-                        "http://bizzarodevs.com/issues"
+                        30,
+                        "THE PROTOCOL",
+                        "https://us13.campaign-archive.com/home/?u=34e123a6cb927c8855702db9e&id=a42dcec0bd"
                     }
                 }
                 );
@@ -30,9 +30,9 @@ namespace ItLinksBot.Migrations
                 values: new object[,]
                 {
                     {
-                        29,
-                        "-1001380411549",
-                        29
+                        30,
+                        "-1001322723171",
+                        30
                     }
                 }
                 );
@@ -43,12 +43,12 @@ namespace ItLinksBot.Migrations
             migrationBuilder.DeleteData(
                 table: "Providers",
                 keyColumn: "ProviderID",
-                keyValue: 29
+                keyValue: 30
                 );
             migrationBuilder.DeleteData(
                 table: "TelegramChannels",
                 keyColumn: "ChannelID",
-                keyValue: 29
+                keyValue: 30
                 );
         }
     }

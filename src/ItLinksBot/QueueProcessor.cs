@@ -411,5 +411,19 @@ namespace ItLinksBot
             }
             return responses;
         }
+
+        public static string GetChannelInviteLink(TelegramChannel tgChannel, TelegramAPI bot)
+        {
+            var channelInfo = bot.GetChat(tgChannel.ChannelName);
+            var botPostObject = JObject.Parse(channelInfo);
+            if ((bool)botPostObject["ok"])
+            {
+                return (string)botPostObject["result"]["invite_link"];
+            }
+            else
+            {
+                return "ERROR!";
+            }
+        }
     }
 }
