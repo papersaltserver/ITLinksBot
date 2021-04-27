@@ -4,6 +4,7 @@ using ItLinksBot.Providers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Linq;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -49,6 +50,7 @@ namespace ItLinksBot
             services.AddTransient<IParser, TechmemeParser>();
             services.AddTransient<IParser, DenseDiscoveryParser>();
             services.AddTransient<IParser, BizzaroDevsParser>();
+            services.AddTransient<IParser, TheProtocolParser>();
             serviceProvider = services.BuildServiceProvider();
         }
         static void Main()
@@ -75,6 +77,15 @@ namespace ItLinksBot
             context.Database.Migrate();
             TelegramAPI bot = new(config["BotApiKey"]);
             IEnumerable<IParser> serviceCollection = serviceProvider.GetServices<IParser>();
+            foreach (TelegramChannel tgChannel in context.TelegramChannels)
+            {
+                context.Entry(tgChannel).Reference(c => c.Provider).Load();
+                var inviteLink = QueueProcessor.GetChannelInviteLink(tgChannel, bot);
+                Console.WriteLine($"Name: {tgChannel.Provider.ProviderName}");
+                Console.WriteLine($"Original link: {tgChannel.Provider.DigestURL}");
+                Console.WriteLine($"Invite link: {inviteLink}\n");
+            }
+            
             while (true)
             {
                 var activeProviders = context.Providers.Where(pr => pr.ProviderEnabled);
@@ -119,7 +130,7 @@ namespace ItLinksBot
                     {
                         //Posting new digests, not posted yet
                         var digests = context.Digests.Where(d => d.Provider == tgChannel.Provider && !context.DigestPosts.Select(dp => dp.Digest).Contains(d)).OrderBy(d => d.DigestDay);
-                        if (digests.Any()) Log.Information($"Found {digests.Count()} new digests to post in {tgChannel.ChannelName}");
+                        if (digests.Any()) Log.Information($"Found {digests.Count()} new digests to post in {tgChannel.Provider.ProviderName}");
                         foreach (Digest digest in digests)
                         {
                             List<DigestPost> digestPost = QueueProcessor.AddDigestPost(tgChannel, digest, bot, serviceProvider);

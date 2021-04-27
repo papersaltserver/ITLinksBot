@@ -47,7 +47,7 @@ namespace ItLinksBot
         public string UpdateMessage(string channel, int messageId, string newMessage)
         {
             string urlString = "https://api.telegram.org/bot{0}/editMessageText";
-            urlString = String.Format(urlString, _botKey);
+            urlString = string.Format(urlString, _botKey);
             HttpClient httpClient = new();
             Dictionary<string, string> requestBody = new()
             {
@@ -64,6 +64,26 @@ namespace ItLinksBot
             StringContent content = new(json, Encoding.UTF8, "application/json");
             var resp = httpClient.PostAsync(urlString, content).Result;
             return resp.Content.ReadAsStringAsync().Result;
+        }
+
+        public string GetChat(string chatId)
+        {
+            string urlString = "https://api.telegram.org/bot{0}/getChat";
+            urlString = string.Format(urlString, _botKey);
+            HttpClient httpClient = new();
+            Dictionary<string, string> requestBody = new()
+            {
+                { "chat_id", chatId }
+            };
+            string json = JsonConvert.SerializeObject(requestBody, Newtonsoft.Json.Formatting.None,
+                            new JsonSerializerSettings
+                            {
+                                NullValueHandling = NullValueHandling.Ignore
+                            });
+            StringContent content = new(json, Encoding.UTF8, "application/json");
+            var resp = httpClient.PostAsync(urlString, content).Result.Content.ReadAsStringAsync().Result;
+
+            return resp;
         }
     }
 }

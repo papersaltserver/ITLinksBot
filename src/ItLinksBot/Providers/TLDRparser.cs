@@ -37,7 +37,7 @@ namespace ItLinksBot.Providers
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             HtmlNodeCollection digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@id='doc-container']/div/div[contains(@class,'col-md-4')]/a");
-            var latestIssues = digestsInArchive.OrderByDescending(d => d.InnerText).Take(3);
+            var latestIssues = digestsInArchive.OrderByDescending(d => d.InnerText).Take(5);
             foreach (var digestNode in latestIssues)
             {
                 var digestUrl = new Uri(baseUri, digestNode.GetAttributeValue("href", "Not found"));
@@ -72,7 +72,7 @@ namespace ItLinksBot.Providers
                 {
                     continue;
                 }
-                var title = titleNode.InnerText;
+                var title = titleNode.InnerText.Trim();
                 var href = titleNode.GetAttributeValue("href", "Not found");
                 if (!href.Contains("://") && href.Contains("/"))
                 {
