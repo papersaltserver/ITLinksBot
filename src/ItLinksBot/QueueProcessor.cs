@@ -400,7 +400,7 @@ namespace ItLinksBot
                 else if ((int)linkPostObject["error_code"] == 429)
                 {
                     var secondsToSleep = (int)linkPostObject["parameters"]["retry_after"];
-                    Log.Information($"Sleeping {secondsToSleep + 2} seconds before retrying to send to {tgChannel.ChannelName} again");
+                    Log.Information($"Sleeping {secondsToSleep + 2} seconds before retrying to send to {tgChannel.Provider.ProviderName} again");
                     System.Threading.Thread.Sleep((secondsToSleep + 2) * 1000);
                 }
                 else
@@ -414,15 +414,26 @@ namespace ItLinksBot
 
         public static string GetChannelInviteLink(TelegramChannel tgChannel, TelegramAPI bot)
         {
-            var channelInfo = bot.GetChat(tgChannel.ChannelName);
-            var botPostObject = JObject.Parse(channelInfo);
-            if ((bool)botPostObject["ok"])
+            string channelInfo = bot.GetChat(tgChannel.ChannelName);
+            JObject botPostObject = JObject.Parse(channelInfo);
+            while (true)
             {
-                return (string)botPostObject["result"]["invite_link"];
-            }
-            else
-            {
-                return "ERROR!";
+                if ((bool)botPostObject["ok"])
+                {
+                    return (string)botPostObject["result"]["invite_link"];
+                }
+                else if ((int)botPostObject["error_code"] == 429)
+                {
+                    var secondsToSleep = (int)botPostObject["parameters"]["retry_after"];
+                    Log.Verbose($"Sleeping {secondsToSleep + 2} seconds before retrying to get channel info for {tgChannel.Provider.ProviderName} again");
+                    System.Threading.Thread.Sleep((secondsToSleep + 2) * 1000);
+                }
+                else
+                {
+                    return "ERROR!";
+                }
+                channelInfo = bot.GetChat(tgChannel.ChannelName);
+                botPostObject = JObject.Parse(channelInfo);
             }
         }
     }
