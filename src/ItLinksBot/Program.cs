@@ -52,6 +52,7 @@ namespace ItLinksBot
             services.AddTransient<IParser, BizzaroDevsParser>();
             services.AddTransient<IParser, TheProtocolParser>();
             services.AddTransient<IParser, DevopsWeeklyParser>();
+            services.AddTransient<IParser, CoreyTechParser>();
             serviceProvider = services.BuildServiceProvider();
         }
         static void Main()
