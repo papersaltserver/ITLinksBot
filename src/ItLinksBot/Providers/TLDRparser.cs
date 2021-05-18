@@ -3,6 +3,7 @@ using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Web;
 
 namespace ItLinksBot.Providers
@@ -36,14 +37,16 @@ namespace ItLinksBot.Providers
             var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            HtmlNodeCollection digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@id='doc-container']/div/div[contains(@class,'col-md-4')]/a");
+            HtmlNodeCollection digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@id='doc-container']//div[contains(@class,'text-left')]/a");
             var latestIssues = digestsInArchive.OrderByDescending(d => d.InnerText).Take(5);
+            
             foreach (var digestNode in latestIssues)
             {
                 var digestUrl = new Uri(baseUri, digestNode.GetAttributeValue("href", "Not found"));
+                var dateText = Regex.Match(digestNode.InnerText.Trim(), @"^(\d\d\d\d-\d\d-\d\d)").Groups[1].Value;
                 var currentDigest = new Digest
                 {
-                    DigestDay = DateTime.Parse(HttpUtility.HtmlDecode(digestNode.InnerText).Replace("Daily Update", "")),
+                    DigestDay = DateTime.Parse(dateText),
                     DigestName = digestNode.InnerText,
                     DigestDescription = "", //tldr doesn't have description for digest itself
                     DigestURL = digestUrl.AbsoluteUri,
