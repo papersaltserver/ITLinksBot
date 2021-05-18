@@ -44,7 +44,7 @@ namespace ItLinksBot.Providers
                 var currentDigest = new Digest
                 {
                     DigestDay = DateTime.Parse(HttpUtility.HtmlDecode(digestNode.InnerText).Replace("Daily Update", "")),
-                    DigestName = HttpUtility.HtmlDecode(digestNode.InnerText).Trim(),
+                    DigestName = digestNode.InnerText,
                     DigestDescription = "", //tldr doesn't have description for digest itself
                     DigestURL = digestUrl.AbsoluteUri,
                     Provider = provider

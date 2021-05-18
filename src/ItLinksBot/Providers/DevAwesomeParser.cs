@@ -45,7 +45,7 @@ namespace ItLinksBot.Providers
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
-                    DigestName = HttpUtility.HtmlDecode(digestNode.InnerText).Trim(),
+                    DigestName = digestNode.InnerText,
                     DigestDescription = "", //description is hard to get and is always the same
                     DigestURL = digestUrl,
                     Provider = provider
@@ -78,7 +78,7 @@ namespace ItLinksBot.Providers
             {
                 HtmlNode link = linksInDigest[i];
                 var titleNode = link.SelectSingleNode(".//p[1]");
-                var title = HttpUtility.HtmlDecode(titleNode.InnerText).Trim();
+                var title = titleNode.InnerText;
                 var descriptionNode = contentNormalizer.NormalizeDom(link.SelectSingleNode(".//p[2]"));
                 var description = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 

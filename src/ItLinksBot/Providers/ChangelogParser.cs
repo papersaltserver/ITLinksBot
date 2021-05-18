@@ -48,7 +48,7 @@ namespace ItLinksBot.Providers
                 var currentDigest = new Digest
                 {
                     DigestDay = DateTime.Parse(HttpUtility.HtmlDecode(digest.InnerText).Split('—')[1].Trim()),
-                    DigestName = HttpUtility.HtmlDecode(digest.InnerText),
+                    DigestName = digest.InnerText,
                     DigestDescription = "", //changelog doesn't have description for digest itself
                     DigestURL = digestUrl,
                     Provider = provider

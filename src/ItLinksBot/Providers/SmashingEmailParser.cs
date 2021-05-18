@@ -46,7 +46,7 @@ namespace ItLinksBot.Providers
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
-                    DigestName = HttpUtility.HtmlDecode(digestNode.InnerText).Trim(),
+                    DigestName = digestNode.InnerText,
                     DigestDescription = "", //smashing magazine doesn't have description in digest list, will populate later
                     DigestURL = digestUrl.AbsoluteUri,
                     Provider = provider
@@ -60,7 +60,7 @@ namespace ItLinksBot.Providers
             var digestContent = contentGetter.GetContent(digest.DigestURL);
             var digestDetails = new HtmlDocument();
             digestDetails.LoadHtml(digestContent);
-            var digestName = HttpUtility.HtmlDecode(digestDetails.DocumentNode.SelectSingleNode("//h1[contains(@class,'header--indent')]").InnerText).Replace("\n", " ");
+            var digestName = digestDetails.DocumentNode.SelectSingleNode("//h1[contains(@class,'header--indent')]").InnerText.Replace("\n", " ");
             var digestDate = DateTime.Parse(HttpUtility.HtmlDecode(digestDetails.DocumentNode.SelectSingleNode("//span[contains(@class,'header__title-desc')]").InnerText));
 
             var sibling = digestDetails.DocumentNode.SelectSingleNode("//h3[@id='editorial']").NextSibling;
@@ -97,7 +97,7 @@ namespace ItLinksBot.Providers
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
-                var title = HttpUtility.HtmlDecode(link.InnerText);
+                var title = link.InnerText;
 
                 var sibling = link.NextSibling;
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");

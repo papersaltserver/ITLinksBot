@@ -47,7 +47,7 @@ namespace ItLinksBot.Providers
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
-                    DigestName = HttpUtility.HtmlDecode(relativePathNode.InnerText).Trim(),
+                    DigestName = relativePathNode.InnerText,
                     DigestDescription = "", //javascript weekly doesn't have description for digest itself
                     DigestURL = digestUrl.AbsoluteUri,
                     Provider = provider
