@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using ItLinksBot.Models;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace ItLinksBot.Providers
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "Data Is Plural";
-        readonly Uri baseUri = new("https://tinyletter.com/");
+        readonly Uri baseUri = new("https://www.data-is-plural.com/");
 
         public DataIsPluralParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
         {
@@ -36,23 +37,26 @@ namespace ItLinksBot.Providers
             var stringResult = contentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//li[contains(@class,'message-item')]").Take(50);
+            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//li[contains(@class,'edition')]").Take(5);
             foreach (var digestNode in digestsInArchive)
             {
-                var dateNode = digestNode.SelectSingleNode("./span[contains(@class,'message-date')]");
-                var digestDate = DateTime.Parse(dateNode.InnerText.Trim());
-                var linkNode = digestNode.SelectSingleNode("./a[contains(@class,'message-link')]");
-                var digestName = linkNode.InnerText.Trim();
+                var dateNode = digestNode.SelectSingleNode("./span[contains(@class,'edition-date')]");
+                var dateTimeNode = dateNode.SelectSingleNode(".//time");
+                var dateTimeText = dateTimeNode.GetAttributeValue("datetime", "not found");
+                var digestDate = DateTime.Parse(dateTimeText.Replace(" UTC", "Z"));
+                var linkNode = dateNode.SelectSingleNode("./a");
+                var digestNameNode = digestNode.SelectSingleNode("./span[contains(@class,'edition-summary')]");
+                var digestName = digestNameNode.InnerText.Trim();
                 var digestHref = linkNode.GetAttributeValue("href", "Not found");
                 var digestUrl = new Uri(baseUri, digestHref);
-                var descriptionNode = digestNode.SelectSingleNode("./p[contains(@class,'message-snippet')]");
-                var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
+                //var descriptionNode = digestNode.SelectSingleNode("./p[contains(@class,'message-snippet')]");
+                //var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
                     DigestName = digestName,
-                    DigestDescription = descriptionText, //we'll populate this later
+                    DigestDescription = "",
                     DigestURL = digestUrl.AbsoluteUri,
                     Provider = provider
                 };
@@ -72,20 +76,25 @@ namespace ItLinksBot.Providers
             var digestContent = contentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'message-body')]//p[position()>1 and position()<last()]");
+            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'edition-body')]//p");
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
                 var title = ""; //this digest doesn't have separate header
                 var href = link.SelectSingleNode("./a[1]")?.GetAttributeValue("href", "Not found");
-                if (href == null) continue;
-                if (!href.Contains("://") && href.Contains("/"))
+                if (href == null)
+                {
+                    Log.Warning("Data is Plural digest {digestUrl} has a paragraph without link {p}",digest.DigestURL, link.InnerText);
+                    continue;
+                }
+                /*if (!href.Contains("://") && href.Contains("/"))
                 {
                     var digestUrl = new Uri(digest.DigestURL);
                     var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
                     href = (new Uri(digestBase, href)).AbsoluteUri;
-                }
-                href = Utils.UnshortenLink(href);
+                }*/
+                var linkUrl = new Uri(baseUri, href);
+                href = Utils.UnshortenLink(linkUrl.AbsoluteUri);
 
                 var descriptionNode = contentNormalizer.NormalizeDom(link);
                 var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
