@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using ItLinksBot.ContentGetters;
 using ItLinksBot.Models;
 using Serilog;
 using System;
@@ -10,15 +11,15 @@ namespace ItLinksBot.Providers
 {
     class ProductiveGrowthParser : IParser
     {
-        private readonly IContentGetter contentGetter;
+        private readonly IContentGetter<string> htlmContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "ProductiveGrowth";
         readonly Uri baseUri = new("https://productivegrowth.substack.com/");
 
-        public ProductiveGrowthParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
+        public ProductiveGrowthParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            contentGetter = cg;
+            htlmContentGetter = cg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
@@ -35,7 +36,7 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = contentGetter.GetContent(provider.DigestURL);
+            var stringResult = htlmContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[contains(@class,'post-preview-content')]").Take(50);
@@ -62,7 +63,7 @@ namespace ItLinksBot.Providers
 
         public Digest GetDigestDetails(Digest digest)
         {
-            var digestContent = contentGetter.GetContent(digest.DigestURL);
+            var digestContent = htlmContentGetter.GetContent(digest.DigestURL);
             var digestDetails = new HtmlDocument();
             digestDetails.LoadHtml(digestContent);
             var dateNode = digestDetails.DocumentNode.SelectSingleNode("//div[@id='main']//script");
@@ -97,7 +98,7 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new();
-            var digestContent = contentGetter.GetContent(digest.DigestURL);
+            var digestContent = htlmContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             var digestSections = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'body')]/p[em[contains(text(),'First time')]]//following-sibling::div[hr]");

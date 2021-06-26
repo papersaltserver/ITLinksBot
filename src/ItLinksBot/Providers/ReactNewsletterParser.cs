@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using ItLinksBot.ContentGetters;
 using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
@@ -9,14 +10,14 @@ namespace ItLinksBot.Providers
 {
     class ReactNewsletterParser : IParser
     {
-        private readonly IContentGetter contentGetter;
+        private readonly IContentGetter<string> htlmContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "React Newsletter";
         readonly Uri baseUri = new("https://reactnewsletter.com/");
-        public ReactNewsletterParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
+        public ReactNewsletterParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            contentGetter = cg;
+            htlmContentGetter = cg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
@@ -33,7 +34,7 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = contentGetter.GetContent(provider.DigestURL);
+            var stringResult = htlmContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var allDigestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[contains(@class,'masonry')]//li/a");
@@ -65,7 +66,7 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new();
-            var digestContent = contentGetter.GetContent(digest.DigestURL);
+            var digestContent = htlmContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'Content_container')]/div/h3");

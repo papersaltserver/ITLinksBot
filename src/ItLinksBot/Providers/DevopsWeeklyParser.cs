@@ -7,21 +7,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using ItLinksBot.ContentGetters;
 
 namespace ItLinksBot.Providers
 {
     class DevopsWeeklyParser: IParser
     {
         public string CurrentProvider => "Devops Weekly";
-        private readonly IContentGetter contentGetter;
-        private readonly IContentNormalizer contentNormalizer;
+        private readonly IContentGetter<string> htmlContentGetter;
+        //private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         //readonly Uri baseUri = new("https://us2.campaign-archive.com");
 
-        public DevopsWeeklyParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
+        public DevopsWeeklyParser(IContentGetter<string> cg, /*IContentNormalizer cn,*/ ITextSanitizer ts)
         {
-            contentGetter = cg;
-            contentNormalizer = cn;
+            htmlContentGetter = cg;
+            //contentNormalizer = cn;
             textSanitizer = ts;
         }
 
@@ -38,7 +39,7 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = contentGetter.GetContent(provider.DigestURL);
+            var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//li[contains(@class,'campaign')]").Take(5);
@@ -74,7 +75,7 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new();
-            var digestContent = contentGetter.GetContent(digest.DigestURL);
+            var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linkMatches = Regex.Matches(digestContent, @"([^\<\>\r\n\=]+?)\<br\>\r\n\<br\>\r\n(.+?)\<br\>\r\n\<br\>\r\n\<br\>",RegexOptions.Singleline);
             for(int i=1; i < linkMatches.Count; i++)
             {
@@ -90,7 +91,7 @@ namespace ItLinksBot.Providers
                 }
                 else
                 {
-                    href = hrefSplitArray[hrefSplitArray.Length - 1];
+                    href = hrefSplitArray[^1];
                     for(int j = 0; j < hrefSplitArray.Length - 1; j++)
                     {
                         descriptionText += $"\n{hrefSplitArray[j]}";
@@ -105,40 +106,6 @@ namespace ItLinksBot.Providers
                     Digest = digest
                 });
             }
-            /*var linksHtml = new HtmlDocument();
-            linksHtml.LoadHtml(digestContent);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//*[@id='templateBody']//table//table//table//td[contains(@class,'mcnTextContent')][not(div)]");
-            for (int i = 0; i < linksInDigest.Count; i++)
-            {
-                HtmlNode link = linksInDigest[i];
-                var titleNode = link.SelectSingleNode("./ancestor::table[contains(@class,'mcnTextBlock')]/preceding-sibling::table[1]//div");
-                string title;
-                if (titleNode != null)
-                {
-                    title = titleNode.InnerText; //no titles
-                }
-                else
-                {
-                    title = "";
-                }
-                var href = digest.DigestURL + "#section-" + i;
-
-                //var contentNodes = link.SelectNodes("./table[not(contains(@class,'leading_item'))]");
-                string descriptionText;
-                var descriptionNode = HtmlNode.CreateNode("<div></div>");
-                descriptionNode.AppendChild(link);
-                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
-                descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-
-                links.Add(new Link
-                {
-                    URL = href,
-                    Title = title,
-                    Description = descriptionText,
-                    LinkOrder = i,
-                    Digest = digest
-                });
-            }*/
             return links;
         }
 

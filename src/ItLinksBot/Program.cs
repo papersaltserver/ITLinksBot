@@ -1,4 +1,7 @@
-﻿using ItLinksBot.Data;
+﻿using AutoMapper;
+using ItLinksBot.ContentGetters;
+using ItLinksBot.Data;
+using ItLinksBot.DTO;
 using ItLinksBot.Models;
 using ItLinksBot.Providers;
 using Microsoft.EntityFrameworkCore;
@@ -15,10 +18,12 @@ namespace ItLinksBot
     class Program
     {
         private static IServiceProvider serviceProvider;
+
         private static void ConfigureServices()
         {
             var services = new ServiceCollection();
-            services.AddScoped<IContentGetter, HtmlContentGetter>();
+            services.AddScoped<IContentGetter<string>, HtmlContentGetter>();
+            services.AddScoped<IContentGetter<byte[]>, BinContentGetter>();
             services.AddScoped<IContentNormalizer, DomNormlizer>();
             services.AddScoped<ITextSanitizer, TextSanitizer>();
             services.AddTransient<IParser, Oreily4ShortLinksParser>();
@@ -54,12 +59,16 @@ namespace ItLinksBot
             services.AddTransient<IParser, DevopsWeeklyParser>();
             services.AddTransient<IParser, CoreyTechParser>();
             services.AddTransient<IParser, DevOpsishParser>();
+            services.AddTransient<IParser, KubeWeeklyParser>();
+            services.AddAutoMapper(cfg =>
+            {
+                cfg.CreateMap<Photo, PhotoDTO>();
+            });
             serviceProvider = services.BuildServiceProvider();
         }
         static void Main()
         {
             ConfigureServices();
-
             IConfiguration config = new ConfigurationBuilder()
                 .AddJsonFile("./config/appsettings.json",
                              optional: true,
@@ -80,6 +89,7 @@ namespace ItLinksBot
             context.Database.Migrate();
             TelegramAPI bot = new(config["BotApiKey"]);
             IEnumerable<IParser> serviceCollection = serviceProvider.GetServices<IParser>();
+
             foreach (TelegramChannel tgChannel in context.TelegramChannels)
             {
                 context.Entry(tgChannel).Reference(c => c.Provider).Load();
@@ -139,7 +149,7 @@ namespace ItLinksBot
                             List<DigestPost> digestPost = QueueProcessor.AddDigestPost(tgChannel, digest, bot, serviceProvider);
                             context.DigestPosts.AddRange(digestPost);
 
-                            var links = context.Links.Where(l => l.Digest == digest).OrderBy(l => l.LinkOrder);
+                            var links = context.Links.Where(l => l.Digest == digest).OrderBy(l => l.LinkOrder).Include(l => l.Medias);
                             foreach (var link in links)
                             {
                                 List<LinkPost> linkPost = QueueProcessor.AddLinkPost(tgChannel, link, bot, serviceProvider);

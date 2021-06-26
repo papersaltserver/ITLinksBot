@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using ItLinksBot.ContentGetters;
 using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
@@ -11,21 +12,21 @@ namespace ItLinksBot.Providers
 {
     class Oreily4ShortLinksParser : IParser
     {
-        private readonly IContentGetter contentGetter;
+        private readonly IContentGetter<string> htlmContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "O'Reily Four Short Links";
         readonly Uri baseUri = new("https://www.oreilly.com/");
-        public Oreily4ShortLinksParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
+        public Oreily4ShortLinksParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            contentGetter = cg;
+            htlmContentGetter = cg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = contentGetter.GetContent(provider.DigestURL);
+            var stringResult = htlmContentGetter.GetContent(provider.DigestURL);
             XmlReader reader = XmlReader.Create(new StringReader(stringResult));
             var feed = SyndicationFeed.Load(reader);
             foreach (var feedItem in feed.Items.Take(50))

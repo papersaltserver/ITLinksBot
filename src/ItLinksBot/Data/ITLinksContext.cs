@@ -23,5 +23,7 @@ namespace ItLinksBot.Data
         public DbSet<TelegramChannel> TelegramChannels { get; set; }
         public DbSet<DigestPost> DigestPosts { get; set; }
         public DbSet<LinkPost> LinkPosts { get; set; }
+        public DbSet<Media> Medias { get; set; }
+        public DbSet<Photo> Photos { get; set; }
     }
 }
