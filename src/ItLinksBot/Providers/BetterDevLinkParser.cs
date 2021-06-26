@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using ItLinksBot.ContentGetters;
 using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
@@ -9,15 +10,15 @@ namespace ItLinksBot.Providers
 {
     class BetterDevLinkParser : IParser
     {
-        private readonly IContentGetter contentGetter;
+        private readonly IContentGetter<string> htmlContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "Better Dev Link";
         readonly Uri baseUri = new("https://betterdev.link/");
 
-        public BetterDevLinkParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
+        public BetterDevLinkParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            contentGetter = cg;
+            htmlContentGetter = cg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
@@ -34,7 +35,7 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = contentGetter.GetContent(provider.DigestURL);
+            var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//a[contains(@class,'finder-item-link')]").Take(50);
@@ -60,7 +61,7 @@ namespace ItLinksBot.Providers
 
         public Digest GetDigestDetails(Digest digest)
         {
-            var digestContent = contentGetter.GetContent(digest.DigestURL);
+            var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var digestDetails = new HtmlDocument();
             digestDetails.LoadHtml(digestContent);
             var digestDate = DateTime.Parse(HttpUtility.HtmlDecode(digestDetails.DocumentNode.SelectSingleNode("//h2[contains(@class,'subtitle')]").InnerText.Split('-')[1].Trim()));
@@ -90,7 +91,7 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new();
-            var digestContent = contentGetter.GetContent(digest.DigestURL);
+            var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'issue-link')]");

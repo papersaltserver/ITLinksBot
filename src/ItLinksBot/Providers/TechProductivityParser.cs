@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using ItLinksBot.ContentGetters;
 using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
@@ -9,15 +10,15 @@ namespace ItLinksBot.Providers
 {
     class TechProductivityParser : IParser
     {
-        private readonly IContentGetter contentGetter;
+        private readonly IContentGetter<string> htlmContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "Tech Productivity";
         readonly Uri baseUri = new("https://techproductivity.co/");
 
-        public TechProductivityParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
+        public TechProductivityParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            contentGetter = cg;
+            htlmContentGetter = cg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
@@ -34,7 +35,7 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = contentGetter.GetContent(provider.DigestURL);
+            var stringResult = htlmContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//li[contains(@class,'campaign')]").Take(5);
@@ -61,7 +62,7 @@ namespace ItLinksBot.Providers
 
         public Digest GetDigestDetails(Digest digest)
         {
-            var digestContent = contentGetter.GetContent(digest.DigestURL);
+            var digestContent = htlmContentGetter.GetContent(digest.DigestURL);
             var digestDetails = new HtmlDocument();
             digestDetails.LoadHtml(digestContent);
             var titleText = digestDetails.DocumentNode.SelectSingleNode("//div[contains(text(), 'Issue #')]").InnerText.Trim();
@@ -93,7 +94,7 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new();
-            var digestContent = contentGetter.GetContent(digest.DigestURL);
+            var digestContent = htlmContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("(//*[contains(@class,'outlook-group-fix')]//div[a or p])[position()>2 and position()<last()-2]/p/a|(//*[contains(@class,'outlook-group-fix')]//div[a or p])[position()>2 and position()<last()-2]/a");

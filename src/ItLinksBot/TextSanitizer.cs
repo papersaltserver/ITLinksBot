@@ -11,6 +11,9 @@ namespace ItLinksBot
             normalizedDescription = normalizedDescription.Replace("\t", "");
             normalizedDescription = normalizedDescription.Replace("\r", "");
             normalizedDescription = Regex.Replace(normalizedDescription, @"[ ]+\n", "\n", RegexOptions.Singleline);
+            normalizedDescription = Regex.Replace(normalizedDescription, @"(?:&nbsp;){2,}", "&nbsp;", RegexOptions.Singleline);
+            normalizedDescription = Regex.Replace(normalizedDescription, @"^&nbsp;", "", RegexOptions.Singleline);
+            normalizedDescription = Regex.Replace(normalizedDescription, @"\n&nbsp;", "\n", RegexOptions.Singleline);
             normalizedDescription = Regex.Replace(normalizedDescription, @"[\n]{3,}", "\n\n", RegexOptions.Singleline);
             return normalizedDescription;
         }

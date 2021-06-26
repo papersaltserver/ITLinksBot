@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using ItLinksBot.ContentGetters;
 using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
@@ -10,14 +11,14 @@ namespace ItLinksBot.Providers
 {
     public class TLDRparser : IParser
     {
-        private readonly IContentGetter contentGetter;
+        private readonly IContentGetter<string> htmlContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "TLDR";
         readonly Uri baseUri = new("https://tldr.tech/");
-        public TLDRparser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
+        public TLDRparser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            contentGetter = cg;
+            htmlContentGetter = cg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
@@ -34,10 +35,10 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = contentGetter.GetContent(provider.DigestURL);
+            var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            HtmlNodeCollection digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@id='doc-container']//div[contains(@class,'text-left')]/a");
+            HtmlNodeCollection digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@id='doc-container']//div[contains(@class,'text-left')]//a");
             var latestIssues = digestsInArchive.OrderByDescending(d => d.InnerText).Take(5);
             
             foreach (var digestNode in latestIssues)
@@ -63,7 +64,7 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new();
-            var digestContent = contentGetter.GetContent(digest.DigestURL);
+            var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@id='doc-container']//h3/../..");

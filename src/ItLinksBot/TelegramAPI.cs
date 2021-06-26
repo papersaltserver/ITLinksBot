@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using ItLinksBot.DTO;
+using ItLinksBot.TelegramDTO;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -39,6 +41,37 @@ namespace ItLinksBot
                             });
             StringContent content = new(json, Encoding.UTF8, "application/json");
             var resp = httpClient.PostAsync(urlString, content).Result;
+            //dumb Telegram API doesn't guarantee message order when it is sent in batches, 1s should be enough to complete posting
+            System.Threading.Thread.Sleep(1000);
+            return resp.Content.ReadAsStringAsync().Result;
+        }
+
+        public string SendMediaGroup(string Channel, ITelegramMedia[] telegramMedias, IMediaDTO[] files)
+        {
+            string urlString = "https://api.telegram.org/bot{0}/sendMediaGroup";
+            urlString = string.Format(urlString, _botKey);
+
+            MultipartFormDataContent form = new()
+            {
+                { new StringContent(Channel, Encoding.UTF8), "chat_id" }
+            };
+            
+            /*TelegramMediaGroup mediaGroup = new() { 
+                chat_id = Channel,
+                media = telegramMedias
+            };*/
+            string jsonMedia = JsonConvert.SerializeObject(telegramMedias, Formatting.None,
+                            new JsonSerializerSettings
+                            {
+                                NullValueHandling = NullValueHandling.Ignore
+                            });
+            form.Add(new StringContent(jsonMedia, Encoding.UTF8), "media");
+            foreach(var file in files)
+            {
+                form.Add(new ByteArrayContent(file.ContentBytes), file.FileName, file.FileName);
+            }
+            HttpClient httpClient = new();
+            var resp = httpClient.PostAsync(urlString, form).Result;
             //dumb Telegram API doesn't guarantee message order when it is sent in batches, 1s should be enough to complete posting
             System.Threading.Thread.Sleep(1000);
             return resp.Content.ReadAsStringAsync().Result;

@@ -13,6 +13,7 @@ namespace ItLinksBot.Models
         public string Title { get; set; }
         public string Description { get; set; }
         public int LinkOrder { get; set; }
+        public ICollection<Media> Medias { get; set; }
         public Digest Digest { get; set; }
     }
 

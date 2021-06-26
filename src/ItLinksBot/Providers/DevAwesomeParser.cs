@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using ItLinksBot.ContentGetters;
 using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
@@ -11,12 +12,12 @@ namespace ItLinksBot.Providers
     {
         private readonly Uri baseUri = new("https://devawesome.io/");
         public string CurrentProvider => "Dev Awesome";
-        private readonly IContentGetter contentGetter;
+        private readonly IContentGetter<string> htmlContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
-        public DevAwesomeParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
+        public DevAwesomeParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            contentGetter = cg;
+            htmlContentGetter = cg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
@@ -33,7 +34,7 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = contentGetter.GetContent(provider.DigestURL);
+            var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@id='issues-index']//li/p").Take(50);
@@ -64,13 +65,13 @@ namespace ItLinksBot.Providers
         {
             List<Link> links = new();
 
-            var preDigestContent = contentGetter.GetContent(digest.DigestURL);
+            var preDigestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var preIframe = new HtmlDocument();
             preIframe.LoadHtml(preDigestContent);
             var iframeNode = preIframe.DocumentNode.SelectSingleNode("//iframe[@id='newsletter-demo']");
             var realLink = iframeNode.GetAttributeValue("src", "Not found");
 
-            var digestContent = contentGetter.GetContent(realLink);
+            var digestContent = htmlContentGetter.GetContent(realLink);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//table[@class='container']//table//tr[position()>1]//a");

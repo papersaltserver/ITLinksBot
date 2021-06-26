@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using ItLinksBot.ContentGetters;
 using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
@@ -8,14 +9,14 @@ namespace ItLinksBot.Providers
 {
     class ProgrammingDigestParser : IParser
     {
-        private readonly IContentGetter contentGetter;
+        private readonly IContentGetter<string> htlmContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "programming digest";
         readonly Uri baseUri = new("https://programmingdigest.net/");
-        public ProgrammingDigestParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
+        public ProgrammingDigestParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            contentGetter = cg;
+            htlmContentGetter = cg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
@@ -33,7 +34,7 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = contentGetter.GetContent(provider.DigestURL);
+            var stringResult = htlmContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@class='main']/h3").Take(50);
@@ -70,7 +71,7 @@ namespace ItLinksBot.Providers
         {
             List<Link> links = new();
 
-            var digestContent = contentGetter.GetContent(digest.DigestURL);
+            var digestContent = htlmContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'digest-article')]");

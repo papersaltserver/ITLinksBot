@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using ItLinksBot.ContentGetters;
 using ItLinksBot.Models;
 using Serilog;
 using System;
@@ -9,15 +10,15 @@ namespace ItLinksBot.Providers
 {
     class DataIsPluralParser : IParser
     {
-        private readonly IContentGetter contentGetter;
+        private readonly IContentGetter<string> htmlContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "Data Is Plural";
         readonly Uri baseUri = new("https://www.data-is-plural.com/");
 
-        public DataIsPluralParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
+        public DataIsPluralParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            contentGetter = cg;
+            htmlContentGetter = cg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
@@ -34,7 +35,7 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = contentGetter.GetContent(provider.DigestURL);
+            var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//li[contains(@class,'edition')]").Take(5);
@@ -73,7 +74,7 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new();
-            var digestContent = contentGetter.GetContent(digest.DigestURL);
+            var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'edition-body')]//p");

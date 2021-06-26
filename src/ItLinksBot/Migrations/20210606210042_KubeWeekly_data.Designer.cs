@@ -3,18 +3,20 @@ using System;
 using ItLinksBot.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ItLinksBot.Migrations
 {
     [DbContext(typeof(ITLinksContext))]
-    partial class ITLinksContextModelSnapshot : ModelSnapshot
+    [Migration("20210606210042_KubeWeekly_data")]
+    partial class KubeWeekly_data
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "5.0.7");
+                .HasAnnotation("ProductVersion", "5.0.4");
 
             modelBuilder.Entity("ItLinksBot.Models.Digest", b =>
                 {
@@ -138,34 +140,6 @@ namespace ItLinksBot.Migrations
                     b.ToTable("LinkPost");
                 });
 
-            modelBuilder.Entity("ItLinksBot.Models.Media", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<byte[]>("ContentBytes")
-                        .HasColumnType("BLOB");
-
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("FileName")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("LinkID")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LinkID");
-
-                    b.ToTable("Medias");
-
-                    b.HasDiscriminator<string>("Discriminator").HasValue("Media");
-                });
-
             modelBuilder.Entity("ItLinksBot.Models.Provider", b =>
                 {
                     b.Property<int>("ProviderID")
@@ -203,13 +177,6 @@ namespace ItLinksBot.Migrations
                     b.HasIndex("ProviderID");
 
                     b.ToTable("TelegramChannels");
-                });
-
-            modelBuilder.Entity("ItLinksBot.Models.Photo", b =>
-                {
-                    b.HasBaseType("ItLinksBot.Models.Media");
-
-                    b.HasDiscriminator().HasValue("Photo");
                 });
 
             modelBuilder.Entity("ItLinksBot.Models.Digest", b =>
@@ -260,15 +227,6 @@ namespace ItLinksBot.Migrations
                     b.Navigation("Link");
                 });
 
-            modelBuilder.Entity("ItLinksBot.Models.Media", b =>
-                {
-                    b.HasOne("ItLinksBot.Models.Link", "Link")
-                        .WithMany("Medias")
-                        .HasForeignKey("LinkID");
-
-                    b.Navigation("Link");
-                });
-
             modelBuilder.Entity("ItLinksBot.Models.TelegramChannel", b =>
                 {
                     b.HasOne("ItLinksBot.Models.Provider", "Provider")
@@ -281,11 +239,6 @@ namespace ItLinksBot.Migrations
             modelBuilder.Entity("ItLinksBot.Models.Digest", b =>
                 {
                     b.Navigation("Links");
-                });
-
-            modelBuilder.Entity("ItLinksBot.Models.Link", b =>
-                {
-                    b.Navigation("Medias");
                 });
 
             modelBuilder.Entity("ItLinksBot.Models.TelegramChannel", b =>

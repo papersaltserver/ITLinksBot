@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using ItLinksBot.ContentGetters;
 using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
@@ -9,14 +10,14 @@ namespace ItLinksBot.Providers
     class DevOpsishParser : IParser
     {
         public string CurrentProvider => "DevOps'ish";
-        private readonly IContentGetter contentGetter;
+        private readonly IContentGetter<string> htmlContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         readonly Uri baseUri = new("https://devopsish.com");
 
-        public DevOpsishParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
+        public DevOpsishParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            contentGetter = cg;
+            htmlContentGetter = cg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
@@ -34,7 +35,7 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = contentGetter.GetContent(provider.DigestURL);
+            var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//article[contains(@class,'blog-post')]").Take(5);
@@ -62,7 +63,7 @@ namespace ItLinksBot.Providers
 
         public Digest GetDigestDetails(Digest digest)
         {
-            string digestContent = contentGetter.GetContent(digest.DigestURL);
+            string digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             HtmlDocument digestDocument = new();
             digestDocument.LoadHtml(digestContent);
             HtmlNodeCollection digestDescription = digestDocument.DocumentNode.SelectNodes("//article[contains(@class,'blog-post')]/p[preceding-sibling::div[contains(@class,'emailoctopus-form')] and count(preceding-sibling::h2)=0]");
@@ -87,7 +88,7 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new();
-            var digestContent = contentGetter.GetContent(digest.DigestURL);
+            var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//article[contains(@class,'blog-post')]/p[count(preceding-sibling::h2)>0 and count(preceding-sibling::hr)=0]");

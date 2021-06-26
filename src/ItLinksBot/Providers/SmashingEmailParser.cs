@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using ItLinksBot.ContentGetters;
 using ItLinksBot.Models;
 using Serilog;
 using System;
@@ -10,15 +11,15 @@ namespace ItLinksBot.Providers
 {
     class SmashingEmailParser : IParser
     {
-        private readonly IContentGetter contentGetter;
+        private readonly IContentGetter<string> htmlContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "Smashing Email Newsletter";
         readonly Uri baseUri = new("https://www.smashingmagazine.com/");
 
-        public SmashingEmailParser(IContentGetter cg, IContentNormalizer cn, ITextSanitizer ts)
+        public SmashingEmailParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            contentGetter = cg;
+            htmlContentGetter = cg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
@@ -35,7 +36,7 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = contentGetter.GetContent(provider.DigestURL);
+            var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//ol[contains(@class,'internal__toc--newsletter')]/li/a").Take(50);
@@ -57,7 +58,7 @@ namespace ItLinksBot.Providers
         }
         public Digest GetDigestDetails(Digest digest)
         {
-            var digestContent = contentGetter.GetContent(digest.DigestURL);
+            var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var digestDetails = new HtmlDocument();
             digestDetails.LoadHtml(digestContent);
             var digestName = digestDetails.DocumentNode.SelectSingleNode("//h1[contains(@class,'header--indent')]").InnerText.Replace("\n", " ");
@@ -90,7 +91,7 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new();
-            var digestContent = contentGetter.GetContent(digest.DigestURL);
+            var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'internal__content--newsletter')]/h3[not(@id='editorial')]");
