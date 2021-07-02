@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ItLinksBot.DTO;
 using ItLinksBot.TelegramDTO;
+using Newtonsoft.Json.Linq;
 
 namespace ItLinksBot_Tests
 {
@@ -31,7 +32,8 @@ namespace ItLinksBot_Tests
                 }
             };
             string Channel = "-1001380515454";
-            TelegramAPI bot = new("1442631783:AAE5BtVd_JLFTs0-r3hJZqACAKIwej-7Q5M");
+            var botKey = Environment.GetEnvironmentVariable("TELEGRAM_API_KEY");
+            TelegramAPI bot = new(botKey);
             var telegramMedias = new TelegramPhoto[] { 
                 new TelegramPhoto
                 {
@@ -44,7 +46,8 @@ namespace ItLinksBot_Tests
                 }
             };
             var resp = bot.SendMediaGroup(Channel, telegramMedias, dtoArray);
-            Assert.True(false, "This test needs an implementation");
+            var botPostObject = JObject.Parse(resp);
+            Assert.True((bool)botPostObject["ok"], "This test needs an implementation");
         }
     }
 }

@@ -7,6 +7,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ItLinksBot", "ItLinksBot\It
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ItLinksBot-UnitTest", "ItLinksBot-Test\ItLinksBot-UnitTest.csproj", "{092F284A-D559-45FF-B0BC-6D3CEE6C7646}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ExternalItems", "ExternalItems", "{97A244BE-4D77-495E-B063-5EF2F74B02CF}"
+	ProjectSection(SolutionItems) = preProject
+		..\.dockerignore = ..\.dockerignore
+		..\.gitignore = ..\.gitignore
+		..\Dockerfile = ..\Dockerfile
+		..\LICENSE = ..\LICENSE
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Github_Actions", "Github_Actions", "{E848FCA4-DDC7-44CD-9BE2-2039FAE67CFE}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\workflows\dotnet.yml = ..\.github\workflows\dotnet.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,6 +37,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E848FCA4-DDC7-44CD-9BE2-2039FAE67CFE} = {97A244BE-4D77-495E-B063-5EF2F74B02CF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {915DA986-930F-4B79-963F-B09900392F0F}
