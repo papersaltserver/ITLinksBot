@@ -27,4 +27,5 @@ jobs:
       working-directory: ./src
       env: # Or as an environment variable
         TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
+        TELEGRAM_CHANNELID: ${{ secrets.TELEGRAM_CHANNELID }}
       run: dotnet test --no-build --verbosity normal
