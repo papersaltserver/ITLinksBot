@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- File name extension must be .runsettings -->
+<RunSettings>
+  <RunConfiguration>
+    <EnvironmentVariables>
+      <!-- Fill with your data to run tests-->
+      <TELEGRAM_CHANNELID></TELEGRAM_CHANNELID>
+      <TELEGRAM_API_KEY></TELEGRAM_API_KEY>
+    </EnvironmentVariables>
+  </RunConfiguration>
+</RunSettings>
