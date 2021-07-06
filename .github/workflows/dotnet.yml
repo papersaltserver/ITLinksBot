@@ -2,7 +2,7 @@ name: .NET
 
 on:
   push:
-    branches: [ main ]
+    branches: [ '**' ]
   pull_request:
     branches: [ main ]
 
@@ -25,4 +25,7 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       working-directory: ./src
+      env: # Or as an environment variable
+        TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
+        TELEGRAM_CHANNELID: ${{ secrets.TELEGRAM_CHANNELID }}
       run: dotnet test --no-build --verbosity normal
