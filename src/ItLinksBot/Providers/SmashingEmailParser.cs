@@ -94,7 +94,7 @@ namespace ItLinksBot.Providers
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'internal__content--newsletter')]/h3[not(@id='editorial')]");
+            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'internal__content--newsletter')]//h3[not(@id='editorial')]");
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
