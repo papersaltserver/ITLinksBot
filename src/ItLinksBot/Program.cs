@@ -94,10 +94,22 @@ namespace ItLinksBot
             {
                 context.Entry(tgChannel).Reference(c => c.Provider).Load();
                 var inviteLink = QueueProcessor.GetChannelInviteLink(tgChannel, bot);
-                Console.WriteLine($"Name: {tgChannel.Provider.ProviderName}");
-                Console.WriteLine($"Original link: {tgChannel.Provider.DigestURL}");
-                Console.WriteLine($"Invite link: {inviteLink}\n");
+                Log.Information("Digest name: {providerName}", tgChannel.Provider.ProviderName);
+                Log.Information("Original digest link: {digestLink}", tgChannel.Provider.DigestURL);
+                Log.Information("Invite link: {inviteLink}\n", inviteLink);
             }
+
+            Log.Information("Checking if there are not updated digests posted");
+            foreach (var prov in context.Providers)
+            {
+                Digest lastIssue = context.Digests.OrderBy(p => p.DigestDay).LastOrDefault(p => p.Provider == prov);
+                if(prov.LatestIssue < lastIssue.DigestDay)
+                {
+                    Log.Information("Provider {providerName}, was updated to latest issue date {latestIssueDate}",prov.ProviderName, lastIssue.DigestDay);
+                    prov.LatestIssue = lastIssue.DigestDay;
+                }
+            }
+            context.SaveChanges();
             
             while (true)
             {
@@ -105,33 +117,44 @@ namespace ItLinksBot
                 foreach (Provider prov in activeProviders)
                 {
                     var parser = serviceCollection.FirstOrDefault(p => p.CurrentProvider == prov.ProviderName);
-                    List<Digest> digests = parser.GetCurrentDigests(prov);
-                    //saving digests to entities
-                    var newDigests = digests.Except(context.Digests, new DigestComparer());
-                    Log.Information($"Found {newDigests.Count()} new digests for newsletter {prov.ProviderName}");
-
-                    //getting and saving only new links to entities
-                    if (newDigests.Any())
+                    try
                     {
-                        int totalLinks = 0;
-                        foreach (var dgst in newDigests)
+                        List<Digest> digests = parser.GetCurrentDigests(prov);
+                        //saving digests to entities
+                        var newDigests = digests.Except(context.Digests, new DigestComparer());
+                        Log.Information($"Found {newDigests.Count()} new digests for newsletter {prov.ProviderName}");
+
+                        //getting and saving only new links to entities
+                        if (newDigests.Any())
                         {
-                            var fullDigest = dgst;
-                            //parse digests which do not have info in digest itself
-                            if (fullDigest.DigestDay == new DateTime(1900, 1, 1))
+                            int totalLinks = 0;
+                            foreach (var dgst in newDigests)
                             {
-                                fullDigest = parser.GetDigestDetails(dgst);
+                                var fullDigest = dgst;
+                                //parse digests which do not have info in digest itself
+                                if (fullDigest.DigestDay == new DateTime(1900, 1, 1))
+                                {
+                                    fullDigest = parser.GetDigestDetails(dgst);
+                                }
+                                List<Link> linksInCurrentDigest = parser.GetDigestLinks(fullDigest);
+                                var newLinks = linksInCurrentDigest.Except(context.Links, new LinkComparer());
+                                context.Digests.Add(fullDigest);
+                                context.Links.AddRange(newLinks);
+                                Log.Information($"Found {newLinks.Count()} new links for newsletter {prov.ProviderName} in digest {fullDigest.DigestName}");
+                                prov.LatestIssue = fullDigest.DigestDay;
+                                prov.SubsequentErrors = 0;
+                                //persisting entities change
+                                context.SaveChanges();
+                                totalLinks += 1 + linksInCurrentDigest.Count;
                             }
-                            List<Link> linksInCurrentDigest = parser.GetDigestLinks(fullDigest);
-                            var newLinks = linksInCurrentDigest.Except(context.Links, new LinkComparer());
-                            context.Digests.Add(fullDigest);
-                            context.Links.AddRange(newLinks);
-                            Log.Information($"Found {newLinks.Count()} new links for newsletter {prov.ProviderName} in digest {fullDigest.DigestName}");
-                            //persisting entities change
-                            context.SaveChanges();
-                            totalLinks += 1 + linksInCurrentDigest.Count;
+                            prov.LatestSync = DateTime.Now;
+                            Log.Information($"Total number of objects to post: {totalLinks}");
                         }
-                        Log.Information($"Total number of objects to post: {totalLinks}");
+                    }catch(Exception e)
+                    {
+                        Log.Error("Error procesing {digestName}, error:\n{exception}", prov.ProviderName, e);
+                        prov.SubsequentErrors++;
+                        continue;
                     }
                 }
 
