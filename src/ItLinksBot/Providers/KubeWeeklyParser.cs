@@ -104,8 +104,12 @@ namespace ItLinksBot.Providers
             {
                 HtmlNode link = linksInDigest[i];
                 var titleNode = link.SelectSingleNode(".//h2[1]");
-                string title = textSanitizer.Sanitize(titleNode.InnerText.Trim());
-
+                string title = "";
+                if(titleNode != null)
+                {
+                    title = textSanitizer.Sanitize(titleNode.InnerText.Trim());
+                }
+                
                 //HtmlNode hrefNode = link.SelectSingleNode(".//a[1]");
                 var href = $"{digest.DigestURL}#section{i}";
                 //href = new Uri(baseUri, href).AbsoluteUri;
