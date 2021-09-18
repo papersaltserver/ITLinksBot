@@ -60,6 +60,7 @@ namespace ItLinksBot
             services.AddTransient<IParser, CoreyTechParser>();
             services.AddTransient<IParser, DevOpsishParser>();
             services.AddTransient<IParser, KubeWeeklyParser>();
+            services.AddTransient<IParser, HowCuriousParser>();
             services.AddAutoMapper(cfg =>
             {
                 cfg.CreateMap<Photo, PhotoDTO>();
@@ -103,7 +104,7 @@ namespace ItLinksBot
             foreach (var prov in context.Providers)
             {
                 Digest lastIssue = context.Digests.OrderBy(p => p.DigestDay).LastOrDefault(p => p.Provider == prov);
-                if(prov.LatestIssue < lastIssue.DigestDay)
+                if(lastIssue != null && prov.LatestIssue < lastIssue.DigestDay)
                 {
                     Log.Information("Provider {providerName}, was updated to latest issue date {latestIssueDate}",prov.ProviderName, lastIssue.DigestDay);
                     prov.LatestIssue = lastIssue.DigestDay;
