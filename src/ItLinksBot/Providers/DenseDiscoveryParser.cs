@@ -86,7 +86,9 @@ namespace ItLinksBot.Providers
             //very dirty hack to get date, may be broken any time, no way to get something more suitable so far
             HttpClient imgClient = new();
             imgClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75");
-            var imgContent = imgClient.GetAsync(realLink + "head.jpg").Result;
+            var baseUri = new Uri(realLink);
+            var headImageLink = new Uri(baseUri, "head.jpg").AbsoluteUri;
+            var imgContent = imgClient.GetAsync(headImageLink).Result;
             var fileModifiedDate = imgContent.Content.Headers.LastModified.Value.DateTime;
 
             var currentDigest = new Digest
@@ -110,6 +112,7 @@ namespace ItLinksBot.Providers
             stubDocument.LoadHtml(stubContent);
             HtmlNode iframeNode = stubDocument.DocumentNode.SelectSingleNode("//iframe[@id='iframe']");
             string realLink = iframeNode.GetAttributeValue("src", "not found");
+            var baseUri = new Uri(realLink);
 
             //getting real content
             string digestContent = htmlContentGetter.GetContent(realLink);
@@ -144,10 +147,11 @@ namespace ItLinksBot.Providers
             string worthyFiveTitle = worthyFiveNode.SelectSingleNode(".//table[1]//p[2]").InnerText;
             HtmlNode worthyFiveDescNode = worthyFiveNode.SelectSingleNode(".//table[2]");
             worthyFiveDescNode = contentNormalizer.NormalizeDom(worthyFiveDescNode);
-            string worthyFiveDescText = realLink + "worthy-five.jpg\n" + textSanitizer.Sanitize(worthyFiveDescNode.InnerHtml.Trim());
+            var worthyFiveImageLink = new Uri(baseUri, "worthy-five.jpg").AbsoluteUri;
+            string worthyFiveDescText = worthyFiveImageLink + "\n" + textSanitizer.Sanitize(worthyFiveDescNode.InnerHtml.Trim());
             links.Add(new Link
             {
-                URL = realLink + "worthy-five.jpg",
+                URL = worthyFiveImageLink,
                 Title = worthyFiveTitle,
                 Description = worthyFiveDescText,
                 LinkOrder = linkPosition,
@@ -242,9 +246,11 @@ namespace ItLinksBot.Providers
 
             }
             //The Week in a GIF
+            
+            var gifImageLink = new Uri(baseUri, "gif.gif").AbsoluteUri;
             links.Add(new Link
             {
-                URL = realLink + "gif.gif",
+                URL = gifImageLink,
                 Title = "The Week in a GIF",
                 Description = "",
                 LinkOrder = linkPosition,

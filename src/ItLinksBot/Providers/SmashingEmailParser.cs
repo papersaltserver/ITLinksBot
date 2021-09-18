@@ -61,14 +61,19 @@ namespace ItLinksBot.Providers
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var digestDetails = new HtmlDocument();
             digestDetails.LoadHtml(digestContent);
-            var digestName = digestDetails.DocumentNode.SelectSingleNode("//h1[contains(@class,'header--indent')]").InnerText.Replace("\n", " ");
+            var digestName = digestDetails.DocumentNode.SelectSingleNode("//h1[contains(@class,'header--indent')]").InnerText.Replace("\n", " ").Trim();
             var digestDate = DateTime.Parse(HttpUtility.HtmlDecode(digestDetails.DocumentNode.SelectSingleNode("//span[contains(@class,'header__title-desc')]").InnerText));
 
-            var sibling = digestDetails.DocumentNode.SelectSingleNode("//h3[@id='editorial']").NextSibling;
+            var editorialNode = digestDetails.DocumentNode.SelectSingleNode("//h3[@id='editorial']");
+            if(editorialNode == null)
+            {
+                editorialNode = digestDetails.DocumentNode.SelectSingleNode("//h3[text()='Editorial']");
+            }
+            var sibling = editorialNode.NextSibling;
             var descriptionNode = HtmlNode.CreateNode("<div></div>");
 
             //copying nodes related to the current link to a new abstract node
-            while (sibling != null && sibling.Name.ToUpper() != "H3" && sibling.Name.ToUpper() != "OL")
+            while (sibling != null && sibling.Name.ToUpper() != "H3" && sibling.Name.ToUpper() != "H2" && sibling.Name.ToUpper() != "OL")
             {
                 descriptionNode.AppendChild(sibling.Clone());
                 sibling = sibling.NextSibling;
@@ -94,7 +99,7 @@ namespace ItLinksBot.Providers
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'internal__content--newsletter')]//h3[not(@id='editorial')]");
+            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'internal__content--newsletter')]//h3[not(@id='editorial') and not(text()='Editorial')]|//div[contains(@class,'internal__content--newsletter')]//h2[not(@id='editorial') and not(text()='Editorial')]");
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];

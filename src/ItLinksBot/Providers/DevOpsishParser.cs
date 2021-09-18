@@ -1,6 +1,7 @@
 ﻿using HtmlAgilityPack;
 using ItLinksBot.ContentGetters;
 using ItLinksBot.Models;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -68,12 +69,16 @@ namespace ItLinksBot.Providers
             digestDocument.LoadHtml(digestContent);
             HtmlNodeCollection digestDescription = digestDocument.DocumentNode.SelectNodes("//article[contains(@class,'blog-post')]/p[preceding-sibling::div[contains(@class,'emailoctopus-form')] and count(preceding-sibling::h2)=0]");
             HtmlNode descriptionNode = HtmlNode.CreateNode("<div></div>");
-            foreach (HtmlNode digestParagraph in digestDescription)
+            string descriptionText = "";
+            if (digestDescription != null)
             {
-                descriptionNode.AppendChild(digestParagraph.Clone());
+                foreach (HtmlNode digestParagraph in digestDescription)
+                {
+                    descriptionNode.AppendChild(digestParagraph.Clone());
+                }
+                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
+                descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
             }
-            descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
-            var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
             var dateNode = digestDocument.DocumentNode.SelectSingleNode("//article[contains(@class,'blog-post')]//time");
             string dateText = dateNode.GetAttributeValue("datetime", "Not found");
@@ -98,6 +103,11 @@ namespace ItLinksBot.Providers
                 string title = ""; //no separate titles in devopsish
 
                 HtmlNode hrefNode = link.SelectSingleNode(".//a[1]");
+                if(hrefNode == null)
+                {
+                    Log.Warning("Unable to find <a> element in the following block:\n{href}\n", link.InnerText);
+                    continue;
+                }
                 var href = hrefNode.GetAttributeValue("href", "Not found");
                 href = new Uri(baseUri, href).AbsoluteUri;
                 href = Utils.UnshortenLink(href);
