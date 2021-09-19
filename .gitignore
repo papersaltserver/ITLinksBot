@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # .runsettings exclude from git as we're storing secrets there
 .runsettings
+
+# ItLinksBot.service exclude from git as we're storing installation specific info there
+ItLinksBot.service
