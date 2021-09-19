@@ -17,6 +17,7 @@ namespace ItLinksBot
         public static string UnshortenLink(string linkUrl)
         {
             string[] exceptionList = new string[] { "techcrunch.com", "www.bloomberg.com", "www.washingtonpost.com", "www.youtube.com" };
+            string[] nonBrowserList = new string[] { "t.co" };
             HttpWebRequest req;
             CookieContainer cookieContainer = new();
             try
@@ -41,6 +42,10 @@ namespace ItLinksBot
             {
                 try
                 {
+                    if (nonBrowserList.Contains(req.RequestUri.Host))
+                    {
+                        req.UserAgent = ".NET unshortening client v0.01";
+                    }
                     var resp = (HttpWebResponse)req.GetResponse();
                     if (resp.StatusCode == HttpStatusCode.Ambiguous ||
                     resp.StatusCode == HttpStatusCode.MovedPermanently ||

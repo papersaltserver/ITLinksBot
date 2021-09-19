@@ -34,6 +34,7 @@ namespace ItLinksBot_Tests
         [InlineData("https://javascriptweekly.com/link/105046/web", "https://www.jackfranklin.co.uk/blog/comparing-svelte-and-react-javascript/")]
         [InlineData("", "")]
         [InlineData("xyz", "xyz")]
+        [InlineData("https://t.co/4vrH4JvfNj", "https://www.ft.com/content/cc3e3854-5f76-4422-a970-9010c3bc732b")]
         public void UnshortenLinkTest(string url, string realUrl)
         {
             Assert.Equal(realUrl, Utils.UnshortenLink(url));
