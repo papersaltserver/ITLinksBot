@@ -38,7 +38,7 @@ jobs:
       env:
         TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
         TELEGRAM_CHANNELID: ${{ secrets.TELEGRAM_CHANNELID }}
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test --no-build --verbosity normal ItLinksBot.sln
     # This is the a separate action that sets up buildx runner
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
