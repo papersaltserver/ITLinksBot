@@ -154,7 +154,7 @@ namespace ItLinksBot
                             Log.Information($"Total number of objects to post: {totalLinks}");
                         }
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         Log.Error("Error procesing {digestName}, error:\n{exception}", prov.ProviderName, e);
                         prov.SubsequentErrors++;

@@ -104,7 +104,7 @@ namespace ItLinksBot.Providers
                 HtmlNode link = linksInDigest[i];
                 var titleNode = link.SelectSingleNode(".//h2[1]");
                 string title = "";
-                if(titleNode != null)
+                if (titleNode != null)
                 {
                     title = textSanitizer.Sanitize(titleNode.InnerText.Trim());
                 }
@@ -138,7 +138,8 @@ namespace ItLinksBot.Providers
                 string imgHref = imgNode.GetAttributeValue("src", "Not found");
                 string imgName = HttpUtility.UrlDecode(imgHref.Split('/').Last().Split('?').First());
                 byte[] imgFile = binContentGetter.GetContent(imgHref);
-                var currentImg = new Photo {
+                var currentImg = new Photo
+                {
                     ContentBytes = imgFile,
                     FileName = imgName
                 };
@@ -148,7 +149,7 @@ namespace ItLinksBot.Providers
                     URL = href,
                     Title = "",//no title for tweets
                     Description = "",//no description for tweets
-                    LinkOrder = i+globalLinkCounter,
+                    LinkOrder = i + globalLinkCounter,
                     Digest = digest,
                     Medias = new List<Media> { currentImg }
                 });

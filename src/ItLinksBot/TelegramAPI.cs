@@ -57,14 +57,14 @@ namespace ItLinksBot
             };
 
             string jsonMedia = JsonConvert.SerializeObject(
-                telegramMedias, 
+                telegramMedias,
                 Formatting.None,
                 new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Ignore
                 });
             form.Add(new StringContent(jsonMedia, Encoding.UTF8), "media");
-            foreach(var file in files)
+            foreach (var file in files)
             {
                 form.Add(new ByteArrayContent(file.ContentBytes), file.FileName, file.FileName);
             }

@@ -14,10 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Github_Actions", "Github_Ac
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B522177D-DA61-485D-875C-3C7DB6763FA1}"
 	ProjectSection(SolutionItems) = preProject
-		..\.dockerfilelintrc = ..\.dockerfilelintrc
 		..\.dockerignore = ..\.dockerignore
 		..\.gitignore = ..\.gitignore
-		..\.jscpd.json = ..\.jscpd.json
 		.runsettings = .runsettings
 		.runsettings.default = .runsettings.default
 		ItLinksBot.service = ItLinksBot.service
@@ -26,6 +24,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{C136B038-001C-4DCA-98D4-3761BF63B4B8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{77625B89-B89A-4CD3-81DD-D0217A24C7ED}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\workflows\dotnet.yml = ..\.github\workflows\dotnet.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "linters", "linters", "{79ECAF70-3E3F-490F-AC02-9EC4B00ADE84}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\linters\.dockerfilelintrc = ..\.github\linters\.dockerfilelintrc
+		..\.github\linters\.jscpd.json = ..\.github\linters\.jscpd.json
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +60,8 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E848FCA4-DDC7-44CD-9BE2-2039FAE67CFE} = {B522177D-DA61-485D-875C-3C7DB6763FA1}
+		{77625B89-B89A-4CD3-81DD-D0217A24C7ED} = {E848FCA4-DDC7-44CD-9BE2-2039FAE67CFE}
+		{79ECAF70-3E3F-490F-AC02-9EC4B00ADE84} = {E848FCA4-DDC7-44CD-9BE2-2039FAE67CFE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {915DA986-930F-4B79-963F-B09900392F0F}
