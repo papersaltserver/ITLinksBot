@@ -243,10 +243,9 @@ namespace ItLinksBot.Providers
                     });
                     linkPosition++;
                 }
-
             }
             //The Week in a GIF
-            
+
             var gifImageLink = new Uri(baseUri, "gif.gif").AbsoluteUri;
             links.Add(new Link
             {

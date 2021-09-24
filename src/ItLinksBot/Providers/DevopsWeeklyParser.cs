@@ -11,7 +11,7 @@ using ItLinksBot.ContentGetters;
 
 namespace ItLinksBot.Providers
 {
-    class DevopsWeeklyParser: IParser
+    class DevopsWeeklyParser : IParser
     {
         public string CurrentProvider => "Devops Weekly";
         private readonly IContentGetter<string> htmlContentGetter;
@@ -76,8 +76,8 @@ namespace ItLinksBot.Providers
         {
             List<Link> links = new();
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
-            var linkMatches = Regex.Matches(digestContent, @"([^\<\>\r\n\=]+?)\<br\>\r\n\<br\>\r\n(.+?)\<br\>\r\n\<br\>\r\n\<br\>",RegexOptions.Singleline);
-            for(int i=1; i < linkMatches.Count; i++)
+            var linkMatches = Regex.Matches(digestContent, @"([^\<\>\r\n\=]+?)\<br\>\r\n\<br\>\r\n(.+?)\<br\>\r\n\<br\>\r\n\<br\>", RegexOptions.Singleline);
+            for (int i = 1; i < linkMatches.Count; i++)
             {
                 string title = "";
                 string description = linkMatches[i].Groups[1].Value;
@@ -85,14 +85,14 @@ namespace ItLinksBot.Providers
                 string hrefText = linkMatches[i].Groups[2].Value;
                 string[] hrefSplitArray = hrefText.Split(new string[] { "<br>" }, StringSplitOptions.None);
                 string href;
-                if(hrefSplitArray.Length == 1)
+                if (hrefSplitArray.Length == 1)
                 {
                     href = Utils.UnshortenLink(hrefSplitArray[0].Trim());
                 }
                 else
                 {
                     href = hrefSplitArray[^1];
-                    for(int j = 0; j < hrefSplitArray.Length - 1; j++)
+                    for (int j = 0; j < hrefSplitArray.Length - 1; j++)
                     {
                         descriptionText += $"\n{hrefSplitArray[j]}";
                     }

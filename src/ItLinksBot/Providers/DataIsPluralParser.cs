@@ -85,7 +85,7 @@ namespace ItLinksBot.Providers
                 var href = link.SelectSingleNode("./a[1]")?.GetAttributeValue("href", "Not found");
                 if (href == null)
                 {
-                    Log.Warning("Data is Plural digest {digestUrl} has a paragraph without link {p}",digest.DigestURL, link.InnerText);
+                    Log.Warning("Data is Plural digest {digestUrl} has a paragraph without link {p}", digest.DigestURL, link.InnerText);
                     continue;
                 }
                 /*if (!href.Contains("://") && href.Contains("/"))

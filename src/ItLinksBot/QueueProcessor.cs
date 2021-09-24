@@ -59,11 +59,13 @@ namespace ItLinksBot
                 {
                     messageChunks.Add(DecorateTelegramString(message.Substring(0, tgCaptionSizeLimit - closestBreak), true, false));
                     splitPosition = tgCaptionSizeLimit - closestBreak;
-                }else if (closestDot >= 0)
+                }
+                else if (closestDot >= 0)
                 {
                     messageChunks.Add(DecorateTelegramString(message.Substring(0, tgCaptionSizeLimit - closestDot), true, false));
                     splitPosition = tgCaptionSizeLimit - closestDot;
-                }else if (closestSpace >= 0)
+                }
+                else if (closestSpace >= 0)
                 {
                     messageChunks.Add(DecorateTelegramString(message.Substring(0, tgCaptionSizeLimit - closestSpace), true, false));
                     splitPosition = tgCaptionSizeLimit - closestSpace;
@@ -437,7 +439,7 @@ namespace ItLinksBot
             if (link.Medias != null && link.Medias.Any())
             {
                 messageChunks = SplitCaptionForTg(message);
-                while(numberPostedChunks < 1)
+                while (numberPostedChunks < 1)
                 {
                     string chunk = messageChunks[0];
                     var mediasToPost = link.Medias;
@@ -449,19 +451,22 @@ namespace ItLinksBot
                         throw new NotImplementedException();
                     }
                     int mediaIndex = 0;
-                    foreach(var m in mediasToPost)
+                    foreach (var m in mediasToPost)
                     {
                         string currentCaption;
-                        if (mediaIndex == 0) {
+                        if (mediaIndex == 0)
+                        {
                             currentCaption = chunk;
                         }
                         else
                         {
                             currentCaption = "";
                         }
-                        switch (m.GetType().Name) {
+                        switch (m.GetType().Name)
+                        {
                             case "Photo":
-                                telegramMedia[mediaIndex] = new TelegramPhoto {
+                                telegramMedia[mediaIndex] = new TelegramPhoto
+                                {
                                     caption = currentCaption,
                                     media = $"attach://{m.FileName}"
                                 };
@@ -477,7 +482,7 @@ namespace ItLinksBot
                     var mediaGroupPostObject = JObject.Parse(mediaGroupPostResult);
                     if ((bool)mediaGroupPostObject["ok"])
                     {
-                        foreach(var r in mediaGroupPostObject["result"])
+                        foreach (var r in mediaGroupPostObject["result"])
                         {
                             string chatId = ((string)r["chat"]["id"]).Replace("-100", "");
                             string messageId = (string)r["message_id"];
@@ -491,7 +496,6 @@ namespace ItLinksBot
                                 PostText = (string)r["caption"]
                             });
                         }
-                        
                         numberPostedChunks++;
                     }
                     else if ((int)mediaGroupPostObject["error_code"] == 429)
@@ -511,7 +515,7 @@ namespace ItLinksBot
             {
                 messageChunks = SplitMessageForTg(message);
             }
-            
+
             while (numberPostedChunks < messageChunks.Count)
             {
                 string chunk = messageChunks[numberPostedChunks];

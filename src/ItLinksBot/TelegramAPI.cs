@@ -55,16 +55,14 @@ namespace ItLinksBot
             {
                 { new StringContent(Channel, Encoding.UTF8), "chat_id" }
             };
-            
-            /*TelegramMediaGroup mediaGroup = new() { 
-                chat_id = Channel,
-                media = telegramMedias
-            };*/
-            string jsonMedia = JsonConvert.SerializeObject(telegramMedias, Formatting.None,
-                            new JsonSerializerSettings
-                            {
-                                NullValueHandling = NullValueHandling.Ignore
-                            });
+
+            string jsonMedia = JsonConvert.SerializeObject(
+                telegramMedias, 
+                Formatting.None,
+                new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                });
             form.Add(new StringContent(jsonMedia, Encoding.UTF8), "media");
             foreach(var file in files)
             {

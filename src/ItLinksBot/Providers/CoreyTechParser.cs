@@ -78,7 +78,7 @@ namespace ItLinksBot.Providers
                 HtmlNode link = linksInDigest[i];
                 string title = ""; //no titles in this digest
                 var hrefNode = link.SelectSingleNode(".//a");
-                if(hrefNode == null)
+                if (hrefNode == null)
                 {
                     continue;
                 }

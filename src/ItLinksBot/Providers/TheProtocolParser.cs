@@ -92,8 +92,7 @@ namespace ItLinksBot.Providers
                     title = "";
                 }
                 var href = digest.DigestURL + "#section-" + i;
-                
-                //var contentNodes = link.SelectNodes("./table[not(contains(@class,'leading_item'))]");
+
                 string descriptionText;
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
                 descriptionNode.AppendChild(link);

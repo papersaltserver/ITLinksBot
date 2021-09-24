@@ -37,18 +37,18 @@ namespace ItLinksBot.Providers
             {
                 linkCategory = $"[{link.Category}]";
             }
-                
+
             if (link.Medias == null || !link.Medias.Any())
             {
-                if(Regex.IsMatch(link.URL, @"^.*#section\d+$"))
+                if (Regex.IsMatch(link.URL, @"^.*#section\d+$"))
                 {
                     return $"<strong>{linkCategory}{link.Title}</strong>\n\n{link.Description}";
                 }
                 else
-                { 
+                {
                     return $"<strong>{linkCategory}{link.Title}</strong>\n\n{link.Description}\n{link.URL}";
                 }
-                
+
             }
             else
             {
@@ -138,7 +138,7 @@ namespace ItLinksBot.Providers
 
                 //detecting if this is an Image node
                 HtmlNode firstChild = link.SelectSingleNode("./td/*[1]");
-                if(firstChild.Name.ToUpper() == "IMG")
+                if (firstChild.Name.ToUpper() == "IMG")
                 {
                     string imgHref = firstChild.GetAttributeValue("src", "Not found");
                     string imgName = HttpUtility.UrlDecode(imgHref.Split('/').Last().Split('?').First());
