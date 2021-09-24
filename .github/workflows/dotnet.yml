@@ -13,19 +13,35 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/cache@v2
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+    - name: Run .NET Code Analysis
+      uses: dotnet/code-analysis@v1
+      id: code-analysis
+      with:
+        solution: ./src/MySolution.sln
+        build-breaking: true
+        all-categories: all
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.x
     - name: Restore dependencies
       working-directory: ./src
-      run: dotnet restore
+      run: dotnet restore --locked-mode
     - name: Build
       working-directory: ./src
       run: dotnet build --no-restore
     - name: Test
       working-directory: ./src
-      env: # Or as an environment variable
+      env:
         TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
         TELEGRAM_CHANNELID: ${{ secrets.TELEGRAM_CHANNELID }}
       run: dotnet test --no-build --verbosity normal
+    - name: Build docker
+      run: docker-compose build
+      

@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using Serilog;
+using Serilog.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -74,6 +75,7 @@ namespace ItLinksBot
                 .AddJsonFile("./config/appsettings.json",
                              optional: true,
                              reloadOnChange: true)
+                .AddEnvironmentVariables(prefix: "LINKSBOT_")
                 .Build();
 
             Log.Logger = new LoggerConfiguration()
