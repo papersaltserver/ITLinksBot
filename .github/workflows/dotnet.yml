@@ -19,13 +19,6 @@ jobs:
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
         restore-keys: |
           ${{ runner.os }}-nuget-
-    - name: Run .NET Code Analysis
-      uses: dotnet/code-analysis
-      id: code-analysis
-      with:
-        solution: ./src/MySolution.sln
-        build-breaking: true
-        all-categories: all
     - name: Lint Code Base
       uses: github/super-linter@v4
     - name: Setup .NET
