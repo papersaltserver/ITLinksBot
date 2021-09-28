@@ -65,6 +65,16 @@ jobs:
         tags: papersaltserver/itlinksbot:latest
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
+    - name: executing remote ssh commands using ssh key
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.OCI_HOST }}
+        username: ${{ secrets.OCI_USERNAME }}
+        key: ${{ secrets.OCI_KEY }}
+        script: |
+          sudo /usr/bin/docker pull papersaltserver/itlinksbot:latest
+          sudo /usr/bin/docker rm -f oci-linksbot
+          sudo /usr/bin/docker run -d --restart unless-stopped -v /home/ubuntu/net5.0/db/:/app/db --env-file /home/ubuntu/net5.0/env.list --name oci-linksbot papersaltserver/itlinksbot:latest
     # This ugly bit is necessary if you don't want your cache to grow forever
     # till it hits GitHub's limit of 5GB.
     # Temp fix
