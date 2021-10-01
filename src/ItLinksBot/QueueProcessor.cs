@@ -137,7 +137,7 @@ namespace ItLinksBot
             }
             return messageChunks;
         }
-        
+
         public static List<DigestPost> AddDigestPost(TelegramChannel tgChannel, Digest digest, TelegramAPI bot, IServiceProvider serviceProvider)
         {
             IEnumerable<IParser> serviceCollection = serviceProvider.GetServices<IParser>();
