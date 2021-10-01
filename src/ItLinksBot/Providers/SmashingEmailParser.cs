@@ -122,7 +122,7 @@ namespace ItLinksBot.Providers
                 {
                     Log.Warning("SmashingMagazin section {title} in digest {url} doesn't have links", title, digest.DigestURL);
                     continue;
-                };
+                }
                 if (!href.Contains("://") && href.Contains("/"))
                 {
                     href = (new Uri(baseUri, href)).AbsoluteUri;

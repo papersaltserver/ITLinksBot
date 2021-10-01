@@ -41,7 +41,6 @@ namespace ItLinksBot.Providers
             var digestsInArchive = allDigestsInArchive.OrderByDescending(l => DateTime.Parse(l.SelectSingleNode(".//p[contains(@class,'text-gray')]").InnerText, new CultureInfo("en-US", false))).Take(10);
             foreach (var digestNode in digestsInArchive)
             {
-                //var relativePathNode = digestNode.SelectSingleNode(".//a");
                 var digestUrl = new Uri(baseUri, digestNode.GetAttributeValue("href", "Not found"));
                 var digestDate = DateTime.Parse(digestNode.SelectSingleNode(".//p[contains(@class,'text-gray')]").InnerText, new CultureInfo("en-US", false));
                 var digestDescriptionNode = contentNormalizer.NormalizeDom(digestNode.SelectSingleNode("./p"));

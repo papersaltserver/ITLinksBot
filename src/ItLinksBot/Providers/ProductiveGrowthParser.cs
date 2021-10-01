@@ -76,7 +76,7 @@ namespace ItLinksBot.Providers
             //copying nodes related to the current link to a new abstract node
             while (sibling != null
                 && sibling.Name.ToUpper() != "H3"
-                && !sibling.ChildNodes.Where(ch => ch.Name.ToUpper() == "FORM" || ch.Name.ToUpper() == "HR").Any()
+                && !sibling.ChildNodes.Any(ch => ch.Name.ToUpper() == "FORM" || ch.Name.ToUpper() == "HR")
                 && !sibling.InnerText.ToUpper().Contains("HAVE FEEDBACK?"))
             {
                 descriptionNode.AppendChild(sibling.Clone());
@@ -114,7 +114,7 @@ namespace ItLinksBot.Providers
             }
             for (int i = 0; i < digestSections.Count; i++)
             {
-                HtmlNode section = (HtmlNode)digestSections[i];
+                HtmlNode section = digestSections[i];
                 HtmlNode sibling;
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
                 if (digestSections.Count == 1)
@@ -125,7 +125,7 @@ namespace ItLinksBot.Providers
                 else
                 {
                     sibling = section.NextSibling;
-                    while (sibling != null && (!(sibling.Name.ToUpper() == "DIV") || !sibling.ChildNodes.Where(ch => ch.Name.ToUpper() == "HR").Any()))
+                    while (sibling != null && (sibling.Name.ToUpper() != "DIV" || !sibling.ChildNodes.Any(ch => ch.Name.ToUpper() == "HR")))
                     {
                         descriptionNode.AppendChild(sibling.Clone());
                         sibling = sibling.NextSibling;

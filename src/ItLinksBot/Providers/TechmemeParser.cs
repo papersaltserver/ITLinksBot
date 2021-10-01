@@ -48,7 +48,6 @@ namespace ItLinksBot.Providers
                 var hrefNode = digestNode.SelectSingleNode("./a");
                 var digestHref = hrefNode.GetAttributeValue("href", "Not found");
                 var digestName = hrefNode.InnerText.Trim();
-                //var digestUrl = new Uri(baseUri, digestHref);
                 var fullHref = Utils.UnshortenLink(digestHref);
 
                 var currentDigest = new Digest

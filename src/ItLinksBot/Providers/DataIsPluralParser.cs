@@ -50,8 +50,6 @@ namespace ItLinksBot.Providers
                 var digestName = digestNameNode.InnerText.Trim();
                 var digestHref = linkNode.GetAttributeValue("href", "Not found");
                 var digestUrl = new Uri(baseUri, digestHref);
-                //var descriptionNode = digestNode.SelectSingleNode("./p[contains(@class,'message-snippet')]");
-                //var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
                 var currentDigest = new Digest
                 {
@@ -88,12 +86,7 @@ namespace ItLinksBot.Providers
                     Log.Warning("Data is Plural digest {digestUrl} has a paragraph without link {p}", digest.DigestURL, link.InnerText);
                     continue;
                 }
-                /*if (!href.Contains("://") && href.Contains("/"))
-                {
-                    var digestUrl = new Uri(digest.DigestURL);
-                    var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
-                    href = (new Uri(digestBase, href)).AbsoluteUri;
-                }*/
+
                 var linkUrl = new Uri(baseUri, href);
                 href = Utils.UnshortenLink(linkUrl.AbsoluteUri);
 

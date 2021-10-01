@@ -17,22 +17,16 @@ namespace ItLinksBot
     {
         private static string DecorateTelegramString(string message, bool isFirst, bool isLast)
         {
-            if (isFirst && isLast)
+            StringBuilder tempMessage = new(message);
+            if (!isFirst)
             {
-                return message;
+                tempMessage.Insert(0, "[...]");
             }
-            else if (isFirst && !isLast)
+            if (!isLast)
             {
-                return message + "[...]";
+                tempMessage.Append("[...]");
             }
-            else if (!isFirst && !isLast)
-            {
-                return "[...]" + message + "[...]";
-            }
-            else
-            {
-                return "[...]" + message;
-            }
+            return tempMessage.ToString();
         }
         private const int tgMessageSizeLimit = 4080;
         private const int tgCaptionSizeLimit = 1010;
@@ -49,11 +43,11 @@ namespace ItLinksBot
                 var reverseChunk = new string(charArray);
                 int splitPosition;
                 //trying to break string by new line in the last third of block
-                var closestBreak = reverseChunk.IndexOf("\n", 0, (int)reverseChunk.Length / 3);
+                var closestBreak = reverseChunk.IndexOf("\n", 0, reverseChunk.Length / 3);
                 //if no new line found trying to break by dot  in the last third of block
-                var closestDot = reverseChunk.IndexOf(".", 0, (int)reverseChunk.Length / 3);
+                var closestDot = reverseChunk.IndexOf(".", 0, reverseChunk.Length / 3);
                 //if no dot found trying to break by space
-                var closestSpace = reverseChunk.IndexOf(" ", 0, (int)reverseChunk.Length / 3);
+                var closestSpace = reverseChunk.IndexOf(" ", 0, reverseChunk.Length / 3);
 
                 if (closestBreak >= 0)
                 {
@@ -108,7 +102,7 @@ namespace ItLinksBot
                         Array.Reverse(charArray);
                         var reverseChunk = new string(charArray);
                         //trying to break string by new line
-                        var closestBreak = reverseChunk.IndexOf("\n", 0, (int)reverseChunk.Length / 3);
+                        var closestBreak = reverseChunk.IndexOf("\n", 0, reverseChunk.Length / 3);
                         if (closestBreak >= 0)
                         {
                             messageChunks.Add(DecorateTelegramString(message.Substring(i, telegramMessageLimit - closestBreak), i == 0, false));
@@ -116,7 +110,7 @@ namespace ItLinksBot
                             continue;
                         }
                         //if no new line found trying to break by dot
-                        var closestDot = reverseChunk.IndexOf(".", 0, (int)reverseChunk.Length / 3);
+                        var closestDot = reverseChunk.IndexOf(".", 0, reverseChunk.Length / 3);
                         if (closestDot >= 0)
                         {
                             messageChunks.Add(DecorateTelegramString(message.Substring(i, telegramMessageLimit - closestDot), i == 0, false));
@@ -124,7 +118,7 @@ namespace ItLinksBot
                             continue;
                         }
                         //if no dot found trying to break by space
-                        var closestSpace = reverseChunk.IndexOf(" ", 0, (int)reverseChunk.Length / 3);
+                        var closestSpace = reverseChunk.IndexOf(" ", 0, reverseChunk.Length / 3);
                         if (closestSpace >= 0)
                         {
                             messageChunks.Add(DecorateTelegramString(message.Substring(i, telegramMessageLimit - closestSpace), i == 0, false));
@@ -386,7 +380,6 @@ namespace ItLinksBot
         }
         public static List<DigestPost> AddDigestPost(TelegramChannel tgChannel, Digest digest, TelegramAPI bot, IServiceProvider serviceProvider)
         {
-            //var parser = ParserFactory.Setup(tgChannel.Provider, serviceProvider);
             IEnumerable<IParser> serviceCollection = serviceProvider.GetServices<IParser>();
             var parser = serviceCollection.FirstOrDefault(p => p.CurrentProvider == tgChannel.Provider.ProviderName);
             string message = EscapeTgString(parser.FormatDigestPost(digest));
@@ -478,7 +471,6 @@ namespace ItLinksBot
                         mediaIndex++;
                     }
                     var mediaGroupPostResult = bot.SendMediaGroup(tgChannel.ChannelName, telegramMedia, mediaDTOs);
-                    //var linkPostResult = bot.SendMessage(tgChannel.ChannelName, chunk);
                     var mediaGroupPostObject = JObject.Parse(mediaGroupPostResult);
                     if ((bool)mediaGroupPostObject["ok"])
                     {

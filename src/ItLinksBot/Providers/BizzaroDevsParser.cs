@@ -141,8 +141,6 @@ namespace ItLinksBot.Providers
                     {
                         descriptionNode.AppendChild(node.Clone());
                     }
-
-                    //descriptionNode.AppendChildren(contentCopy);
                     descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
                     descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
                 }

@@ -23,7 +23,6 @@ namespace ItLinksBot
         /// <returns></returns>
         public string SendMessage(string Channel, string message)
         {
-            //Throttle();
             string urlString = "https://api.telegram.org/bot{0}/sendMessage";
             urlString = string.Format(urlString, _botKey);
             HttpClient httpClient = new();

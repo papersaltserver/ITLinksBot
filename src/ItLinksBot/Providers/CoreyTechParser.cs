@@ -19,7 +19,6 @@ namespace ItLinksBot.Providers
         private readonly IContentGetter<string> htmlContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
-        //readonly Uri baseUri = new("https://corey.tech/");
 
         public CoreyTechParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
@@ -82,7 +81,7 @@ namespace ItLinksBot.Providers
                 {
                     continue;
                 }
-                var href = hrefNode.GetAttributeValue("href", "Not found"); ;
+                var href = hrefNode.GetAttributeValue("href", "Not found");
 
                 string descriptionText;
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");

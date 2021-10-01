@@ -16,7 +16,7 @@ using System.Linq;
 
 namespace ItLinksBot
 {
-    class Program
+    static class Program
     {
         private static IServiceProvider serviceProvider;
 

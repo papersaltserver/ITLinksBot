@@ -15,14 +15,11 @@ namespace ItLinksBot.Providers
     {
         public string CurrentProvider => "Devops Weekly";
         private readonly IContentGetter<string> htmlContentGetter;
-        //private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
-        //readonly Uri baseUri = new("https://us2.campaign-archive.com");
 
-        public DevopsWeeklyParser(IContentGetter<string> cg, /*IContentNormalizer cn,*/ ITextSanitizer ts)
+        public DevopsWeeklyParser(IContentGetter<string> cg, ITextSanitizer ts)
         {
             htmlContentGetter = cg;
-            //contentNormalizer = cn;
             textSanitizer = ts;
         }
 
@@ -51,7 +48,6 @@ namespace ItLinksBot.Providers
                 var hrefNode = digestNode.SelectSingleNode("./a");
                 var digestHref = hrefNode.GetAttributeValue("href", "Not found");
                 var digestName = hrefNode.InnerText.Trim();
-                //var digestUrl = new Uri(baseUri, digestHref);
                 var fullHref = Utils.UnshortenLink(digestHref);
 
                 var currentDigest = new Digest

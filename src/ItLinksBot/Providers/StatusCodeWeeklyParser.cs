@@ -69,7 +69,6 @@ namespace ItLinksBot.Providers
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//table[contains(@class,'el-item')]");
-            //var acceptableTags = new String[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];

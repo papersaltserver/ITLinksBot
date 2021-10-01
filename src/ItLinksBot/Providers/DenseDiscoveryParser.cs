@@ -17,7 +17,6 @@ namespace ItLinksBot.Providers
         private readonly IContentGetter<string> htmlContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
-        //readonly Uri baseUri = new("https://www.densediscovery.com/");
         public DenseDiscoveryParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
             htmlContentGetter = cg;
@@ -47,7 +46,7 @@ namespace ItLinksBot.Providers
             {
                 var digestDate = new DateTime(1900, 1, 1); //we'll fill it later
                 var digestName = digestNode.Title.Text;
-                var fullHref = digestNode.Links[0].Uri.AbsoluteUri; ;
+                var fullHref = digestNode.Links[0].Uri.AbsoluteUri;
 
                 var currentDigest = new Digest
                 {

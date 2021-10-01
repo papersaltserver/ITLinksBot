@@ -10,7 +10,6 @@ namespace ItLinksBot.ContentGetters
 {
     class BinContentGetter : IContentGetter<byte[]>
     {
-        //public string ContentType => "bin";
         public byte[] GetContent(string resourceUrl)
         {
             try

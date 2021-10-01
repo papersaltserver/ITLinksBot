@@ -52,7 +52,7 @@ namespace ItLinksBot.Providers
             List<Link> links = new();
             var reader = XmlReader.Create(digest.Provider.DigestURL);
             var feed = SyndicationFeed.Load(reader);
-            var digestNode = feed.Items.Where(n => n.Title.Text == digest.DigestName && n.Links[0].Uri.AbsoluteUri == digest.DigestURL).SingleOrDefault();
+            var digestNode = feed.Items.SingleOrDefault(n => n.Title.Text == digest.DigestName && n.Links[0].Uri.AbsoluteUri == digest.DigestURL);
             var feedElementContent = digestNode.ElementExtensions.ReadElementExtensions<string>("encoded", "http://purl.org/rss/1.0/modules/content/").FirstOrDefault();
             var htmlLinks = new HtmlDocument();
             htmlLinks.LoadHtml(feedElementContent);
