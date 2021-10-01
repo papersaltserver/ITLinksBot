@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  itlinksbot:
+    image: ${DOCKER_REGISTRY-}itlinksbot
+    build:
+      context: .
+      dockerfile: ItLinksBot/Dockerfile

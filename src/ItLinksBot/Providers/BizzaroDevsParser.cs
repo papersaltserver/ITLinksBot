@@ -45,8 +45,8 @@ namespace ItLinksBot.Providers
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//li[contains(@class,'item')]").Take(5);
             foreach (var digestNode in digestsInArchive)
             {
-                var digestDate = new DateTime(1900, 1, 1); //setting to 1900 to fill description later
-                
+                var digestDate = new DateTime(1900, 1, 1);//setting to 1900 to fill description later
+
                 var hrefNode = digestNode.SelectSingleNode(".//a");
                 var digestHref = hrefNode.GetAttributeValue("href", "Not found");
                 string fullHref = new Uri(baseUri, digestHref).AbsoluteUri;
@@ -72,10 +72,10 @@ namespace ItLinksBot.Providers
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var digestDetails = new HtmlDocument();
             digestDetails.LoadHtml(digestContent);
-            
+
             var dateNode = digestDetails.DocumentNode.SelectSingleNode("//article[@id='start']//time[contains(@class,'published')]");
             var digestDate = DateTime.Parse(dateNode.GetAttributeValue("datetime", "not found"));
-            
+
             var descriptionNodeOriginal = digestDetails.DocumentNode.SelectNodes("//div[@id='intro']/div/*[preceding-sibling::a[@name]][following-sibling::span[contains(@class,'item__footer')]]");
             string normalizedDescription;
             if (descriptionNodeOriginal != null)
@@ -129,7 +129,7 @@ namespace ItLinksBot.Providers
                 href = Utils.UnshortenLink(href);
                 //getting description
                 var contentNodes = link.SelectNodes("./*[preceding-sibling::h3][following-sibling::span[contains(@class,'item__footer')]]");
-                if(contentNodes == null)
+                if (contentNodes == null)
                 {
                     contentNodes = link.SelectNodes("./*[preceding-sibling::a[@name]][following-sibling::span[contains(@class,'item__footer')]]");
                 }
@@ -137,19 +137,17 @@ namespace ItLinksBot.Providers
                 if (contentNodes != null)
                 {
                     var descriptionNode = HtmlNode.CreateNode("<div></div>");
-                    foreach(var node in contentNodes)
+                    foreach (var node in contentNodes)
                     {
                         descriptionNode.AppendChild(node.Clone());
                     }
-
-                    //descriptionNode.AppendChildren(contentCopy);
                     descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
                     descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
                 }
                 else
                 {
                     descriptionText = "";
-                    Log.Warning("Description for link {link} in Bizzaro Devs is empty",href);
+                    Log.Warning("Description for link {link} in Bizzaro Devs is empty", href);
                 }
 
                 links.Add(new Link
@@ -164,7 +162,7 @@ namespace ItLinksBot.Providers
             int articleLinks = linksInDigest.Count;
             //Interesting links list parsing
             linksInDigest = linksHtml.DocumentNode.SelectNodes("//section[contains(@class,'cc-mustsees')]//div[@id!='intro' and @id!='outro']//div[contains(@class,'item')]/ol/li");
-            if(linksInDigest == null)
+            if (linksInDigest == null)
             {
                 linksInDigest = linksHtml.DocumentNode.SelectNodes("//section[contains(@class,'cc-mustsees')]//div[@id!='intro' and @id!='outro']//div[contains(@class,'item')]");
                 Log.Information("Broken must see links section in Bizzaro Devs {digest}", digest.DigestURL);
@@ -181,7 +179,7 @@ namespace ItLinksBot.Providers
                 {
                     href = hrefNode.GetAttributeValue("href", "Not found");
                 }
-                else               
+                else
                 {
                     hrefNode = linksHtml.DocumentNode.SelectSingleNode("//section[contains(@class,'cc-mustsees')]//div[@id!='intro' and @id!='outro']//div[contains(@class,'item')]/span/span/a");
                     href = hrefNode.GetAttributeValue("href", "Not found") + "#link" + articleLinks + i;
@@ -204,7 +202,7 @@ namespace ItLinksBot.Providers
                     URL = href,
                     Title = title,
                     Description = descriptionText,
-                    LinkOrder = articleLinks+i,
+                    LinkOrder = articleLinks + i,
                     Digest = digest
                 });
             }

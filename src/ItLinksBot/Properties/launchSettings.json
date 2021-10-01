@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "ItLinksBot": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

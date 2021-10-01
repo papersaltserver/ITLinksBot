@@ -16,7 +16,6 @@ namespace ItLinksBot.Providers
         private readonly IContentGetter<string> htlmContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
-        //readonly Uri baseUri = new("https://us13.campaign-archive.com");
 
         public TheProtocolParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
@@ -50,7 +49,6 @@ namespace ItLinksBot.Providers
                 var hrefNode = digestNode.SelectSingleNode("./a");
                 var digestHref = hrefNode.GetAttributeValue("href", "Not found");
                 var digestName = hrefNode.InnerText.Trim();
-                //var digestUrl = new Uri(baseUri, digestHref);
                 var fullHref = Utils.UnshortenLink(digestHref);
 
                 var currentDigest = new Digest
@@ -92,8 +90,7 @@ namespace ItLinksBot.Providers
                     title = "";
                 }
                 var href = digest.DigestURL + "#section-" + i;
-                
-                //var contentNodes = link.SelectNodes("./table[not(contains(@class,'leading_item'))]");
+
                 string descriptionText;
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
                 descriptionNode.AppendChild(link);

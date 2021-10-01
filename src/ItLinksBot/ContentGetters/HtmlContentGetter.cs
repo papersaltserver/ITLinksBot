@@ -6,7 +6,6 @@ namespace ItLinksBot.ContentGetters
 {
     class HtmlContentGetter : IContentGetter<string>
     {
-        //public string ContentType => "html";
         public string GetContent(string resourceUrl)
         {
             try

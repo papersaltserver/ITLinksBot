@@ -65,7 +65,7 @@ namespace ItLinksBot.Providers
             var digestDate = DateTime.Parse(HttpUtility.HtmlDecode(digestDetails.DocumentNode.SelectSingleNode("//span[contains(@class,'header__title-desc')]").InnerText));
 
             var editorialNode = digestDetails.DocumentNode.SelectSingleNode("//h3[@id='editorial']");
-            if(editorialNode == null)
+            if (editorialNode == null)
             {
                 editorialNode = digestDetails.DocumentNode.SelectSingleNode("//h3[text()='Editorial']");
             }
@@ -118,10 +118,11 @@ namespace ItLinksBot.Providers
                 string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
                 var href = descriptionNode.SelectSingleNode(".//a")?.GetAttributeValue("href", "Not found");
-                if (href == null) {
+                if (href == null)
+                {
                     Log.Warning("SmashingMagazin section {title} in digest {url} doesn't have links", title, digest.DigestURL);
                     continue;
-                };
+                }
                 if (!href.Contains("://") && href.Contains("/"))
                 {
                     href = (new Uri(baseUri, href)).AbsoluteUri;

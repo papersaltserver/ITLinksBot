@@ -103,7 +103,7 @@ namespace ItLinksBot.Providers
                 string title = ""; //no separate titles in devopsish
 
                 HtmlNode hrefNode = link.SelectSingleNode(".//a[1]");
-                if(hrefNode == null)
+                if (hrefNode == null)
                 {
                     Log.Warning("Unable to find <a> element in the following block:\n{href}\n", link.InnerText);
                     continue;

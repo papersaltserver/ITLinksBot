@@ -9,7 +9,7 @@ using System.Web;
 
 namespace ItLinksBot.Providers
 {
-    class KubeWeeklyParser: IParser
+    class KubeWeeklyParser : IParser
     {
         public string CurrentProvider => "KubeWeekly";
         private readonly IContentGetter<string> htmlContentGetter;
@@ -33,15 +33,15 @@ namespace ItLinksBot.Providers
 
         public string FormatLinkPost(Link link)
         {
-            if (link.Medias == null || !link.Medias.Any()) 
+            if (link.Medias == null || !link.Medias.Any())
             {
                 return $"<strong>{link.Title}</strong>\n\n{link.Description}";
             }
             else
             {
-                string title="";
+                string title = "";
                 string description = "";
-                if(link.Title != null && link.Title != "")
+                if (link.Title != null && link.Title != "")
                 {
                     title = $"{link.Title}\n\n";
                 }
@@ -51,7 +51,6 @@ namespace ItLinksBot.Providers
                 }
                 return $"{title}{description}{link.URL}";
             }
-            
         }
 
         public List<Digest> GetCurrentDigests(Provider provider)
@@ -98,22 +97,19 @@ namespace ItLinksBot.Providers
             linksHtml.LoadHtml(digestContent);
             //KubeWeekly has 2 types of information blocks: Tweets and Informaion, we'll analyze them 1 by 1
             //Informational posts
-            
+
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@id='column-1-1']/table//div[@data-hs-cos-type='rich_text']");
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
                 var titleNode = link.SelectSingleNode(".//h2[1]");
                 string title = "";
-                if(titleNode != null)
+                if (titleNode != null)
                 {
                     title = textSanitizer.Sanitize(titleNode.InnerText.Trim());
                 }
-                
-                //HtmlNode hrefNode = link.SelectSingleNode(".//a[1]");
+
                 var href = $"{digest.DigestURL}#section{i}";
-                //href = new Uri(baseUri, href).AbsoluteUri;
-                //href = Utils.UnshortenLink(href);
 
                 string descriptionText;
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
@@ -132,7 +128,7 @@ namespace ItLinksBot.Providers
             }
             int globalLinkCounter = linksInDigest.Count;
             var tweets = linksHtml.DocumentNode.SelectNodes("//div[@id='column-1-1']/div[descendant::a]");
-            for(int i = 0; i < tweets.Count; i++)
+            for (int i = 0; i < tweets.Count; i++)
             {
                 HtmlNode tweetNode = tweets[i];
                 HtmlNode hrefNode = tweetNode.SelectSingleNode(".//a");
@@ -142,7 +138,8 @@ namespace ItLinksBot.Providers
                 string imgHref = imgNode.GetAttributeValue("src", "Not found");
                 string imgName = HttpUtility.UrlDecode(imgHref.Split('/').Last().Split('?').First());
                 byte[] imgFile = binContentGetter.GetContent(imgHref);
-                var currentImg = new Photo { 
+                var currentImg = new Photo
+                {
                     ContentBytes = imgFile,
                     FileName = imgName
                 };
@@ -150,13 +147,12 @@ namespace ItLinksBot.Providers
                 links.Add(new Link
                 {
                     URL = href,
-                    Title = "", //no title for tweets
-                    Description = "", //no description for tweets
-                    LinkOrder = i+globalLinkCounter,
+                    Title = "",//no title for tweets
+                    Description = "",//no description for tweets
+                    LinkOrder = i + globalLinkCounter,
                     Digest = digest,
                     Medias = new List<Media> { currentImg }
                 });
-
             }
             return links;
         }

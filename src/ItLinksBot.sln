@@ -18,10 +18,23 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\.gitignore = ..\.gitignore
 		.runsettings = .runsettings
 		.runsettings.default = .runsettings.default
-		..\Dockerfile = ..\Dockerfile
+		create-deploy-user.sh = create-deploy-user.sh
 		ItLinksBot.service = ItLinksBot.service
 		ItLinksBot.service.example = ItLinksBot.service.example
 		..\LICENSE = ..\LICENSE
+	EndProjectSection
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{C136B038-001C-4DCA-98D4-3761BF63B4B8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{77625B89-B89A-4CD3-81DD-D0217A24C7ED}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\workflows\dotnet.yml = ..\.github\workflows\dotnet.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "linters", "linters", "{79ECAF70-3E3F-490F-AC02-9EC4B00ADE84}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\linters\.dockerfilelintrc = ..\.github\linters\.dockerfilelintrc
+		..\.github\linters\.jscpd.json = ..\.github\linters\.jscpd.json
 	EndProjectSection
 EndProject
 Global
@@ -38,12 +51,18 @@ Global
 		{092F284A-D559-45FF-B0BC-6D3CEE6C7646}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{092F284A-D559-45FF-B0BC-6D3CEE6C7646}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{092F284A-D559-45FF-B0BC-6D3CEE6C7646}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C136B038-001C-4DCA-98D4-3761BF63B4B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C136B038-001C-4DCA-98D4-3761BF63B4B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C136B038-001C-4DCA-98D4-3761BF63B4B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C136B038-001C-4DCA-98D4-3761BF63B4B8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E848FCA4-DDC7-44CD-9BE2-2039FAE67CFE} = {B522177D-DA61-485D-875C-3C7DB6763FA1}
+		{77625B89-B89A-4CD3-81DD-D0217A24C7ED} = {E848FCA4-DDC7-44CD-9BE2-2039FAE67CFE}
+		{79ECAF70-3E3F-490F-AC02-9EC4B00ADE84} = {E848FCA4-DDC7-44CD-9BE2-2039FAE67CFE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {915DA986-930F-4B79-963F-B09900392F0F}

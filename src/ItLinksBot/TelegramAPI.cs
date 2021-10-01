@@ -23,7 +23,6 @@ namespace ItLinksBot
         /// <returns></returns>
         public string SendMessage(string Channel, string message)
         {
-            //Throttle();
             string urlString = "https://api.telegram.org/bot{0}/sendMessage";
             urlString = string.Format(urlString, _botKey);
             HttpClient httpClient = new();
@@ -55,18 +54,16 @@ namespace ItLinksBot
             {
                 { new StringContent(Channel, Encoding.UTF8), "chat_id" }
             };
-            
-            /*TelegramMediaGroup mediaGroup = new() { 
-                chat_id = Channel,
-                media = telegramMedias
-            };*/
-            string jsonMedia = JsonConvert.SerializeObject(telegramMedias, Formatting.None,
-                            new JsonSerializerSettings
-                            {
-                                NullValueHandling = NullValueHandling.Ignore
-                            });
+
+            string jsonMedia = JsonConvert.SerializeObject(
+                telegramMedias,
+                Formatting.None,
+                new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                });
             form.Add(new StringContent(jsonMedia, Encoding.UTF8), "media");
-            foreach(var file in files)
+            foreach (var file in files)
             {
                 form.Add(new ByteArrayContent(file.ContentBytes), file.FileName, file.FileName);
             }

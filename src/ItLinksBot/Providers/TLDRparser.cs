@@ -40,7 +40,7 @@ namespace ItLinksBot.Providers
             digestArchiveHtml.LoadHtml(stringResult);
             HtmlNodeCollection digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@id='doc-container']//div[contains(@class,'text-left')]//a");
             var latestIssues = digestsInArchive.OrderByDescending(d => d.InnerText).Take(5);
-            
+
             foreach (var digestNode in latestIssues)
             {
                 var digestUrl = new Uri(baseUri, digestNode.GetAttributeValue("href", "Not found"));

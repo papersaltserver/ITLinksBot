@@ -9,13 +9,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using Serilog;
+using Serilog.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace ItLinksBot
 {
-    class Program
+    static class Program
     {
         private static IServiceProvider serviceProvider;
 
@@ -74,6 +75,7 @@ namespace ItLinksBot
                 .AddJsonFile("./config/appsettings.json",
                              optional: true,
                              reloadOnChange: true)
+                .AddEnvironmentVariables(prefix: "LINKSBOT_")
                 .Build();
 
             Log.Logger = new LoggerConfiguration()
@@ -104,14 +106,14 @@ namespace ItLinksBot
             foreach (var prov in context.Providers)
             {
                 Digest lastIssue = context.Digests.OrderBy(p => p.DigestDay).LastOrDefault(p => p.Provider == prov);
-                if(lastIssue != null && prov.LatestIssue < lastIssue.DigestDay)
+                if (lastIssue != null && prov.LatestIssue < lastIssue.DigestDay)
                 {
-                    Log.Information("Provider {providerName}, was updated to latest issue date {latestIssueDate}",prov.ProviderName, lastIssue.DigestDay);
+                    Log.Information("Provider {providerName}, was updated to latest issue date {latestIssueDate}", prov.ProviderName, lastIssue.DigestDay);
                     prov.LatestIssue = lastIssue.DigestDay;
                 }
             }
             context.SaveChanges();
-            
+
             while (true)
             {
                 var activeProviders = context.Providers.Where(pr => pr.ProviderEnabled);
@@ -151,7 +153,8 @@ namespace ItLinksBot
                             prov.LatestSync = DateTime.Now;
                             Log.Information($"Total number of objects to post: {totalLinks}");
                         }
-                    }catch(Exception e)
+                    }
+                    catch (Exception e)
                     {
                         Log.Error("Error procesing {digestName}, error:\n{exception}", prov.ProviderName, e);
                         prov.SubsequentErrors++;

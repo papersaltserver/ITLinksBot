@@ -9,16 +9,16 @@ namespace ItLinksBot
         private string[] acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
         private string[] nodesProhibited = new string[] { "style", "script" };
         private string[] nodesNewLines = new string[] { "div", "p", "h1", "h2", "h3", "h4", "li", "td" };
-        public HtmlNode NormalizeDom(HtmlNode originalNode, string[] localAcceptableTags, string[] localNodesProhibited, string[] localNodesNewLines)
+        public HtmlNode NormalizeDom(HtmlNode originalNode, string[] accptableTags, string[] nodesProhibited, string[] nodesNewLines)
         {
-            acceptableTags = localAcceptableTags;
-            nodesProhibited = localNodesProhibited;
-            nodesNewLines = localNodesNewLines;
+            acceptableTags = accptableTags;
+            this.nodesProhibited = nodesProhibited;
+            this.nodesNewLines = nodesNewLines;
             return NormalizeDom(originalNode);
         }
-        public HtmlNode NormalizeDom(HtmlNode originalNode, string[] localAcceptableTags)
+        public HtmlNode NormalizeDom(HtmlNode originalNode, string[] accptableTags)
         {
-            acceptableTags = localAcceptableTags;
+            acceptableTags = accptableTags;
             return NormalizeDom(originalNode);
         }
         public HtmlNode NormalizeDom(HtmlNode originalNode)
