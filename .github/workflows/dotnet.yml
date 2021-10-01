@@ -49,13 +49,6 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.x
-    - name: Cache SonarCloud scanner
-      id: cache-sonar-scanner
-      uses: actions/cache@v1
-      with:
-        path: ./.sonar/scanner
-        key: ${{ runner.os }}-sonar-scanner
-        restore-keys: ${{ runner.os }}-sonar-scanner
     - name: Install SonarCloud scanner
       working-directory: ./src
       if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
@@ -74,18 +67,18 @@ jobs:
     - name: Build
       working-directory: ./src
       run: dotnet build --no-restore ItLinksBot.sln
-    - name: Stop Sonar
-      working-directory: ./src
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: ./.sonar/scanner/dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
     - name: Test
       working-directory: ./src
       env:
         TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
         TELEGRAM_CHANNELID: ${{ secrets.TELEGRAM_CHANNELID }}
       run: dotnet test --no-build --verbosity normal ItLinksBot.sln
+    - name: Stop Sonar
+      working-directory: ./src
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: ./.sonar/scanner/dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
     # This is the a separate action that sets up buildx runner
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
