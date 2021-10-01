@@ -60,7 +60,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: ./.sonar/scanner/dotnet-sonarscanner begin /k:"papersaltserver_ITLinksBot" /o:"papersaltserver" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.xunit.reportsPaths="./XUnitResults.xml" /d:sonar.cs.opencover.reportsPaths="./ItLinksBot-Test/coverage.opencover.xml" /d:sonar.host.url="https://sonarcloud.io"
+      run: ./.sonar/scanner/dotnet-sonarscanner begin /k:"papersaltserver_ITLinksBot" /o:"papersaltserver" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.xunit.reportsPaths="./ItLinksBot-Test/test_result.xml" /d:sonar.cs.opencover.reportsPaths="./ItLinksBot-Test/coverage.opencover.xml" /d:sonar.host.url="https://sonarcloud.io"
     - name: Restore dependencies
       working-directory: ./src
       run: dotnet restore --locked-mode ItLinksBot.sln
@@ -72,7 +72,7 @@ jobs:
       env:
         TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
         TELEGRAM_CHANNELID: ${{ secrets.TELEGRAM_CHANNELID }}
-      run: dotnet test --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:Xml="./XUnitResults.xml" ItLinksBot.sln
+      run: dotnet test --no-build --verbosity normal --logger:"xunit;LogFilePath=test_result.xml" /p:CollectCoverage=true /p:CoverletOutputFormat=opencover ItLinksBot.sln
     - name: Stop Sonar
       working-directory: ./src
       env:
