@@ -35,10 +35,10 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-buildx-
     #Linting code
-    ##- name: Lint Code Base
-    ##  uses: github/super-linter@v4
-    ##  env:
-    ##    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Lint Code Base
+      uses: github/super-linter@v4
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     #Setting up environment
     #JDK for sonarqube
     - name: Set up JDK 11
