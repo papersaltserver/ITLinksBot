@@ -35,10 +35,10 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-buildx-
     #Linting code
-    - name: Lint Code Base
-      uses: github/super-linter@v4
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    ##- name: Lint Code Base
+    ##  uses: github/super-linter@v4
+    ##  env:
+    ##    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     #Setting up environment
     #JDK for sonarqube
     - name: Set up JDK 11
@@ -57,11 +57,13 @@ jobs:
         key: ${{ runner.os }}-sonar-scanner
         restore-keys: ${{ runner.os }}-sonar-scanner
     - name: Install SonarCloud scanner
+      working-directory: ./src
       if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
       run: |
         mkdir -p ./.sonar/scanner
         dotnet tool update dotnet-sonarscanner --tool-path ./.sonar/scanner
     - name: Start Sonar
+      working-directory: ./src
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -73,6 +75,7 @@ jobs:
       working-directory: ./src
       run: dotnet build --no-restore ItLinksBot.sln
     - name: Stop Sonar
+      working-directory: ./src
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
