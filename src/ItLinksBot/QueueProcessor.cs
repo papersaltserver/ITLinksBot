@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using HtmlAgilityPack;
 using ItLinksBot.DTO;
 using ItLinksBot.Models;
 using ItLinksBot.TelegramDTO;
@@ -79,6 +80,19 @@ namespace ItLinksBot
             }
             return messageChunks;
         }
+        private static int RewindUnclosedTag(string chunk)
+        {
+            int messageCursor = chunk.Length;
+            var htmlDocument = new HtmlDocument();
+            htmlDocument.LoadHtml(chunk);
+            while ((htmlDocument.ParseErrors.Any() || chunk[messageCursor - 1] == '<') && messageCursor > 1)
+            {
+                messageCursor--;
+                var chunkWindow = chunk.Substring(0, messageCursor);
+                htmlDocument.LoadHtml(chunkWindow);
+            }
+            return messageCursor;
+        }
         private static List<string> SplitMessageForTg(string message)
         {
             List<string> messageChunks = new();
@@ -89,11 +103,10 @@ namespace ItLinksBot
                 int i = 0;
                 while (i < message.Length)
                 {
+                    int closestBreak, closestDot, closestSpace, chunkLength = 0;
                     if (i + telegramMessageLimit > message.Length)
                     {
-                        telegramMessageLimit = message.Length - i;
-                        messageChunks.Add(DecorateTelegramString(message.Substring(i, telegramMessageLimit), i == 0, true));
-                        i += telegramMessageLimit;
+                        chunkLength = message.Length - i;
                     }
                     else
                     {
@@ -101,34 +114,34 @@ namespace ItLinksBot
                         char[] charArray = currentChunk.ToCharArray();
                         Array.Reverse(charArray);
                         var reverseChunk = new string(charArray);
-                        //trying to break string by new line
-                        var closestBreak = reverseChunk.IndexOf("\n", 0, reverseChunk.Length / 3);
+
+                        closestBreak = reverseChunk.IndexOf("\n", 0, reverseChunk.Length / 3);
+                        closestDot = reverseChunk.IndexOf(".", 0, reverseChunk.Length / 3);
+                        closestSpace = reverseChunk.IndexOf(" ", 0, reverseChunk.Length / 3);
                         if (closestBreak >= 0)
                         {
-                            messageChunks.Add(DecorateTelegramString(message.Substring(i, telegramMessageLimit - closestBreak), i == 0, false));
-                            i += telegramMessageLimit - closestBreak;
-                            continue;
+                            //trying to break string by new line
+                            chunkLength = telegramMessageLimit - closestBreak;
                         }
-                        //if no new line found trying to break by dot
-                        var closestDot = reverseChunk.IndexOf(".", 0, reverseChunk.Length / 3);
-                        if (closestDot >= 0)
+                        else if (closestDot >= 0)
                         {
-                            messageChunks.Add(DecorateTelegramString(message.Substring(i, telegramMessageLimit - closestDot), i == 0, false));
-                            i += telegramMessageLimit - closestDot;
-                            continue;
+                            //if no new line found trying to break by dot
+                            chunkLength = telegramMessageLimit - closestDot;
                         }
-                        //if no dot found trying to break by space
-                        var closestSpace = reverseChunk.IndexOf(" ", 0, reverseChunk.Length / 3);
-                        if (closestSpace >= 0)
+                        else if (closestSpace >= 0)
                         {
-                            messageChunks.Add(DecorateTelegramString(message.Substring(i, telegramMessageLimit - closestSpace), i == 0, false));
-                            i += telegramMessageLimit - closestSpace;
-                            continue;
+                            //if no dot found trying to break by space
+                            chunkLength = telegramMessageLimit - closestSpace;
                         }
-                        //worst case scenario - no new line, no break, no space found
-                        messageChunks.Add(DecorateTelegramString(message.Substring(i, telegramMessageLimit), i == 0, false));
-                        i += telegramMessageLimit;
+                        else
+                        {
+                            //worst case scenario - no new line, no break, no space found
+                            chunkLength = telegramMessageLimit;
+                        }
                     }
+                    chunkLength = RewindUnclosedTag(message.Substring(i, chunkLength));
+                    messageChunks.Add(DecorateTelegramString(message.Substring(i, chunkLength), i == 0, false));
+                    i += chunkLength;
                 }
             }
             else
