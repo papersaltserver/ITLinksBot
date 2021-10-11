@@ -101,7 +101,7 @@ namespace ItLinksBot.Providers
                 }
 
                 var categoryNode = link.SelectSingleNode("./preceding-sibling::div[contains(@class,'section_header')][1]");
-                string categoryText = categoryNode.InnerText.ToUpper().Replace("\n"," ").Replace("\r","").Trim();
+                string categoryText = categoryNode.InnerText.ToUpper().Replace("\n", " ").Replace("\r", "").Trim();
 
                 links.Add(new Link
                 {
