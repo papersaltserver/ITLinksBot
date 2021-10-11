@@ -93,7 +93,7 @@ namespace ItLinksBot.Providers
                 {
                     URL = href,
                     Title = title,
-                    Category = categoryText, 
+                    Category = categoryText,
                     Description = descriptionText,
                     LinkOrder = i,
                     Digest = digest
