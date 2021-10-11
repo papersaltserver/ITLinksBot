@@ -25,12 +25,12 @@ namespace ItLinksBot.Providers
 
         public string FormatDigestPost(Digest digest)
         {
-            return string.Format("<b>{0} - {1}</b>\n{2}\n{3}", digest.DigestName, digest.DigestDay.ToString("yyyy-MM-dd"), digest.DigestDescription, digest.DigestURL);
+            return $"<b>{digest.DigestName} - {digest.DigestDay.ToString("yyyy-MM-dd")}</b>\n{digest.DigestDescription}\n{digest.DigestURL}";
         }
 
         public string FormatLinkPost(Link link)
         {
-            return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
+            return $"<strong>[{link.Category}]{link.Title}</strong>\n\n{link.Description}\n{link.URL}";
         }
 
         public List<Digest> GetCurrentDigests(Provider provider)
@@ -100,10 +100,14 @@ namespace ItLinksBot.Providers
                     descriptionText = "";
                 }
 
+                var categoryNode = link.SelectSingleNode("./preceding-sibling::div[contains(@class,'section_header')][1]");
+                string categoryText = categoryNode.InnerText.ToUpper().Replace("\n"," ").Replace("\r","").Trim();
+
                 links.Add(new Link
                 {
                     URL = href,
                     Title = title,
+                    Category = categoryText,
                     Description = descriptionText,
                     LinkOrder = i,
                     Digest = digest

@@ -24,12 +24,12 @@ namespace ItLinksBot.Providers
         }
         public string FormatDigestPost(Digest digest)
         {
-            return string.Format("<b>{0}</b>\n{1}", digest.DigestName, digest.DigestURL);
+            return $"<b>{digest.DigestName}</b>\n{digest.DigestURL}";
         }
 
         public string FormatLinkPost(Link link)
         {
-            return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
+            return $"<strong>[{link.Category}]{link.Title}</strong>\n\n{link.Description}\n{link.URL}";
         }
 
         public List<Digest> GetCurrentDigests(Provider provider)
@@ -85,10 +85,15 @@ namespace ItLinksBot.Providers
                 href = Utils.UnshortenLink(href);
                 var descriptionNode = contentNormalizer.NormalizeDom(link.SelectSingleNode("./div"));
                 var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
+
+                var categoryNode = link.SelectSingleNode("./preceding-sibling::div[strong][1]");
+                var categoryIconNode = categoryNode.SelectSingleNode("./preceding-sibling::div[1]");
+                var categoryText = categoryIconNode.InnerText.Replace("\n", "").Replace("\r", "").Trim() + categoryNode.InnerText.Replace("\n", " ").Replace("\r", "").Trim();
                 links.Add(new Link
                 {
                     URL = href,
                     Title = title,
+                    Category = categoryText, 
                     Description = descriptionText,
                     LinkOrder = i,
                     Digest = digest
