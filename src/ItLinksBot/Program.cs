@@ -62,6 +62,7 @@ namespace ItLinksBot
             services.AddTransient<IParser, DevOpsishParser>();
             services.AddTransient<IParser, KubeWeeklyParser>();
             services.AddTransient<IParser, HowCuriousParser>();
+            services.AddTransient<IParser, TheLongGameParser>();
             services.AddAutoMapper(cfg =>
             {
                 cfg.CreateMap<Photo, PhotoDTO>();
