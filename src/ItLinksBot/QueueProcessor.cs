@@ -310,6 +310,7 @@ namespace ItLinksBot
                 else
                 {
                     Log.Error("Error from posting message to Telegram API {linkPostResult}", linkPostResult);
+                    Log.Error("Original message: {originalMessage}", chunk);
                     throw new Exception($"Unknown service response: {linkPostResult}");
                 }
             }
