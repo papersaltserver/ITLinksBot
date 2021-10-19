@@ -103,7 +103,8 @@ namespace ItLinksBot
                 int i = 0;
                 while (i < message.Length)
                 {
-                    int closestBreak, closestDot, closestSpace, chunkLength = 0;
+                    int closestBreak, closestDot, closestSpace;
+                    int chunkLength;
                     if (i + telegramMessageLimit > message.Length)
                     {
                         chunkLength = message.Length - i;

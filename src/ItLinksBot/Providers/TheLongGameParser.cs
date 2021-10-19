@@ -1,6 +1,7 @@
 ﻿using HtmlAgilityPack;
 using ItLinksBot.ContentGetters;
 using ItLinksBot.Models;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,16 +13,14 @@ namespace ItLinksBot.Providers
     class TheLongGameParser : IParser
     {
         private readonly IContentGetter<string> htmlContentGetter;
-        private readonly IContentGetter<byte[]> binContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "The Long Game";
         readonly Uri baseUri = new("https://www.getrevue.co/");
 
-        public TheLongGameParser(IContentGetter<string> cg, IContentGetter<byte[]> bcg, IContentNormalizer cn, ITextSanitizer ts)
+        public TheLongGameParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
             htmlContentGetter = cg;
-            binContentGetter = bcg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
@@ -41,7 +40,16 @@ namespace ItLinksBot.Providers
             var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//section[@id='issues']/div[@id='issues-covers' or @id='issues-holder']//a").Take(5);
+            IEnumerable<HtmlNode> digestsInArchive;
+            try
+            {
+                digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//section[@id='issues']/div[@id='issues-covers' or @id='issues-holder']//a").Take(5);
+            }
+            catch (Exception e)
+            {
+                Log.Warning("Problem {exception} with link {url} which returned the following content:\n{content}\n", e.Message, provider.DigestURL, stringResult);
+                throw;
+            }
             foreach (var digestNode in digestsInArchive)
             {
                 var digestDate = new DateTime(1900, 1, 1);
@@ -70,7 +78,7 @@ namespace ItLinksBot.Providers
             var digestDate = DateTime.Parse(dateNode.GetAttributeValue("datetime", "not found"));
 
             //this newsletter marked up incorrectly, they have second <html> document inside div#issue-frame, we need to work with this
-            var digestRealContent = digestDetails.DocumentNode.SelectSingleNode("//div[@id='issue-frame']").InnerHtml;
+            var digestRealContent = digestDetails.DocumentNode.SelectSingleNode("//div[html]").InnerHtml;
             var digestRealDetails = new HtmlDocument();
             digestRealDetails.LoadHtml(digestRealContent);
 
@@ -107,7 +115,7 @@ namespace ItLinksBot.Providers
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             //this newsletter has broken mark up, so we are forced to re-evaluate document root
-            digestContent = linksHtml.DocumentNode.SelectSingleNode("//div[@id='issue-frame']").InnerHtml;
+            digestContent = linksHtml.DocumentNode.SelectSingleNode("//div[html]").InnerHtml;
             linksHtml.LoadHtml(digestContent);
             HtmlNodeCollection linksInDigest = linksHtml.DocumentNode.SelectNodes("//table//table[.//div[contains(@class,'link-description')]]");
             for (int i = 0; i < linksInDigest.Count; i++)
