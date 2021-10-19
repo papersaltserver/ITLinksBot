@@ -122,6 +122,10 @@ namespace ItLinksBot.Providers
             {
                 HtmlNode link = linksInDigest[i];
                 HtmlNode hrefNode = link.SelectSingleNode(".//div[contains(@class,'link-title')]/a");
+                if (hrefNode == null)
+                {
+                    hrefNode = link.SelectSingleNode(".//a");
+                }
                 string href = hrefNode.GetAttributeValue("href", "Not found");
                 string title = hrefNode.InnerText.Trim();
 
