@@ -15,7 +15,7 @@ namespace ItLinksBot.Providers
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "TLDR";
-        readonly Uri baseUri = new("https://tldr.tech/");
+        readonly Uri baseUri = new("https://messaged.com/");
         public TLDRparser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
             htmlContentGetter = cg;
