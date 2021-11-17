@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ItLinksBot
@@ -10,7 +11,7 @@ namespace ItLinksBot
     {
         public static string ToHtmlCode(string originalString)
         {
-            StringBuilder sb = new(originalString);
+            StringBuilder sb = new(Regex.Replace(originalString, @"<(\s*?)>", "&lt;$1&gt;"));
             sb.Replace("&Aacute;", "&#193;");
             sb.Replace("&aacute;", "&#225;");
             sb.Replace("&Abreve;", "&#258;");
@@ -805,7 +806,6 @@ namespace ItLinksBot
             sb.Replace("&Zopf;", "&#8484;");
             sb.Replace("&zwj;", "&#8205;");
             sb.Replace("&zwnj;", "&#8204;");
-
             return sb.ToString();
         }
     }
