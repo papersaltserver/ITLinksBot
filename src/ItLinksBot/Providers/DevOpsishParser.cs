@@ -39,12 +39,13 @@ namespace ItLinksBot.Providers
             var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//article[contains(@class,'blog-post')]").Take(5);
+            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//article[contains(@class,'post-entry')]").Take(5);
             foreach (var digestNode in digestsInArchive)
             {
-                var hrefNode = digestNode.SelectSingleNode(".//h2[contains(@class,'blog-post-title')]/a");
+                var hrefNode = digestNode.SelectSingleNode("./a");
                 var digestHref = hrefNode.GetAttributeValue("href", "Not found");
-                var digestName = hrefNode.InnerText.Trim();
+                var titleNode = digestNode.SelectSingleNode("./h2");
+                var digestName = titleNode.InnerText.Trim();
                 var digestUrl = new Uri(baseUri, digestHref);
                 var fullHref = Utils.UnshortenLink(digestUrl.AbsoluteUri);
                 var digestDate = new DateTime(1900, 1, 1); //we'll fill it later
@@ -67,7 +68,7 @@ namespace ItLinksBot.Providers
             string digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             HtmlDocument digestDocument = new();
             digestDocument.LoadHtml(digestContent);
-            HtmlNodeCollection digestDescription = digestDocument.DocumentNode.SelectNodes("//article[contains(@class,'blog-post')]/p[preceding-sibling::div[contains(@class,'emailoctopus-form')] and count(preceding-sibling::h2)=0]");
+            HtmlNodeCollection digestDescription = digestDocument.DocumentNode.SelectNodes("//section[contains(@class,'post-content')]/p[count(preceding-sibling::h2)=0]");
             HtmlNode descriptionNode = HtmlNode.CreateNode("<div></div>");
             string descriptionText = "";
             if (digestDescription != null)
@@ -80,8 +81,8 @@ namespace ItLinksBot.Providers
                 descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
             }
 
-            var dateNode = digestDocument.DocumentNode.SelectSingleNode("//article[contains(@class,'blog-post')]//time");
-            string dateText = dateNode.GetAttributeValue("datetime", "Not found");
+            var dateNode = digestDocument.DocumentNode.SelectSingleNode("//header[contains(@class,'post-title')]//time");
+            string dateText = dateNode.InnerText.Trim();
             var digestDate = DateTime.Parse(dateText);
 
             digest.DigestDay = digestDate;
@@ -96,7 +97,7 @@ namespace ItLinksBot.Providers
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//article[contains(@class,'blog-post')]/p[count(preceding-sibling::h2)>0 and count(preceding-sibling::hr)=0]");
+            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//section[contains(@class,'post-content')]/p[count(preceding-sibling::h2)>0]");
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
