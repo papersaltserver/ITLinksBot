@@ -87,8 +87,12 @@ namespace ItLinksBot.Providers
                 var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
                 var categoryNode = link.SelectSingleNode("./preceding-sibling::div[strong][1]");
-                var categoryIconNode = categoryNode.SelectSingleNode("./preceding-sibling::div[1]");
-                var categoryText = categoryIconNode.InnerText.Replace("\n", "").Replace("\r", "").Trim() + categoryNode.InnerText.Replace("\n", " ").Replace("\r", "").Trim();
+                string categoryText = "";
+                if (categoryNode != null)
+                {
+                    var categoryIconNode = categoryNode.SelectSingleNode("./preceding-sibling::div[1]");
+                    categoryText = categoryIconNode.InnerText.Replace("\n", "").Replace("\r", "").Trim() + categoryNode.InnerText.Replace("\n", " ").Replace("\r", "").Trim();
+                }
                 links.Add(new Link
                 {
                     URL = href,
