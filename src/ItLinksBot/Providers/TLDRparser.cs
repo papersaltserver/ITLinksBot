@@ -15,7 +15,7 @@ namespace ItLinksBot.Providers
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "TLDR";
-        readonly Uri baseUri = new("https://messaged.com/");
+        readonly Uri baseUri = new("https://tldr.tech/");
         public TLDRparser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
             htmlContentGetter = cg;
@@ -67,7 +67,7 @@ namespace ItLinksBot.Providers
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@id='doc-container']//h3/../..");
+            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@id='doc-container']//h3[not(@id='subtitle')]/../..");
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
