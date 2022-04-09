@@ -37,7 +37,7 @@ namespace ItLinksBot.Providers
             var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//article").Take(50);
+            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//article").Take(5);
             foreach (var digestNode in digestsInArchive)
             {
                 var urlNode = digestNode.SelectSingleNode(".//h3[@class='title']/a");
