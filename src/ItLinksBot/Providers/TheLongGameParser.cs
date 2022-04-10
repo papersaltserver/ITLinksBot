@@ -43,7 +43,7 @@ namespace ItLinksBot.Providers
             IEnumerable<HtmlNode> digestsInArchive;
             try
             {
-                digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//section[@id='issues']/div[@id='issues-covers' or @id='issues-holder']//a").Take(5);
+                digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//section[@id='issues']/div[@id='issues-covers' or @id='issues-holder']//a|//div[contains(@class,'component__profile-issues-list')]/a").Take(5);
             }
             catch (Exception e)
             {
