@@ -65,12 +65,12 @@ namespace ItLinksBot.Providers
                 }
                 nextPage = new Uri(digestStartingUri, (string)resultPageObject["meta"]["next"]).AbsoluteUri + "&list=cryptocurrency";
             } while (issues.Count < numbersToProcess && (string)resultPageObject["meta"]["next"] != null);
-            foreach( int digestId in issues)
+            foreach (int digestId in issues)
             {
                 string digestApiUrl = campaignApiUrl + digestId.ToString();
                 string digestReadableUrl = campaignUrlBase + digestId.ToString();
                 string digestBodyString = htmlContentGetter.GetContent(digestApiUrl, additionaHeaders);
-                if(digestBodyString == null || digestBodyString == "")
+                if (digestBodyString == null || digestBodyString == "")
                 {
                     Log.Warning("Inside Cryptocurrency issue {issue} doesn't exist. API Link: {apiLink}. Real link: {realLink}", digestId, digestApiUrl, digestReadableUrl);
                     continue;
