@@ -38,7 +38,7 @@ namespace ItLinksBot
 
             if (message.Length > telegramCaptionLimit)
             {
-                var currentChunk = message.Substring(0, telegramCaptionLimit);
+                var currentChunk = message[..telegramCaptionLimit];
                 char[] charArray = currentChunk.ToCharArray();
                 Array.Reverse(charArray);
                 var reverseChunk = new string(charArray);
@@ -52,26 +52,26 @@ namespace ItLinksBot
 
                 if (closestBreak >= 0)
                 {
-                    messageChunks.Add(DecorateTelegramString(message.Substring(0, tgCaptionSizeLimit - closestBreak), true, false));
+                    messageChunks.Add(DecorateTelegramString(message[..(tgCaptionSizeLimit - closestBreak)], true, false));
                     splitPosition = tgCaptionSizeLimit - closestBreak;
                 }
                 else if (closestDot >= 0)
                 {
-                    messageChunks.Add(DecorateTelegramString(message.Substring(0, tgCaptionSizeLimit - closestDot), true, false));
+                    messageChunks.Add(DecorateTelegramString(message[..(tgCaptionSizeLimit - closestDot)], true, false));
                     splitPosition = tgCaptionSizeLimit - closestDot;
                 }
                 else if (closestSpace >= 0)
                 {
-                    messageChunks.Add(DecorateTelegramString(message.Substring(0, tgCaptionSizeLimit - closestSpace), true, false));
+                    messageChunks.Add(DecorateTelegramString(message[..(tgCaptionSizeLimit - closestSpace)], true, false));
                     splitPosition = tgCaptionSizeLimit - closestSpace;
                 }
                 else
                 {
                     //worst case scenario - no new line, no break, no space found
-                    messageChunks.Add(DecorateTelegramString(message.Substring(0, tgCaptionSizeLimit), true, false));
+                    messageChunks.Add(DecorateTelegramString(message[..tgCaptionSizeLimit], true, false));
                     splitPosition = tgCaptionSizeLimit;
                 }
-                var restChunks = SplitMessageForTg("[...]" + message.Substring(0, splitPosition));
+                var restChunks = SplitMessageForTg("[...]" + message[..splitPosition]);
                 messageChunks.AddRange(restChunks);
             }
             else
@@ -88,7 +88,7 @@ namespace ItLinksBot
             while ((htmlDocument.ParseErrors.Any() || chunk[messageCursor - 1] == '<') && messageCursor > 1)
             {
                 messageCursor--;
-                var chunkWindow = chunk.Substring(0, messageCursor);
+                var chunkWindow = chunk[..messageCursor];
                 htmlDocument.LoadHtml(chunkWindow);
             }
             return messageCursor;

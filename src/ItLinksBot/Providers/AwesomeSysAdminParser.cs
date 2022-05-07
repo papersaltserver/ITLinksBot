@@ -77,7 +77,7 @@ namespace ItLinksBot.Providers
                 var title = link.SelectSingleNode(".//a[contains(@class,'title')]").InnerText;
                 var href = link.SelectSingleNode(".//a[contains(@class,'title')]")?.GetAttributeValue("href", "Not found");
                 if (href == null) continue;
-                if (!href.Contains("://") && href.Contains("/"))
+                if (!href.Contains("://") && href.Contains('/'))
                 {
                     var digestUrl = new Uri(digest.DigestURL);
                     var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);

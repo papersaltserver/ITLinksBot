@@ -89,7 +89,7 @@ namespace ItLinksBot.Providers
                 var title = linkNode.InnerText;
                 var href = linkNode?.GetAttributeValue("href", "Not found");
                 if (href == null) continue;
-                if (!href.Contains("://") && href.Contains("/"))
+                if (!href.Contains("://") && href.Contains('/'))
                 {
                     var digestUrl = new Uri(digest.DigestURL);
                     var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);

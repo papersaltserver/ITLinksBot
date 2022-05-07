@@ -122,7 +122,7 @@ namespace ItLinksBot.Providers
                     hrefNode = link.SelectSingleNode(".//span[contains(@class,'item__footer-link')]/a[1]");
                 }
                 string href = hrefNode.GetAttributeValue("href", "Not found");
-                if (!href.Contains("://") && href.Contains("/"))
+                if (!href.Contains("://") && href.Contains('/'))
                 {
                     href = new Uri(baseUri, href).AbsoluteUri;
                 }
@@ -184,7 +184,7 @@ namespace ItLinksBot.Providers
                     hrefNode = linksHtml.DocumentNode.SelectSingleNode("//section[contains(@class,'cc-mustsees')]//div[@id!='intro' and @id!='outro']//div[contains(@class,'item')]/span/span/a");
                     href = hrefNode.GetAttributeValue("href", "Not found") + "#link" + articleLinks + i;
                 }
-                if (!href.Contains("://") && href.Contains("/"))
+                if (!href.Contains("://") && href.Contains('/'))
                 {
                     href = new Uri(baseUri, href).AbsoluteUri;
                 }

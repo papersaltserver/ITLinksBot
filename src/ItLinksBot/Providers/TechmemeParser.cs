@@ -81,7 +81,7 @@ namespace ItLinksBot.Providers
                 var titleNode = link.SelectSingleNode(".//td/span[contains(@class,'title')][1]");
                 var title = titleNode.InnerText;
                 var href = titleNode.SelectSingleNode("./a").GetAttributeValue("href", "Not found");
-                if (!href.Contains("://") && href.Contains("/"))
+                if (!href.Contains("://") && href.Contains('/'))
                 {
                     href = new Uri(baseUri, href).AbsoluteUri;
                 }

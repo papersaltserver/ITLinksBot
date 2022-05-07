@@ -64,7 +64,7 @@ namespace ItLinksBot.Providers
                 if (linkTag != null)
                 {
                     var href = linkTag.GetAttributeValue("href", "Not found");
-                    if (!href.Contains("://") && href.Contains("/"))
+                    if (!href.Contains("://") && href.Contains('/'))
                     {
                         href = (new Uri(baseUri, href)).AbsoluteUri;
                     }

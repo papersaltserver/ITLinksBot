@@ -75,7 +75,7 @@ namespace ItLinksBot.Providers
                 var title = link.InnerText;
                 var href = link.SelectSingleNode(".//a")?.GetAttributeValue("href", "Not found");
                 if (href == null) continue;
-                if (!href.Contains("://") && href.Contains("/"))
+                if (!href.Contains("://") && href.Contains('/'))
                 {
                     href = (new Uri(baseUri, href)).AbsoluteUri;
                 }

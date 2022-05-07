@@ -41,7 +41,7 @@ namespace ItLinksBot.Providers
             {
                 var urlNode = digestNode.SelectSingleNode("./a");
                 var href = urlNode.GetAttributeValue("href", "Not found");
-                if (!href.Contains("://") && href.Contains("/"))
+                if (!href.Contains("://") && href.Contains('/'))
                 {
                     href = (new Uri(baseUri, href)).AbsoluteUri;
                 }
@@ -85,7 +85,7 @@ namespace ItLinksBot.Providers
 
                 var href = titleNode.GetAttributeValue("href", "Not found");
 
-                if (!href.Contains("://") && href.Contains("/"))
+                if (!href.Contains("://") && href.Contains('/'))
                 {
                     var digestUrl = new Uri(digest.DigestURL);
                     var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
