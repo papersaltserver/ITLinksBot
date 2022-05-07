@@ -4,6 +4,9 @@ using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
+using Serilog;
 
 namespace ItLinksBot.Providers
 {
@@ -14,6 +17,11 @@ namespace ItLinksBot.Providers
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "Inside Cryptocurrency";
         readonly Uri baseUri = new("https://inside.com/");
+
+        private readonly Dictionary<string, string> additionaHeaders = new() { { "X-Application-Secret", "de9289e42b6863e0878e0c0d60dca05810623cb1d7680ed493854f0137e027bf15b4ed2a9dc899075255b6d49130d2d8d65f59dab38100ecfd9df215c66ba8e1" } };
+        private readonly int numbersToProcess = 5;
+        private readonly string campaignApiUrl = "https://community-api.inside.com/v1/campaigns/";
+        private readonly string campaignUrlBase = "https://inside.com/campaigns/";
 
         public InsideCryptocurrencyParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
@@ -34,25 +42,51 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
-            var digestArchiveHtml = new HtmlDocument();
-            digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//table[contains(@class,'table')]//tr").Take(50);
-            foreach (var digestNode in digestsInArchive)
+            Uri digestStartingUri = new(provider.DigestURL);
+            string nextPage = provider.DigestURL;
+            HashSet<int> issues = new();
+            JObject resultPageObject;
+            do
             {
-                var dateNode = digestNode.SelectSingleNode("./td[1]");
-                var digestDate = DateTime.Parse(dateNode.InnerText.Trim());
-                var linkNode = digestNode.SelectSingleNode("./td[2]/a");
-                var digestName = linkNode.InnerText.Trim();
-                var digestHref = linkNode.GetAttributeValue("href", "Not found");
-                var digestUrl = new Uri(baseUri, digestHref);
-
+                var stringResult = htmlContentGetter.GetContent(nextPage, additionaHeaders);
+                resultPageObject = JObject.Parse(stringResult);
+                JArray dataItems = (JArray)resultPageObject["data"];
+                foreach (JObject dataEntry in dataItems)
+                {
+                    JToken campaignToken = dataEntry["campaign"];
+                    if (campaignToken != null && campaignToken.Type != JTokenType.Null)
+                    {
+                        issues.Add((int)dataEntry["campaign"]["id"]);
+                    }
+                    if (issues.Count >= numbersToProcess)
+                    {
+                        break;
+                    }
+                }
+                nextPage = new Uri(digestStartingUri, (string)resultPageObject["meta"]["next"]).AbsoluteUri + "&list=cryptocurrency";
+            } while (issues.Count < numbersToProcess && (string)resultPageObject["meta"]["next"] != null);
+            foreach( int digestId in issues)
+            {
+                string digestApiUrl = campaignApiUrl + digestId.ToString();
+                string digestReadableUrl = campaignUrlBase + digestId.ToString();
+                string digestBodyString = htmlContentGetter.GetContent(digestApiUrl, additionaHeaders);
+                if(digestBodyString == null || digestBodyString == "")
+                {
+                    Log.Warning("Inside Cryptocurrency issue {issue} doesn't exist. API Link: {apiLink}. Real link: {realLink}", digestId, digestApiUrl, digestReadableUrl);
+                    continue;
+                }
+                JObject digestBodyObject = JObject.Parse(digestBodyString);
+                string digestName = (string)digestBodyObject["data"]["title"];
+                var dayString = Regex.Matches(digestName, @"\((.*)\)")[0].Groups[1].Value;
+                dayString = Regex.Replace(dayString, @"(\d+)\w+,", "$1,");
+                var digestDate = DateTime.Parse(dayString);
+                string digestDescription = (string)digestBodyObject["data"]["subject"];
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
                     DigestName = digestName,
-                    DigestDescription = "", //no description there
-                    DigestURL = digestUrl.AbsoluteUri,
+                    DigestDescription = digestDescription,
+                    DigestURL = digestReadableUrl,
                     Provider = provider
                 };
                 digests.Add(currentDigest);
@@ -68,7 +102,9 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new();
-            var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
+            string apiDigestLink = campaignApiUrl + digest.DigestURL.Split('/').LastOrDefault();
+            var digestContentJson = htmlContentGetter.GetContent(apiDigestLink, additionaHeaders);
+            var digestContent = (string)JObject.Parse(digestContentJson)["data"]["content"];
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'column-content')]");
@@ -84,12 +120,7 @@ namespace ItLinksBot.Providers
                 var href = linkNode?.GetAttributeValue("href", "Not found");
                 if (href == null) continue;
 
-                if (!href.Contains("://") && href.Contains("/"))
-                {
-                    var digestUrl = new Uri(digest.DigestURL);
-                    var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
-                    href = (new Uri(digestBase, href)).AbsoluteUri;
-                }
+                href = (new Uri(baseUri, href)).AbsoluteUri;
                 href = Utils.UnshortenLink(href);
 
                 var descriptionNodeOriginal = link.SelectSingleNode(".//div[contains(@class,'story-body')]");
