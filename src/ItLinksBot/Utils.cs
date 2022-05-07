@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 
 namespace ItLinksBot
 {
@@ -18,11 +19,13 @@ namespace ItLinksBot
         {
             string[] exceptionList = new string[] { "techcrunch.com", "www.bloomberg.com", "www.washingtonpost.com", "www.youtube.com" };
             string[] nonBrowserList = new string[] { "t.co" };
-            HttpWebRequest req;
-            CookieContainer cookieContainer = new();
+            HttpClientHandler handler = new();
+            handler.AllowAutoRedirect = false;
+            HttpRequestMessage req;
+            Uri requestUri;
             try
             {
-                req = (HttpWebRequest)WebRequest.Create(linkUrl);
+                requestUri = new(linkUrl);
             }
             catch (Exception)
             {
@@ -30,53 +33,50 @@ namespace ItLinksBot
                 return linkUrl;
             }
             //if current url doesn't need to be unshortened
-            if (exceptionList.Contains(req.RequestUri.Host))
+            if (exceptionList.Contains(requestUri.Host))
             {
                 return linkUrl;
             }
-            req.CookieContainer = cookieContainer;
-            req.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75";
-            req.AllowAutoRedirect = false;
-            string realUrl = linkUrl;
+            HttpClient httpClient = new(handler);
             while (true)
             {
                 try
                 {
-                    if (nonBrowserList.Contains(req.RequestUri.Host))
+                    req = new(HttpMethod.Get, requestUri);
+                    if (nonBrowserList.Contains(requestUri.Host))
                     {
-                        req.UserAgent = ".NET unshortening client v0.01";
+                        req.Headers.Add("User-Agent", ".NET unshortening client v0.01");
                     }
-                    var resp = (HttpWebResponse)req.GetResponse();
+                    else
+                    {
+                        req.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75");
+                    }
+                    var resp = httpClient.Send(req);
                     if (resp.StatusCode == HttpStatusCode.Ambiguous ||
                     resp.StatusCode == HttpStatusCode.MovedPermanently ||
                     resp.StatusCode == HttpStatusCode.Found ||
                     resp.StatusCode == HttpStatusCode.RedirectMethod ||
                     resp.StatusCode == HttpStatusCode.RedirectKeepVerb)
                     {
-                        if (!resp.Headers["Location"].Contains("://"))
+                        if (!resp.Headers.Location.AbsoluteUri.Contains("://"))
                         {
-                            realUrl = (new Uri(req.RequestUri, resp.Headers["Location"])).AbsoluteUri;
+                            requestUri = new Uri(requestUri, resp.Headers.Location);
                         }
                         else
                         {
-                            realUrl = resp.Headers["Location"];
+                            requestUri = resp.Headers.Location;
                         }
 
-                        if (realUrl == req.RequestUri.AbsoluteUri)
+                        if (requestUri.AbsoluteUri == req.RequestUri.AbsoluteUri)
                         {
                             break;
                         }
 
-                        req = (HttpWebRequest)WebRequest.Create(realUrl);
-
                         //if current url doesn't need to be unshortened
                         if (exceptionList.Contains(req.RequestUri.Host))
                         {
-                            return realUrl;
+                            return requestUri.AbsoluteUri;
                         }
-                        req.AllowAutoRedirect = false;
-                        req.CookieContainer = cookieContainer;
-                        req.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75";
                     }
                     else
                     {
@@ -85,12 +85,12 @@ namespace ItLinksBot
                 }
                 catch (Exception e)
                 {
-                    Log.Warning("Problem {exception} with link {original} which leads to {realUrl} ", e.Message, linkUrl, realUrl);
+                    Log.Warning("Problem {exception} with link {original} which leads to {realUrl} ", e.Message, linkUrl, requestUri.AbsoluteUri);
                     break;
                 }
 
             }
-            return realUrl;
+            return requestUri.AbsoluteUri;
         }
     }
 }
