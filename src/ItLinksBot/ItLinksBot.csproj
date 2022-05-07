@@ -48,6 +48,7 @@
     <SourceFileDebug>appsettings.debug.json</SourceFileDebug>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+	<InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
 
   <Target Name="CopyConfiguration" AfterTargets="PostBuildEvent">
