@@ -15,6 +15,7 @@ FROM build AS publish
 RUN dotnet publish "ItLinksBot.csproj" -c Release -o /app/publish
 
 FROM base AS final
+RUN apk add --no-cache icu-libs krb5-libs libgcc libintl libssl1.1 libstdc++ zlib
 ENV DOTNET_RUNNING_IN_CONTAINER=true
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 WORKDIR /app
