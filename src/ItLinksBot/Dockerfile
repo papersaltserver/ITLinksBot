@@ -15,7 +15,14 @@ FROM build AS publish
 RUN dotnet publish "ItLinksBot.csproj" -c Release -o /app/publish
 
 FROM base AS final
-RUN apk add --no-cache icu-libs krb5-libs libgcc libintl libssl1.1 libstdc++ zlib
+RUN apk add --no-cache \
+	icu-libs~=69.1-r1 \
+	krb5-libs~=1.19.3-r0 \
+	libgcc~=10.3.1_git20211027-r0 \
+	libintl~=0.21-r0 \
+	libssl1.1~=1.1.1n-r0 \
+	libstdc++~=10.3.1_git20211027-r0 \
+	zlib~=1.2.12-r0
 ENV DOTNET_RUNNING_IN_CONTAINER=true
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 WORKDIR /app
