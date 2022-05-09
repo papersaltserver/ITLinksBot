@@ -59,7 +59,7 @@ namespace ItLinksBot.Providers
             var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[contains(@class,'kubeweekly-box')]").Take(5);
+            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[contains(@class,'kubeweekly-item')]").Take(5);
             foreach (var digestNode in digestsInArchive)
             {
                 var hrefNode = digestNode.SelectSingleNode(".//a");
@@ -67,7 +67,7 @@ namespace ItLinksBot.Providers
                 var digestName = hrefNode.InnerText.Trim();
                 var digestUrl = new Uri(baseUri, digestHref);
                 var fullHref = Utils.UnshortenLink(digestUrl.AbsoluteUri);
-                var dateNode = digestNode.SelectSingleNode(".//div[contains(@class,'sent')]");
+                var dateNode = digestNode.SelectSingleNode(".//span[contains(@class,'kubeweekly-item__date')]");
                 var dateText = dateNode.InnerText.Trim();
                 var digestDate = DateTime.Parse(dateText, new CultureInfo("en-US", false));
 
