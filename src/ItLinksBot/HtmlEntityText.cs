@@ -204,6 +204,7 @@ namespace ItLinksBot
             sb.Replace("&eth;", "&#240;");
             sb.Replace("&Euml;", "&#203;");
             sb.Replace("&euml;", "&#235;");
+            sb.Replace("&euro;", "&#8364;");
             sb.Replace("&excl;", "&#33;");
             sb.Replace("&exist;", "&#8707;");
             sb.Replace("&female;", "&#9792;");
