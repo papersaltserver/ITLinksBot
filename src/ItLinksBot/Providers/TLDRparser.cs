@@ -29,7 +29,7 @@ namespace ItLinksBot.Providers
 
         public string FormatLinkPost(Link link)
         {
-            if(link.Category != null)
+            if (link.Category != null)
             {
                 return $"<strong>[{link.Category}]{link.Title}</strong>\n\n{link.Description}\n{link.URL}";
             }

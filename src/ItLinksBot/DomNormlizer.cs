@@ -54,7 +54,7 @@ namespace ItLinksBot
                 }
                 else
                 {
-                    if(node.Name == "a")
+                    if (node.Name == "a")
                     {
                         var uselessAttributes = node.Attributes.Where(a => a.Name != "href").Select(a => a.Name).ToArray();
                         foreach (var attr in uselessAttributes)
