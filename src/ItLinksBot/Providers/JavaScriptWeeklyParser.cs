@@ -30,7 +30,14 @@ namespace ItLinksBot.Providers
 
         public string FormatLinkPost(Link link)
         {
-            return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
+            if (link.Category != null)
+            {
+                return $"<strong>[{link.Category}]{link.Title}</strong>\n\n{link.Description}\n{link.URL}";
+            }
+            else
+            {
+                return $"<strong>{link.Title}</strong>\n\n{link.Description}\n{link.URL}";
+            }
         }
 
         public List<Digest> GetCurrentDigests(Provider provider)
@@ -92,10 +99,43 @@ namespace ItLinksBot.Providers
                 descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
                 string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
+                var category = link.SelectSingleNode("./preceding-sibling::table[contains(@class,'el-heading')][1]")?.InnerText?.Trim();
+
                 links.Add(new Link
                 {
                     URL = href,
                     Title = title,
+                    Category = category,
+                    Description = descriptionText,
+                    LinkOrder = i,
+                    Digest = digest
+                });
+            }
+
+            var briefLinksInDigest = linksHtml.DocumentNode.SelectNodes("//table[contains(@class,'content')]//ul//p");
+            for (int i = 0; i < briefLinksInDigest.Count; i++)
+            {
+                HtmlNode link = briefLinksInDigest[i];
+                var title = ""; // brief links does not have title
+                var href = link.SelectSingleNode(".//a")?.GetAttributeValue("href", "Not found");
+                if (href == null)
+                {
+                    href = $"{digest.DigestURL}#briefLink{i}";
+                }
+                if (!href.Contains("://") && href.Contains('/'))
+                {
+                    href = (new Uri(baseUri, href)).AbsoluteUri;
+                }
+                href = Utils.UnshortenLink(href);
+                var descriptionNode = contentNormalizer.NormalizeDom(link);
+                string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
+                string category = "IN BRIEF";
+
+                links.Add(new Link
+                {
+                    URL = href,
+                    Title = title,
+                    Category = category,
                     Description = descriptionText,
                     LinkOrder = i,
                     Digest = digest
