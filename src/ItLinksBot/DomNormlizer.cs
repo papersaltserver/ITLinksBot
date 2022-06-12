@@ -61,6 +61,9 @@ namespace ItLinksBot
                         {
                             node.Attributes.Remove(attr);
                         }
+                        var currentHref = node.GetAttributeValue("href", "Not found");
+                        var newHref = Utils.UnshortenLink(currentHref);
+                        node.SetAttributeValue("href", newHref);
                     }
                     var childNodes = node.SelectNodes("./*|./text()");
                     if (childNodes != null)
