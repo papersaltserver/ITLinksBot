@@ -30,7 +30,7 @@ namespace ItLinksBot.Providers
 
         public string FormatLinkPost(Link link)
         {
-            if (link.Category != null)
+            if (link.Category != null || link.Category != "")
             {
                 return $"<strong>[{link.Category}]{link.Title}</strong>\n\n{link.Description}\n{link.URL}";
             }
@@ -75,31 +75,48 @@ namespace ItLinksBot.Providers
             var digestContent = htlmContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//table[contains(@class,'el-item')]");
+            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//table[contains(@class,'el-item') or contains(@class,'miniitem') and not(ancestor::table[contains(@class,'jobs')])]");
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
-                var title = link.SelectSingleNode(".//span[@class='mainlink']/a").InnerText;
-                var href = link.SelectSingleNode(".//span[@class='mainlink']/a")?.GetAttributeValue("href", "Not found");
-                if (href == null) continue;
-                if (!href.Contains("://") && href.Contains('/'))
+                string title, href, descriptionText;
+                HtmlNode preDescriptionNode;
+                if (link.Attributes["class"].Value.Contains("el-item"))
                 {
-                    href = (new Uri(baseUri, href)).AbsoluteUri;
+                    // Main link format processing
+                    title = link.SelectSingleNode(".//span[@class='mainlink']/a").InnerText;
+                    href = link.SelectSingleNode(".//span[@class='mainlink']/a")?.GetAttributeValue("href", "Not found");
+                    if (href == null) continue;
+                    if (!href.Contains("://") && href.Contains('/'))
+                    {
+                        href = (new Uri(baseUri, href)).AbsoluteUri;
+                    }
+                    preDescriptionNode = link.SelectSingleNode(".//span[@class='mainlink']");
+                }
+                else
+                {
+                    // Mini links processing
+                    title = link.SelectSingleNode("./descendant::a[1]").InnerText;
+                    href = link.SelectSingleNode("./descendant::a[1]").GetAttributeValue("href", "Not found");
+                    preDescriptionNode = link.SelectSingleNode(".//p[contains(@class,'desc')]/span[1]");
+
                 }
                 href = Utils.UnshortenLink(href);
-                var sibling = link.SelectSingleNode(".//span[@class='mainlink']").NextSibling;
+                var category = link.SelectSingleNode("./preceding-sibling::table[contains(@class,'el-heading')][1]")?.InnerText?.Trim();
+                var sibling = preDescriptionNode.NextSibling;
 
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
                 //copying nodes related to the current link to a new abstract node
                 while (sibling != null)
                 {
-                    descriptionNode.AppendChild(sibling.Clone());
+                    if (sibling.Attributes != null && sibling.Attributes["class"] != null && !sibling.Attributes["class"].Value.Contains("name"))
+                    {
+                        descriptionNode.AppendChild(sibling.Clone());
+                    }
                     sibling = sibling.NextSibling;
                 }
                 descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
-                string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-
-                var category = link.SelectSingleNode("./preceding-sibling::table[contains(@class,'el-heading')][1]")?.InnerText?.Trim();
+                descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
                 links.Add(new Link
                 {
