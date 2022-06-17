@@ -76,7 +76,7 @@ namespace ItLinksBot.Providers
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//table[contains(@class,'el-item') or contains(@class,'miniitem') and not(ancestor::table[contains(@class,'jobs')])]");
-            int mainLinks=0;
+            int mainLinks = 0;
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
