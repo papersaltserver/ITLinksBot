@@ -1,9 +1,9 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/runtime:6.0-alpine AS base
+FROM mcr.microsoft.com/dotnet/runtime:6.0 AS base
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["ItLinksBot/ItLinksBot.csproj", "ItLinksBot/"]
 RUN dotnet restore "ItLinksBot/ItLinksBot.csproj" --locked-mode
@@ -15,16 +15,16 @@ FROM build AS publish
 RUN dotnet publish "ItLinksBot.csproj" -c Release -o /app/publish
 
 FROM base AS final
-RUN apk add --no-cache \
-	icu-libs~=69.1-r1 \
-	krb5-libs~=1.19.3-r0 \
-	libgcc~=10.3.1_git20211027-r0 \
-	libintl~=0.21-r0 \
-	libssl1.1~=1.1.1n-r0 \
-	libstdc++~=10.3.1_git20211027-r0 \
-	zlib~=1.2.12-r0
-ENV DOTNET_RUNNING_IN_CONTAINER=true
-ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+#RUN apk add --no-cache \
+#	icu-libs~=69.1-r1 \
+#	krb5-libs~=1.19.3-r0 \
+#	libgcc~=10.3.1_git20211027-r0 \
+#	libintl~=0.21-r0 \
+#	libssl1.1~=1.1.1n-r0 \
+#	libstdc++~=10.3.1_git20211027-r0 \
+#	zlib~=1.2.12-r0
+#ENV DOTNET_RUNNING_IN_CONTAINER=true
+#ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "ItLinksBot.dll"]
