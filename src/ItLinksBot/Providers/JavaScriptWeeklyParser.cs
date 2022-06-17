@@ -76,6 +76,7 @@ namespace ItLinksBot.Providers
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             var linksInDigest = linksHtml.DocumentNode.SelectNodes("//table[contains(@class,'el-item') or contains(@class,'miniitem') and not(ancestor::table[contains(@class,'jobs')])]");
+            int mainLinks=0;
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
@@ -102,14 +103,14 @@ namespace ItLinksBot.Providers
 
                 }
                 href = Utils.UnshortenLink(href);
-                var category = link.SelectSingleNode("./preceding-sibling::table[contains(@class,'el-heading')][1]")?.InnerText?.Trim();
+                string category = link.SelectSingleNode("./preceding-sibling::table[contains(@class,'el-heading')][1]")?.InnerText?.Trim();
                 var sibling = preDescriptionNode.NextSibling;
 
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
                 //copying nodes related to the current link to a new abstract node
                 while (sibling != null)
                 {
-                    if (sibling.Attributes != null && sibling.Attributes["class"] != null && !sibling.Attributes["class"].Value.Contains("name"))
+                    if (sibling.Attributes["class"] == null || sibling.Attributes["class"] != null && !sibling.Attributes["class"].Value.Contains("name"))
                     {
                         descriptionNode.AppendChild(sibling.Clone());
                     }
@@ -127,6 +128,7 @@ namespace ItLinksBot.Providers
                     LinkOrder = i,
                     Digest = digest
                 });
+                mainLinks++;
             }
 
             var briefLinksInDigest = linksHtml.DocumentNode.SelectNodes("//table[contains(@class,'content')]//ul//p");
@@ -154,7 +156,7 @@ namespace ItLinksBot.Providers
                     Title = title,
                     Category = category,
                     Description = descriptionText,
-                    LinkOrder = i,
+                    LinkOrder = i + mainLinks,
                     Digest = digest
                 });
             }
