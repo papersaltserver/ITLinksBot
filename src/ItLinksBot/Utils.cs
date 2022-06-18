@@ -85,7 +85,7 @@ namespace ItLinksBot
                 }
                 catch (Exception e)
                 {
-                    Log.Warning("Problem {exception} with link {original} which leads to {realUrl} ", e.Message, linkUrl, requestUri.AbsoluteUri);
+                    Log.Warning("Unshortening problem {exception} with link {original} which leads to {realUrl} ", e.Message, linkUrl, requestUri.AbsoluteUri);
                     break;
                 }
 
