@@ -63,6 +63,7 @@ namespace ItLinksBot
             services.AddTransient<IParser, KubeWeeklyParser>();
             services.AddTransient<IParser, HowCuriousParser>();
             services.AddTransient<IParser, TheLongGameParser>();
+            services.AddTransient<IParser, NodeWeeklyParser>();
             services.AddAutoMapper(cfg =>
             {
                 cfg.CreateMap<Photo, PhotoDTO>();
@@ -86,7 +87,7 @@ namespace ItLinksBot
             Log.Information("Started bot");
             var optionsBuilder = new DbContextOptionsBuilder<DbContext>();
 
-            var connectionString = config
+            string connectionString = config
                         .GetConnectionString("DefaultConnection");
             optionsBuilder.UseSqlite(connectionString);
             var context = new ITLinksContext();
