@@ -46,7 +46,7 @@ namespace ItLinksBot.Providers
             var stringResult = htlmContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@class='issue']").Take(50);
+            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@class='issue']").Take(5);
             foreach (var digestNode in digestsInArchive)
             {
                 var relativePathNode = digestNode.SelectSingleNode(".//a");
@@ -75,13 +75,13 @@ namespace ItLinksBot.Providers
             var digestContent = htlmContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//table[contains(@class,'el-item') or contains(@class,'miniitem') and not(ancestor::table[contains(@class,'jobs')])]");
+            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@id='content']/table[contains(@class,'el-item') or contains(@class,'miniitem') and not(ancestor::table[contains(@class,'jobs')]) or contains(@class,'el-content')]");
             int mainLinks = 0;
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
                 string title, href, descriptionText;
-                HtmlNode preDescriptionNode;
+                HtmlNode descriptionNodeIterator;
                 if (link.Attributes["class"].Value.Contains("el-item"))
                 {
                     // Main link format processing
@@ -92,29 +92,35 @@ namespace ItLinksBot.Providers
                     {
                         href = (new Uri(baseUri, href)).AbsoluteUri;
                     }
-                    preDescriptionNode = link.SelectSingleNode(".//span[@class='mainlink']");
+                    descriptionNodeIterator = link.SelectSingleNode(".//span[@class='mainlink']").NextSibling;
                 }
-                else
+                else if (link.Attributes["class"].Value.Contains("miniitem"))
                 {
                     // Mini links processing
                     title = link.SelectSingleNode("./descendant::a[1]").InnerText;
                     href = link.SelectSingleNode("./descendant::a[1]").GetAttributeValue("href", "Not found");
-                    preDescriptionNode = link.SelectSingleNode(".//p[contains(@class,'desc')]/span[1]");
+                    descriptionNodeIterator = link.SelectSingleNode(".//p[contains(@class,'desc')]/span[1]").NextSibling;
 
+                }
+                else
+                {
+                    // Note processing
+                    title = ""; // Not does not have titles
+                    href = link.SelectSingleNode("./descendant::a[1]").GetAttributeValue("href", "Not found");
+                    descriptionNodeIterator = link.SelectSingleNode("./child::*[1]");
                 }
                 href = Utils.UnshortenLink(href);
                 string category = link.SelectSingleNode("./preceding-sibling::table[contains(@class,'el-heading')][1]")?.InnerText?.Trim();
-                var sibling = preDescriptionNode.NextSibling;
 
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
                 //copying nodes related to the current link to a new abstract node
-                while (sibling != null)
+                while (descriptionNodeIterator != null)
                 {
-                    if (sibling.Attributes["class"] == null || sibling.Attributes["class"] != null && !sibling.Attributes["class"].Value.Contains("name"))
+                    if (!(descriptionNodeIterator.Attributes["class"]?.Value.Contains("name") == true))
                     {
-                        descriptionNode.AppendChild(sibling.Clone());
+                        descriptionNode.AppendChild(descriptionNodeIterator.Clone());
                     }
-                    sibling = sibling.NextSibling;
+                    descriptionNodeIterator = descriptionNodeIterator.NextSibling;
                 }
                 descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
                 descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
