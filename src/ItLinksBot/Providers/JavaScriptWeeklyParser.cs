@@ -107,10 +107,12 @@ namespace ItLinksBot.Providers
                     // Note processing
                     title = ""; // Not does not have titles
                     var hrefNode = link.SelectSingleNode("./descendant::a[1]");
-                    if (hrefNode != null) {
+                    if (hrefNode != null)
+                    {
                         href = hrefNode.GetAttributeValue("href", "Not found");
                     }
-                    else {
+                    else
+                    {
                         href = $"{digest.DigestURL}#section{i}";
                     }
                     descriptionNodeIterator = link.SelectSingleNode("./child::*[1]");
