@@ -106,7 +106,13 @@ namespace ItLinksBot.Providers
                 {
                     // Note processing
                     title = ""; // Not does not have titles
-                    href = link.SelectSingleNode("./descendant::a[1]").GetAttributeValue("href", "Not found");
+                    var hrefNode = link.SelectSingleNode("./descendant::a[1]");
+                    if (hrefNode != null) {
+                        href = hrefNode.GetAttributeValue("href", "Not found");
+                    }
+                    else {
+                        href = $"{digest.DigestURL}#section{i}";
+                    }
                     descriptionNodeIterator = link.SelectSingleNode("./child::*[1]");
                 }
                 href = Utils.UnshortenLink(href);

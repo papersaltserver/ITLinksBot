@@ -178,7 +178,11 @@ namespace ItLinksBot.Providers
                     string titleText = titleNode.InnerText.Trim();
 
                     HtmlNode categoryNode = link.SelectSingleNode("./preceding-sibling::tr[./td/div[contains(@class,'item-header')]][1]");
-                    string categoryText = categoryNode.InnerText.Trim();
+                    string categoryText = "";
+                    if (categoryNode != null)
+                    {
+                        categoryText = categoryNode.InnerText.Trim();
+                    }
 
                     links.Add(new Link
                     {
