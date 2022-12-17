@@ -80,7 +80,7 @@ jobs:
       env:
         TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
         TELEGRAM_CHANNELID: ${{ secrets.TELEGRAM_CHANNELID }}
-      run: dotnet test --no-build --verbosity normal --logger:"xunit;LogFilePath=test_result.xml" /p:CollectCoverage=true /p:CoverletOutputFormat=opencover ItLinksBot.sln
+      run: dotnet test --no-build --verbosity normal --logger:"xunit;LogFilePath=test_result.xml" /p:CollectCoverage=true /p:CoverletOutputFormat=opencover ./ItLinksBot.sln
     - name: Stop Sonar
       working-directory: ./src
       env:
