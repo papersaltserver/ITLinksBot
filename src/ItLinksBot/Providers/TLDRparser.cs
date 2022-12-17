@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
+using Newtonsoft.Json.Linq;
 
 namespace ItLinksBot.Providers
 {
@@ -45,17 +46,20 @@ namespace ItLinksBot.Providers
             var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            HtmlNodeCollection digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@id='doc-container']//div[contains(@class,'text-left')]//a");
-            var latestIssues = digestsInArchive.OrderByDescending(d => d.InnerText).Take(5);
+            string nextDataNode = digestArchiveHtml.DocumentNode.SelectNodes("//script[@id='__NEXT_DATA__']").First().InnerText;
+            var buildId = (string)JObject.Parse(nextDataNode)["buildId"];
+            var archivesJsonString = htmlContentGetter.GetContent($"https://tldr.tech/_next/data/{buildId}/tech/archives.json");
+            JObject archivesObject = JObject.Parse(archivesJsonString);
+            JArray latestIssues = (JArray)archivesObject["pageProps"]["campaigns"];
 
-            foreach (var digestNode in latestIssues)
+            foreach (JObject digestNode in latestIssues.Take(5))
             {
-                var digestUrl = new Uri(baseUri, digestNode.GetAttributeValue("href", "Not found"));
-                var dateText = Regex.Match(digestNode.InnerText.Trim(), @"^(\d\d\d\d-\d\d-\d\d)").Groups[1].Value;
+                var digestUrl = new Uri(baseUri, $"/_next/data/{buildId}/tech/{(string)digestNode["date"]}.json?date={(string)digestNode["date"]}");
+                var dateText = (string)digestNode["date"];
                 var currentDigest = new Digest
                 {
                     DigestDay = DateTime.Parse(dateText),
-                    DigestName = digestNode.InnerText,
+                    DigestName = (string)digestNode["subject"],
                     DigestDescription = "", //tldr doesn't have description for digest itself
                     DigestURL = digestUrl.AbsoluteUri,
                     Provider = provider
@@ -72,40 +76,30 @@ namespace ItLinksBot.Providers
         {
             List<Link> links = new();
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
-            var linksHtml = new HtmlDocument();
-            linksHtml.LoadHtml(digestContent);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@id='doc-container']//h3[not(@id='subtitle')]/../..");
+            JObject digestObject = JObject.Parse(digestContent);
+            JArray linksInDigest = (JArray)digestObject["pageProps"]["stories"];
             for (int i = 0; i < linksInDigest.Count; i++)
             {
-                HtmlNode link = linksInDigest[i];
-                var titleNode = link.SelectSingleNode("./a");
-                if (titleNode == null)
-                {
-                    continue;
-                }
-                var title = titleNode.InnerText.Trim();
-                var href = titleNode.GetAttributeValue("href", "Not found");
-                if (!href.Contains("://") && href.Contains("/"))
-                {
-                    href = (new Uri(baseUri, href)).AbsoluteUri;
-                }
-                href = Utils.UnshortenLink(href);
-                var descriptionNode = contentNormalizer.NormalizeDom(link.SelectSingleNode("./div"));
-                var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-
-                var categoryNode = link.SelectSingleNode("./preceding-sibling::div[strong][1]");
-                string categoryText = "";
-                if (categoryNode != null)
-                {
-                    var categoryIconNode = categoryNode.SelectSingleNode("./preceding-sibling::div[1]");
-                    categoryText = categoryIconNode.InnerText.Replace("\n", "").Replace("\r", "").Trim() + categoryNode.InnerText.Replace("\n", " ").Replace("\r", "").Trim();
-                }
+                JObject link = (JObject)linksInDigest[i];
+                var categories = new Dictionary<string, string>();
+                categories["sponsor"] = "Sponsor";
+                categories["big"] = "\uD83D\uDCF1 Big Tech & Startups";
+                categories["future"] = "\uD83D\uDE80 Science & Futuristic Technology";
+                categories["programming"] = "\uD83D\uDCBB Programming, Design & Data Science";
+                categories["miscellaneous"] = "\uD83C\uDF81 Miscellaneous";
+                categories["quick"] = "⚡Quick Links";
+                categories["cryptosponsor"] = "Sponsor";
+                categories["markets"] = "\uD83D\uDCC8 Markets & Business";
+                categories["innovation"] = "\uD83D\uDE80 Innovation & Launches";
+                categories["guides"] = "\uD83D\uDCA1 Guides & Resources";
+                categories["crypto"] = "\uD83E\uDD84 Miscellaneous";
+                categories["cryptoquick"] = "⚡Quick Links";
                 links.Add(new Link
                 {
-                    URL = href,
-                    Title = title,
-                    Category = categoryText,
-                    Description = descriptionText,
+                    URL = (string)link["url"],
+                    Title = (string)link["title"],
+                    Category = categories[(string)link["category"]],
+                    Description = (string)link["tldr"],
                     LinkOrder = i,
                     Digest = digest
                 });
