@@ -25,7 +25,7 @@ namespace ItLinksBot.Providers
         }
         public string FormatDigestPost(Digest digest)
         {
-            return $"<b>{digest.DigestName}</b>\n{digest.DigestURL}";
+            return $"<b>[{digest.DigestDay}]{digest.DigestName}</b>\n{digest.DigestURL}";
         }
 
         public string FormatLinkPost(Link link)
@@ -94,12 +94,17 @@ namespace ItLinksBot.Providers
                 categories["guides"] = "\uD83D\uDCA1 Guides & Resources";
                 categories["crypto"] = "\uD83E\uDD84 Miscellaneous";
                 categories["cryptoquick"] = "⚡Quick Links";
+
+                var descriptionHtml = new HtmlDocument();
+                descriptionHtml.LoadHtml((string)link["tldr"]);
+                var descriptionNode = contentNormalizer.NormalizeDom(descriptionHtml.DocumentNode);
+                string normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
                 links.Add(new Link
                 {
                     URL = (string)link["url"],
                     Title = (string)link["title"],
                     Category = categories[(string)link["category"]],
-                    Description = (string)link["tldr"],
+                    Description = normalizedDescription,
                     LinkOrder = i,
                     Digest = digest
                 });
