@@ -9,14 +9,14 @@ namespace ItLinksBot.Providers
 {
     class ProgrammingDigestParser : IParser
     {
-        private readonly IContentGetter<string> htlmContentGetter;
+        private readonly IContentGetter<string> htmlContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "programming digest";
         readonly Uri baseUri = new("https://programmingdigest.net/");
         public ProgrammingDigestParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            htlmContentGetter = cg;
+            htmlContentGetter = cg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
@@ -34,7 +34,7 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = htlmContentGetter.GetContent(provider.DigestURL);
+            var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@class='main']/ul/li").Take(6);
@@ -71,7 +71,7 @@ namespace ItLinksBot.Providers
         {
             List<Link> links = new();
 
-            var digestContent = htlmContentGetter.GetContent(digest.DigestURL);
+            var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
             var currentNode = linksHtml.DocumentNode.SelectSingleNode("//article/*[1]");

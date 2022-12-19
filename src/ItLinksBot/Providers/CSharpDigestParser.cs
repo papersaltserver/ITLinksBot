@@ -36,7 +36,7 @@ namespace ItLinksBot.Providers
             var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@class='main']/h3").Take(50);
+            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@class='main']/ul/li").Take(7);
             foreach (var digestNode in digestsInArchive)
             {
                 var urlNode = digestNode.SelectSingleNode("./a");
@@ -46,7 +46,7 @@ namespace ItLinksBot.Providers
                     href = (new Uri(baseUri, href)).AbsoluteUri;
                 }
 
-                var dateNode = digestNode.NextSibling.NextSibling;
+                var dateNode = urlNode.NextSibling.NextSibling;
                 var digestDate = DateTime.Parse(dateNode.InnerText);
                 var currentDigest = new Digest
                 {
@@ -73,25 +73,35 @@ namespace ItLinksBot.Providers
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'digest-article')]");
-            for (int i = 0; i < linksInDigest.Count; i++)
+            var currentNode = linksHtml.DocumentNode.SelectSingleNode("//article/*[1]");
+            int i = 0;
+            while (currentNode != null)
             {
-                HtmlNode link = linksInDigest[i];
-                var titleNode = link.SelectSingleNode("./p[contains(@class,'title')]/a");
-                var title = titleNode.InnerText.Trim();
-                var descriptionNode = link.SelectSingleNode("./p[contains(@class,'description')]");
-                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
-                var description = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-
-                var href = titleNode.GetAttributeValue("href", "Not found");
-
-                if (!href.Contains("://") && href.Contains('/'))
+                // Mostly now Programming digest built as Header node -> Tldr node, but not every header contains link
+                var hrefNode = currentNode.SelectSingleNode(".//a");
+                string href;
+                if (hrefNode != null)
                 {
-                    var digestUrl = new Uri(digest.DigestURL);
-                    var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
-                    href = (new Uri(digestBase, href)).AbsoluteUri;
+                    href = hrefNode.GetAttributeValue("href", "Not found");
+                    href = Utils.UnshortenLink(href);
                 }
-                href = Utils.UnshortenLink(href);
+                else
+                {
+                    href = $"{digest.DigestURL}#section{i}";
+                }
+                string title = currentNode.InnerText;
+                do
+                {
+                    currentNode = currentNode.NextSibling;
+                } while (currentNode != null && currentNode.Name == "#text");
+
+                string description = "";
+                if (currentNode != null)
+                {
+                    var descriptionNode = currentNode.Clone();
+                    descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
+                    description = textSanitizer.Sanitize(descriptionNode.InnerHtml);
+                }
 
                 links.Add(new Link
                 {
@@ -101,6 +111,14 @@ namespace ItLinksBot.Providers
                     LinkOrder = i,
                     Digest = digest
                 });
+                if (currentNode != null)
+                {
+                    do
+                    {
+                        currentNode = currentNode.NextSibling;
+                    } while (currentNode != null && (currentNode.Name == "#text" || currentNode.Name == "#comment"));
+                }
+                i++;
             }
             return links;
         }
