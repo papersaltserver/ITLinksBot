@@ -94,16 +94,19 @@ namespace ItLinksBot.Providers
                 categories["guides"] = "\uD83D\uDCA1 Guides & Resources";
                 categories["crypto"] = "\uD83E\uDD84 Miscellaneous";
                 categories["cryptoquick"] = "⚡Quick Links";
+                categories["jobs"] = "\uD83D\uDCBC Jobs";
 
                 var descriptionHtml = new HtmlDocument();
                 descriptionHtml.LoadHtml((string)link["tldr"]);
                 var descriptionNode = contentNormalizer.NormalizeDom(descriptionHtml.DocumentNode);
                 string normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
+                string safeCategory;
+                categories.TryGetValue((string)link["category"], out safeCategory);
                 links.Add(new Link
                 {
                     URL = (string)link["url"],
                     Title = (string)link["title"],
-                    Category = categories[(string)link["category"]],
+                    Category = safeCategory,
                     Description = normalizedDescription,
                     LinkOrder = i,
                     Digest = digest
