@@ -4,6 +4,8 @@ using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
+using Quill.Delta;
 
 namespace ItLinksBot.Providers
 {
@@ -13,7 +15,7 @@ namespace ItLinksBot.Providers
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "Fintech";
-        readonly Uri baseUri = new("https://www.getrevue.co/");
+        readonly Uri baseUri = new("https://teal.api.tryletterhead.com/");
 
         public FintechParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
@@ -28,27 +30,26 @@ namespace ItLinksBot.Providers
 
         public string FormatLinkPost(Link link)
         {
-            return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
+            // Fintech uses mixed parts, which are not easy to split, so we're posting them as is without splitting by links
+            return link.Description;
         }
 
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
             var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
-            var digestArchiveHtml = new HtmlDocument();
-            digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//section[@id='issues']/div[@id='issues-covers' or @id='issues-holder']//a|//div[contains(@class,'component__profile-issues-list')]/a").Take(5);
-            foreach (var digestNode in digestsInArchive)
-            {
-                var digestDate = new DateTime(1900, 1, 1);
-                var digestHref = digestNode.GetAttributeValue("href", "Not found");
-                var digestUrl = new Uri(baseUri, digestHref);
+            JArray latestIssues = JArray.Parse(stringResult);
 
+            foreach (JObject digestNode in latestIssues.Take(5))
+            {
+                int digestId = (int)digestNode["id"];
+                var digestUrl = new Uri(baseUri, $"https://teal.api.tryletterhead.com/api/v1/brands/330/channels/396/letters/{digestId}");
+                var dateText = (string)digestNode["publicationDate"];
                 var currentDigest = new Digest
                 {
-                    DigestDay = digestDate,
-                    DigestName = "", //will be added during next request
-                    DigestDescription = "", //description will be added later
+                    DigestDay = DateTime.Parse(dateText),
+                    DigestName = (string)digestNode["title"],
+                    DigestDescription = (string)digestNode["subtitle"],
                     DigestURL = digestUrl.AbsoluteUri,
                     Provider = provider
                 };
@@ -59,75 +60,48 @@ namespace ItLinksBot.Providers
 
         public Digest GetDigestDetails(Digest digest)
         {
-            var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
-            var digestDetails = new HtmlDocument();
-            digestDetails.LoadHtml(digestContent);
-            var dateNode = digestDetails.DocumentNode.SelectSingleNode("//section[@id='issue-display']//time");
-            var digestDate = DateTime.Parse(dateNode.GetAttributeValue("datetime", "not found"));
-            var nameNode = digestDetails.DocumentNode.SelectSingleNode("//section[@id='issue-display']/header/h1");
-            var nameText = nameNode.InnerText.Trim();
-
-            var descriptionNodeOriginal = digestDetails.DocumentNode.SelectSingleNode("//div[contains(@class,'introduction')]");
-            string normalizedDescription;
-            if (descriptionNodeOriginal != null)
-            {
-                var descriptionNode = contentNormalizer.NormalizeDom(descriptionNodeOriginal);
-                normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-            }
-            else
-            {
-                normalizedDescription = "";
-            }
-
-            var currentDigest = new Digest
-            {
-                DigestDay = digestDate,
-                DigestName = nameText,
-                DigestDescription = normalizedDescription,
-                DigestURL = digest.DigestURL,
-                Provider = digest.Provider
-            };
-            return currentDigest;
+            return digest;
         }
 
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new();
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
-            var linksHtml = new HtmlDocument();
-            linksHtml.LoadHtml(digestContent);
-            HtmlNodeCollection linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@id='issue-frame']/div/div[position()>5]//div[contains(@class,'revue-p')]/../../../..|//div[@id='issue-frame']//body/div/div[position()>5]//div[contains(@class,'revue-p')]/../../../..|//div[contains(@class,'text-description')]//ul[contains(@class,'revue-ul')]/li/a");
-            for (int i = 0; i < linksInDigest.Count; i++)
+            JObject digestObject = JObject.Parse(digestContent);
+            JArray sections = JArray.Parse((string)digestObject["sections"]);
+            int entries = 0;
+            foreach (JObject section in sections)
             {
-                HtmlNode link = linksInDigest[i];
-                HtmlNode linkNode;
-                if (link.Name.ToUpper() == "A")
+                JArray columns = (JArray)section["columns"];
+                if (columns.Count == 0)
                 {
-                    linkNode = link;
+                    continue;
                 }
-                else
+                // theoretically there could be multiple columns in one section, but practically it's always one
+                foreach (JObject column in columns)
                 {
-                    linkNode = link.SelectSingleNode(".//a[not(img)][1]|./tr[2]//a|.//div[@class='link-title']//a");
+                    JArray deltaOps = (JArray)column["delta"]["ops"];
+                    // Letterhead uses Quill as their editor, so we could convert Quill DeltaOps to HTML
+                    var htmlConverter = new HtmlConverter(deltaOps);
+                    string html = htmlConverter.Convert();
+                    var linksHtml = new HtmlDocument();
+                    linksHtml.LoadHtml(html);
+                    var descriptionNode = contentNormalizer.NormalizeDom(linksHtml.DocumentNode);
+                    string normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
+                    if (normalizedDescription == "")
+                    {
+                        continue;
+                    }
+                    links.Add(new Link
+                    {
+                        URL = $"{digest.DigestURL}#section{entries}",
+                        Title = "", // no specific title for sections
+                        Description = normalizedDescription,
+                        LinkOrder = entries,
+                        Digest = digest
+                    });
+                    entries++;
                 }
-                if (linkNode == null) continue;
-                var title = linkNode.InnerText.Trim();
-                var href = linkNode.GetAttributeValue("href", "Not found");
-                if (href == "Not found") continue;
-
-                Uri uriHref = new(baseUri, href);
-                href = Utils.UnshortenLink(uriHref.AbsoluteUri);
-
-                var descriptionNodeOriginal = link.SelectSingleNode(".//div[@class='revue-p']/..");
-                var descriptionNode = contentNormalizer.NormalizeDom(descriptionNodeOriginal);
-                string normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-                links.Add(new Link
-                {
-                    URL = href,
-                    Title = title,
-                    Description = normalizedDescription,
-                    LinkOrder = i,
-                    Digest = digest
-                });
             }
             return links;
         }
