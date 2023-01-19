@@ -105,7 +105,7 @@ namespace ItLinksBot.Providers
                 links.Add(new Link
                 {
                     URL = (string)link["url"],
-                    Title = (string)link["title"],
+                    Title = Regex.Replace((string)link["title"], "<.*?>", string.Empty),
                     Category = safeCategory,
                     Description = normalizedDescription,
                     LinkOrder = i,
