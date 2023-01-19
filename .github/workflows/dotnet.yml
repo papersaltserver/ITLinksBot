@@ -12,7 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout Code
+      uses: actions/checkout@v3
+      with:
+        # Full git history is needed to get a proper list of changed files within `super-linter`
+        fetch-depth: 0
     #Set up different caches
     - name: Cache .NET packages
       uses: actions/cache@v3
@@ -46,6 +50,7 @@ jobs:
       uses: github/super-linter@v4.9.7
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VALIDATE_ALL_CODEBASE: false
     #Setting up environment
     #JDK for sonarqube
     - name: Set up JDK 11
