@@ -1,9 +1,9 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/runtime:6.0-bullseye-slim AS base
+FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY ["ItLinksBot/ItLinksBot.csproj", "ItLinksBot/"]
 RUN dotnet restore "ItLinksBot/ItLinksBot.csproj" --locked-mode
@@ -15,16 +15,12 @@ FROM build AS publish
 RUN dotnet publish "ItLinksBot.csproj" -c Release -o /app/publish
 
 FROM base AS final
-#RUN apk add --no-cache \
-#	icu-libs~=69.1-r1 \
-#	krb5-libs~=1.19.3-r0 \
-#	libgcc~=10.3.1_git20211027-r0 \
-#	libintl~=0.21-r0 \
-#	libssl1.1~=1.1.1n-r0 \
-#	libstdc++~=10.3.1_git20211027-r0 \
-#	zlib~=1.2.12-r0
-#ENV DOTNET_RUNNING_IN_CONTAINER=true
-#ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+RUN groupadd --gid 10001 dotnet \
+    && useradd --uid 10000 --gid dotnet --shell /bin/bash --create-home dotnet \
+    && mkdir -p /app/db/src \
+    && chown -R dotnet:dotnet /app
 WORKDIR /app
+USER dotnet
 COPY --from=publish /app/publish .
+HEALTHCHECK NONE
 ENTRYPOINT ["dotnet", "ItLinksBot.dll"]
