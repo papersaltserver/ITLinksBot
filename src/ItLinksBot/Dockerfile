@@ -13,7 +13,7 @@ ARG \
     # Platform of the node performing the build
     BUILDPLATFORM
 COPY ["ItLinksBot/ItLinksBot.csproj", "ItLinksBot/"]
-RUN echo "${BUILDPLATFORM} - ${TARGETARCH}" && dotnet restore "ItLinksBot/ItLinksBot.csproj" --locked-mode -a $TARGETARCH --lock-file-path "packages.lock.arm64.json"
+RUN echo "${BUILDPLATFORM} - ${TARGETARCH}" && dotnet restore "ItLinksBot/ItLinksBot.csproj" --locked-mode -a $TARGETARCH
 COPY . .
 WORKDIR "/src/ItLinksBot"
 RUN echo "${BUILDPLATFORM} - ${TARGETARCH}" && dotnet build "ItLinksBot.csproj" -c Release -o /app/build -a $TARGETARCH
