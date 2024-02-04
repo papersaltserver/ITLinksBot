@@ -1467,7 +1467,7 @@
         }
       }
     },
-    "net8.0/linux-x64": {
+    "net8.0/linux": {
       "System.Runtime.Caching": {
         "type": "Direct",
         "requested": "[8.0.0, )",
