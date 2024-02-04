@@ -131,6 +131,7 @@ jobs:
         tags: papersaltserver/itlinksbot:latest
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
+        platforms: linux/arm64
     # This ugly bit is necessary if you don't want your cache to grow forever
     # till it hits GitHub's limit of 5GB.
     # Temp fix
