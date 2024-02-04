@@ -1467,7 +1467,7 @@
         }
       }
     },
-    "net8.0/win-x64": {
+    "net8.0/win-arm64": {
       "System.Runtime.Caching": {
         "type": "Direct",
         "requested": "[8.0.0, )",
