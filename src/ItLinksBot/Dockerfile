@@ -13,13 +13,13 @@ ARG \
     # Platform of the node performing the build
     BUILDPLATFORM
 COPY ["ItLinksBot/ItLinksBot.csproj", "ItLinksBot/"]
-RUN echo "${BUILDPLATFORM} - ${TARGETARCH}" && dotnet restore "ItLinksBot/ItLinksBot.csproj" --locked-mode -a $TARGETARCH
+RUN echo "${BUILDPLATFORM} - ${TARGETARCH}" && dotnet restore "ItLinksBot/ItLinksBot.csproj" --locked-mode -a arm64
 COPY . .
 WORKDIR "/src/ItLinksBot"
-RUN echo "${BUILDPLATFORM} - ${TARGETARCH}" && dotnet build "ItLinksBot.csproj" -c Release -o /app/build -a $TARGETARCH
+RUN echo "${BUILDPLATFORM} - ${TARGETARCH}" && dotnet build "ItLinksBot.csproj" -c Release -o /app/build -a arm64
 
 FROM build AS publish
-RUN echo "${BUILDPLATFORM} - ${TARGETARCH}" && dotnet publish "ItLinksBot.csproj" -c Release -o /app/publish -a $TARGETARCH
+RUN echo "${BUILDPLATFORM} - ${TARGETARCH}" && dotnet publish "ItLinksBot.csproj" -c Release -o /app/publish -a arm64
 
 FROM base AS final
 RUN groupadd --gid 10001 dotnet \
