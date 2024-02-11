@@ -3,6 +3,7 @@ using System;
 using ItLinksBot.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ItLinksBot.Migrations
 {
     [DbContext(typeof(ITLinksContext))]
-    partial class ITLinksContextModelSnapshot : ModelSnapshot
+    [Migration("20240209165932_ChangeLog_LinkUpdate_2024_02_09")]
+    partial class ChangeLog_LinkUpdate_2024_02_09
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.1");

@@ -1,11 +1,13 @@
 ﻿using HtmlAgilityPack;
 using ItLinksBot.ContentGetters;
 using ItLinksBot.Models;
-using Serilog;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Web;
+using System.ServiceModel.Syndication;
+using System.Text.RegularExpressions;
+using System.Xml;
 
 namespace ItLinksBot.Providers
 {
@@ -28,30 +30,26 @@ namespace ItLinksBot.Providers
 
         public string FormatLinkPost(Link link)
         {
-            return string.Format("<strong>{0}</strong>\n{1}\n{2}", link.Title, link.Description, link.URL);
+            return link.Title == "" ? link.Description : $"{link.Title}/n{link.Description}";
         }
 
         public List<Digest> GetCurrentDigests(Provider provider)
         {
-            var digests = new List<Digest>();
+            List<Digest> digests = new();
             var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
-            var digestArchiveHtml = new HtmlDocument();
-            digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//article[@class='article']//li")?.Take(50);
-            if (digestsInArchive == null)
+            XmlReader reader = XmlReader.Create(new StringReader(stringResult));
+            var feed = SyndicationFeed.Load(reader);
+            foreach (var feedItem in feed.Items.Take(1))
             {
-                Log.Warning("No digests found in archive at {dgstUrl}", provider.DigestURL);
-                return digests;
-            }
-            foreach (var digest in digestsInArchive)
-            {
-                var digestUrl = digest.Descendants("a").FirstOrDefault().GetAttributeValue("href", "Not found");
-                var currentDigest = new Digest
+                var digestDate = new DateTime(1900, 1, 1);
+                var baseLink = feedItem.Links[0].Uri.AbsoluteUri;
+                var digestLink = $"{baseLink}/email";
+                Digest currentDigest = new()
                 {
-                    DigestDay = DateTime.Parse(HttpUtility.HtmlDecode(digest.InnerText).Split('—')[1].Trim()),
-                    DigestName = digest.InnerText,
-                    DigestDescription = "", //changelog doesn't have description for digest itself
-                    DigestURL = digestUrl,
+                    DigestDay = digestDate,
+                    DigestName = feedItem.Title.Text,
+                    DigestDescription = "", // We'll fill it later
+                    DigestURL = digestLink,
                     Provider = provider
                 };
                 digests.Add(currentDigest);
@@ -61,7 +59,33 @@ namespace ItLinksBot.Providers
 
         public Digest GetDigestDetails(Digest digest)
         {
-            return digest;
+            var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
+            var linksHtml = new HtmlDocument();
+            linksHtml.LoadHtml(digestContent);
+            var titleNode = linksHtml.DocumentNode.SelectSingleNode("//head/title");
+            var digestName = titleNode.InnerText;
+            var dayString = Regex.Matches(digestName, @"\((.*)\)")[0].Groups[1].Value;
+            var digestDate = DateTime.Parse(dayString);
+            var currentNode = linksHtml.DocumentNode.SelectSingleNode("//div[contains(@class,'content')]/p[1]");
+            var descriptionNode = HtmlNode.CreateNode("<div></div>");
+            while (currentNode != null && currentNode.Name.ToUpper() != "H2" && currentNode.Name.ToUpper() != "HR")
+            {
+                descriptionNode.AppendChild(currentNode.Clone());
+                currentNode = currentNode.NextSibling;
+            }
+
+            descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
+            string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
+
+            var currentDigest = new Digest
+            {
+                DigestDay = digestDate,
+                DigestName = digestName,
+                DigestDescription = descriptionText,
+                DigestURL = digest.DigestURL,
+                Provider = digest.Provider
+            };
+            return currentDigest;
         }
 
         public List<Link> GetDigestLinks(Digest digest)
@@ -70,32 +94,47 @@ namespace ItLinksBot.Providers
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@class='news_item']");
-            for (int i = 0; i < linksInDigest.Count; i++)
+            // Skipping intro
+            var currentNode = linksHtml.DocumentNode.SelectSingleNode("//div[contains(@class,'content')]/p[1]");
+            while (currentNode != null && currentNode.Name.ToUpper() != "H2" && currentNode.Name.ToUpper() != "HR")
             {
-                HtmlNode link = linksInDigest[i];
-                var titleNode = link.SelectSingleNode(".//h2[@class='news_item-title']");
-                var title = titleNode.InnerText;
-                var href = titleNode.Descendants("a").FirstOrDefault().GetAttributeValue("href", "Not found");
-                if (!href.Contains("://") && href.Contains('/'))
+                currentNode = currentNode.NextSibling;
+            }
+            int sectionId = 0;
+            while (currentNode != null)
+            {
+                var sectionNode = HtmlNode.CreateNode("<div></div>");
+                while (currentNode.Name.ToUpper() == "HR")
                 {
-                    var digestUrl = new Uri(digest.DigestURL);
-                    var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
-                    href = (new Uri(digestBase, href)).AbsoluteUri;
+                    currentNode = currentNode.NextSibling;
                 }
-                href = Utils.UnshortenLink(href);
-                var originalDescriptionNode = link.SelectSingleNode(".//div[@class='news_item-content']");
-                var descriptionNode = contentNormalizer.NormalizeDom(originalDescriptionNode);
-                var description = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
+                string title = "";
+                do
+                {
+                    if (currentNode.Name.ToUpper() == "H2")
+                    {
+                        title = currentNode.InnerText;
+                    }
+                    else
+                    {
+                        sectionNode.AppendChild(currentNode.Clone());
+                    }
+                    currentNode = currentNode.NextSibling;
+                } while (currentNode != null && currentNode.Name.ToUpper() != "H2" && currentNode.Name.ToUpper() != "HR");
+                sectionNode = contentNormalizer.NormalizeDom(sectionNode);
+                string sectionText = textSanitizer.Sanitize(sectionNode.InnerHtml.Trim());
+
                 links.Add(new Link
                 {
-                    URL = href,
+                    URL = $"{digest.DigestURL}#{sectionId}",
                     Title = title,
-                    Description = description,
-                    LinkOrder = i,
+                    Description = sectionText,
+                    LinkOrder = sectionId,
                     Digest = digest
                 });
+                sectionId++;
             }
+
             return links;
         }
     }
