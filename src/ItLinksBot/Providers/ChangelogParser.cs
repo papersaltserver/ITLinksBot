@@ -30,7 +30,7 @@ namespace ItLinksBot.Providers
 
         public string FormatLinkPost(Link link)
         {
-            return link.Title == "" ? link.Description : $"{link.Title}/n{link.Description}";
+            return link.Title == "" ? link.Description : $"<b>{link.Title}</b>\n{link.Description}";
         }
 
         public List<Digest> GetCurrentDigests(Provider provider)
