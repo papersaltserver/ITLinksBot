@@ -39,7 +39,7 @@ namespace ItLinksBot.Providers
             var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             XmlReader reader = XmlReader.Create(new StringReader(stringResult));
             var feed = SyndicationFeed.Load(reader);
-            foreach (var feedItem in feed.Items.Take(1))
+            foreach (var feedItem in feed.Items.Take(2))
             {
                 var digestDate = new DateTime(1900, 1, 1);
                 var baseLink = feedItem.Links[0].Uri.AbsoluteUri;
