@@ -25,14 +25,14 @@ namespace ItLinksBot.Providers
         }
         public string FormatDigestPost(Digest digest)
         {
-            return $"<b>[{digest.DigestDay}]{digest.DigestName}</b>\n{digest.DigestURL}";
+            return $"<b>[{digest.DigestDay}] {digest.DigestName}</b>\n{digest.DigestURL}";
         }
 
         public string FormatLinkPost(Link link)
         {
             if (link.Category != null && link.Category != "")
             {
-                return $"<strong>[{link.Category}]{link.Title}</strong>\n\n{link.Description}\n{link.URL}";
+                return $"<strong>[{link.Category}] {link.Title}</strong>\n\n{link.Description}\n{link.URL}";
             }
             else
             {
@@ -46,26 +46,30 @@ namespace ItLinksBot.Providers
             var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            string nextDataNode = digestArchiveHtml.DocumentNode.SelectNodes("//script[@id='__NEXT_DATA__']").First().InnerText;
-            var buildId = (string)JObject.Parse(nextDataNode)["buildId"];
-            var archivesJsonString = htmlContentGetter.GetContent($"https://tldr.tech/_next/data/{buildId}/tech/archives.json");
-            JObject archivesObject = JObject.Parse(archivesJsonString);
-            JArray latestIssues = (JArray)archivesObject["pageProps"]["campaigns"];
-
-            foreach (JObject digestNode in latestIssues.Take(5))
+            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes(".//a[div[contains(@class,'mb-4')]]").Take(5);
+            foreach (var digestNode in digestsInArchive)
             {
-                var digestUrl = new Uri(baseUri, $"/_next/data/{buildId}/tech/{(string)digestNode["date"]}.json?date={(string)digestNode["date"]}");
-                var dateText = (string)digestNode["date"];
+                var urlNode = digestNode;
+                var href = urlNode.GetAttributeValue("href", "Not found");
+                Uri digestUri = new Uri(baseUri, href);
+                if (!href.Contains("://") && href.Contains('/'))
+                {
+                    href = (new Uri(baseUri, href)).AbsoluteUri;
+                }
+
+                var dateText = digestUri.Segments.LastOrDefault().TrimEnd('/');
+                var digestDate = DateTime.Parse(dateText);
                 var currentDigest = new Digest
                 {
-                    DigestDay = DateTime.Parse(dateText),
-                    DigestName = (string)digestNode["subject"],
-                    DigestDescription = "", //tldr doesn't have description for digest itself
-                    DigestURL = digestUrl.AbsoluteUri,
+                    DigestDay = digestDate,
+                    DigestName = urlNode.InnerText.Trim(),
+                    DigestDescription = "", //no description for this digest
+                    DigestURL = href,
                     Provider = provider
                 };
                 digests.Add(currentDigest);
             }
+
             return digests;
         }
         public Digest GetDigestDetails(Digest digest)
@@ -76,42 +80,36 @@ namespace ItLinksBot.Providers
         {
             List<Link> links = new();
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
-            JObject digestObject = JObject.Parse(digestContent);
-            JArray linksInDigest = (JArray)digestObject["pageProps"]["stories"];
-            for (int i = 0; i < linksInDigest.Count; i++)
+            var linksHtml = new HtmlDocument();
+            linksHtml.LoadHtml(digestContent);
+            var categories = linksHtml.DocumentNode.SelectNodes(".//div[div[h6]]");
+            int linkOrder = 0;
+            foreach (var category in categories)
             {
-                JObject link = (JObject)linksInDigest[i];
-                var categories = new Dictionary<string, string>();
-                categories["sponsor"] = "Sponsor";
-                categories["big"] = "\uD83D\uDCF1 Big Tech & Startups";
-                categories["future"] = "\uD83D\uDE80 Science & Futuristic Technology";
-                categories["programming"] = "\uD83D\uDCBB Programming, Design & Data Science";
-                categories["miscellaneous"] = "\uD83C\uDF81 Miscellaneous";
-                categories["quick"] = "⚡Quick Links";
-                categories["cryptosponsor"] = "Sponsor";
-                categories["markets"] = "\uD83D\uDCC8 Markets & Business";
-                categories["innovation"] = "\uD83D\uDE80 Innovation & Launches";
-                categories["guides"] = "\uD83D\uDCA1 Guides & Resources";
-                categories["crypto"] = "\uD83E\uDD84 Miscellaneous";
-                categories["cryptoquick"] = "⚡Quick Links";
-                categories["jobs"] = "\uD83D\uDCBC Jobs";
-
-                var descriptionHtml = new HtmlDocument();
-                descriptionHtml.LoadHtml((string)link["tldr"]);
-                var descriptionNode = contentNormalizer.NormalizeDom(descriptionHtml.DocumentNode);
-                string normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-                string safeCategory;
-                categories.TryGetValue((string)link["category"], out safeCategory);
-                links.Add(new Link
+                var categoryNode = category.SelectSingleNode("./div[h6]");
+                var categoryText = categoryNode?.InnerText.Replace("\r\n", "\n").Replace("\n", "").Trim();
+                var linkNodes = category.SelectNodes("./div[a]");
+                foreach(var link in linkNodes)
                 {
-                    URL = (string)link["url"],
-                    Title = Regex.Replace((string)link["title"], "<.*?>", string.Empty),
-                    Category = safeCategory,
-                    Description = normalizedDescription,
-                    LinkOrder = i,
-                    Digest = digest
-                });
+                    var hrefNode = link.SelectSingleNode("./a");
+                    var hrefText = hrefNode?.InnerText.Trim();
+                    var hrefLink = hrefNode.GetAttributeValue("href", "Not found");
+                    var descriptionNode = link.SelectSingleNode("./div");
+                    descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
+                    var description = textSanitizer.Sanitize(descriptionNode.InnerHtml);
+                    links.Add(new Link
+                    {
+                        URL = hrefLink,
+                        Title = hrefText,
+                        Category = categoryText,
+                        Description = description,
+                        LinkOrder = linkOrder,
+                        Digest = digest
+                    });
+                    linkOrder++;
+                }
             }
+
             return links;
         }
     }
