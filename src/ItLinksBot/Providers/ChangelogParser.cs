@@ -109,11 +109,17 @@ namespace ItLinksBot.Providers
                     currentNode = currentNode.NextSibling;
                 }
                 string title = "";
+                string titleHref = "";
                 do
                 {
                     if (currentNode.Name.ToUpper() == "H2")
                     {
                         title = currentNode.InnerText;
+                        var titleAnchor = currentNode.SelectSingleNode(".//a");
+                        if(titleAnchor != null)
+                        {
+                            titleHref = titleAnchor.GetAttributeValue("href", "Not found");
+                        }
                     }
                     else
                     {
@@ -121,6 +127,11 @@ namespace ItLinksBot.Providers
                     }
                     currentNode = currentNode.NextSibling;
                 } while (currentNode != null && currentNode.Name.ToUpper() != "H2" && currentNode.Name.ToUpper() != "HR");
+                if (titleHref != "")
+                {
+                    var headerLink = HtmlTextNode.CreateNode(titleHref);
+                    sectionNode.AppendChild(headerLink);
+                }
                 sectionNode = contentNormalizer.NormalizeDom(sectionNode);
                 string sectionText = textSanitizer.Sanitize(sectionNode.InnerHtml.Trim());
 

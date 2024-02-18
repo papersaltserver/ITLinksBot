@@ -78,13 +78,16 @@ namespace ItLinksBot
 
             // Replace empty <a> tags with text link
             var aNodes = normalizedNode.SelectNodes(".//a");
-            foreach (var aNode in aNodes)
+            if (aNodes != null)
             {
-                if (aNode.InnerText.Trim() == "")
+                foreach (var aNode in aNodes)
                 {
-                    var href = aNode?.GetAttributeValue("href", "Not found");
-                    var newNode = HtmlTextNode.CreateNode(href);
-                    aNode.ParentNode.ReplaceChild(newNode, aNode);
+                    if (aNode.InnerText.Trim() == "")
+                    {
+                        var href = aNode?.GetAttributeValue("href", "Not found");
+                        var newNode = HtmlTextNode.CreateNode(href);
+                        aNode.ParentNode.ReplaceChild(newNode, aNode);
+                    }
                 }
             }
 

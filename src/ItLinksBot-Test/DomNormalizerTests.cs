@@ -28,6 +28,7 @@ namespace ItLinksBot_Tests
             Assert.Equal("https://example.com/", textNode.InnerHtml);
         }
 
+        [Fact]
         public void NormalizeDom_ReplacesNontextAnchorTagsWithTextNodes()
         {
             // Arrange
@@ -47,6 +48,20 @@ namespace ItLinksBot_Tests
             var textNode = normalizedNode.SelectSingleNode("//text()");
             Assert.NotNull(textNode);
             Assert.Equal("https://example.com/", textNode.InnerHtml);
+        }
+
+        [Fact]
+        public void NormalizeDom_DoesNotThrowForNodeWithoutAnchorTags()
+        {
+            // Arrange
+            var html = "<div><p>This is some content.</p></div>"; // Example HTML without <a> tags
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html);
+
+            // Act & Assert
+            DomNormlizer normlizer = new();
+            var exception = Record.Exception(() => normlizer.NormalizeDom(doc.DocumentNode));
+            Assert.Null(exception);
         }
     }
 }
