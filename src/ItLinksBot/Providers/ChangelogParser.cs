@@ -116,7 +116,7 @@ namespace ItLinksBot.Providers
                     {
                         title = currentNode.InnerText;
                         var titleAnchor = currentNode.SelectSingleNode(".//a");
-                        if(titleAnchor != null)
+                        if (titleAnchor != null)
                         {
                             titleHref = titleAnchor.GetAttributeValue("href", "Not found");
                         }
