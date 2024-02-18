@@ -89,7 +89,7 @@ namespace ItLinksBot.Providers
                 var categoryNode = category.SelectSingleNode("./div[h6]");
                 var categoryText = categoryNode?.InnerText.Replace("\r\n", "\n").Replace("\n", "").Trim();
                 var linkNodes = category.SelectNodes("./div[a]");
-                foreach(var link in linkNodes)
+                foreach (var link in linkNodes)
                 {
                     var hrefNode = link.SelectSingleNode("./a");
                     var hrefText = hrefNode?.InnerText.Trim();
