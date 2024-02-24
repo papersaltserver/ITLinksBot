@@ -85,7 +85,7 @@ namespace ItLinksBot
                     if (aNode.InnerText.Trim() == "")
                     {
                         var href = aNode?.GetAttributeValue("href", "Not found");
-                        var newNode = HtmlTextNode.CreateNode(href);
+                        var newNode = HtmlNode.CreateNode(href);
                         aNode.ParentNode.ReplaceChild(newNode, aNode);
                     }
                 }

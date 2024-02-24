@@ -94,7 +94,7 @@ namespace ItLinksBot
             context.Database.Migrate();
             TelegramAPI bot = new(config["BotApiKey"]);
             IEnumerable<IParser> serviceCollection = serviceProvider.GetServices<IParser>();
-
+#if !DEBUG
             foreach (TelegramChannel tgChannel in context.TelegramChannels)
             {
                 context.Entry(tgChannel).Reference(c => c.Provider).Load();
@@ -103,6 +103,7 @@ namespace ItLinksBot
                 Log.Information("Original digest link: {digestLink}", tgChannel.Provider.DigestURL);
                 Log.Information("Invite link: {inviteLink}\n", inviteLink);
             }
+#endif
 
             Log.Information("Checking if there are not updated digests posted");
             foreach (var prov in context.Providers)
