@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net.Http;
 using System.ServiceModel.Syndication;
 using System.Xml;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ItLinksBot.Providers
 {
@@ -31,7 +32,11 @@ namespace ItLinksBot.Providers
 
         public string FormatLinkPost(Link link)
         {
-            return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
+            if (link.Title == "SINGLE_IMAGE")
+            {
+                return link.URL;
+            }
+            return $"[{link.Category}]\n{link.Description}";
         }
 
         public List<Digest> GetCurrentDigests(Provider provider)
@@ -41,7 +46,7 @@ namespace ItLinksBot.Providers
             XmlReader reader = XmlReader.Create(new StringReader(stringResult));
             var feed = SyndicationFeed.Load(reader);
 
-            var digestsInArchive = feed.Items.Take(5);
+            var digestsInArchive = feed.Items.Take(40);
             foreach (var digestNode in digestsInArchive)
             {
                 var digestDate = new DateTime(1900, 1, 1); //we'll fill it later
@@ -69,6 +74,7 @@ namespace ItLinksBot.Providers
             stubDocument.LoadHtml(stubContent);
             HtmlNode iframeNode = stubDocument.DocumentNode.SelectSingleNode("//iframe[@id='iframe']");
             string realLink = iframeNode.GetAttributeValue("src", "not found");
+            realLink = realLink.EndsWith('/') ? realLink : $"{realLink}/";
 
             //getting real content
             string digestContent = htmlContentGetter.GetContent(realLink);
@@ -76,9 +82,16 @@ namespace ItLinksBot.Providers
             digestDocument.LoadHtml(digestContent);
 
             //getting description of the digest
-            HtmlNodeCollection descriptionNodes = digestDocument.DocumentNode.SelectNodes("//tr[preceding-sibling::comment()[contains(.,' INTRO Start ')]][following-sibling::comment()[contains(.,' INTRO End ')]]");
+            var descriptionCurrentNode = digestDocument.DocumentNode.SelectSingleNode("//table[contains(@class,'body')]//tr[td[contains(@class,'spacer') or contains(@class,'spc')]]/following-sibling::tr[.//h1]");
+            // this will throw if description was not found, let it be this way
+            descriptionCurrentNode = descriptionCurrentNode.NextSibling;
             var descriptionNode = HtmlNode.CreateNode("<div></div>");
-            descriptionNode.AppendChildren(descriptionNodes);
+            while (descriptionCurrentNode != null && descriptionCurrentNode.SelectSingleNode("./td[contains(@class,'spacer') or contains(@class,'spc')]") == null)
+            {
+                descriptionNode.AppendChild(descriptionCurrentNode.Clone());
+                descriptionCurrentNode = descriptionCurrentNode.NextSibling;
+            }
+
             descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
             string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
@@ -111,149 +124,64 @@ namespace ItLinksBot.Providers
             stubDocument.LoadHtml(stubContent);
             HtmlNode iframeNode = stubDocument.DocumentNode.SelectSingleNode("//iframe[@id='iframe']");
             string realLink = iframeNode.GetAttributeValue("src", "not found");
-            var baseUri = new Uri(realLink);
+            realLink = realLink.EndsWith('/') ? realLink : $"{realLink}/";
 
             //getting real content
             string digestContent = htmlContentGetter.GetContent(realLink);
             HtmlDocument digestDocument = new();
             digestDocument.LoadHtml(digestContent);
 
-            //Apps & Sites
-            var appsSitesLinks = digestDocument.DocumentNode.SelectNodes("//tr[preceding-sibling::comment()[contains(.,'DIGITAL Start')]][following-sibling::comment()[contains(.,'DIGITAL End')]]/td[not(contains(@class,'spacer') or contains(@class,'headline'))]");
-            int linkPosition = 0;
-            for (int i = 0; i < appsSitesLinks.Count; i++)
+            var categories = digestDocument.DocumentNode.SelectNodes("//table[contains(@class,'body')]//tr[td[contains(@class,'space') or contains(@class,'spc')]][count(preceding-sibling::tr[td[contains(@class,'space') or contains(@class,'spc')]])>1]/following-sibling::tr[.//h1][1]");
+            int i = 0;
+            foreach (var cat in categories)
             {
-                HtmlNode link = appsSitesLinks[i];
-                HtmlNode hrefNode = link.SelectSingleNode(".//h2/a");
-                string href = hrefNode.GetAttributeValue("href", "not found");
-                string title = hrefNode.InnerText;
-                HtmlNode descriptionNode = link.SelectSingleNode(".//p");
-                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
-                string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-
-                links.Add(new Link
+                var currentNode = cat.NextSibling;
+                while (currentNode != null && currentNode.SelectSingleNode("./td[contains(@class,'spacer') or contains(@class,'spc')]") == null)
                 {
-                    URL = href,
-                    Title = title,
-                    Description = descriptionText,
-                    LinkOrder = linkPosition,
-                    Digest = digest
-                });
-                linkPosition++;
-            }
-            //Worthy Five
-            HtmlNode worthyFiveNode = digestDocument.DocumentNode.SelectSingleNode("//tr[preceding-sibling::comment()[contains(.,'BOX WORTHY Start')]][following-sibling::comment()[contains(.,'BOX WORTHY End')]]/td[not(contains(@class,'spacer') or contains(@class,'headline'))]");
-            string worthyFiveTitle = worthyFiveNode.SelectSingleNode(".//table[1]//p[2]").InnerText;
-            HtmlNode worthyFiveDescNode = worthyFiveNode.SelectSingleNode(".//table[2]");
-            worthyFiveDescNode = contentNormalizer.NormalizeDom(worthyFiveDescNode);
-            var worthyFiveImageLink = new Uri(baseUri, "worthy-five.jpg").AbsoluteUri;
-            string worthyFiveDescText = worthyFiveImageLink + "\n" + textSanitizer.Sanitize(worthyFiveDescNode.InnerHtml.Trim());
-            links.Add(new Link
-            {
-                URL = worthyFiveImageLink,
-                Title = worthyFiveTitle,
-                Description = worthyFiveDescText,
-                LinkOrder = linkPosition,
-                Digest = digest
-            });
-            linkPosition++;
-
-            //Books & Accessories
-            HtmlNodeCollection bookNodes = digestDocument.DocumentNode.SelectNodes("//tr[preceding-sibling::comment()[contains(.,'ACCESSORIES Start')]][following-sibling::comment()[contains(.,'ACCESSORIES End')]]/td[not(contains(@class,'spacer') or contains(@class,'headline'))]");
-            for (int i = 0; i < bookNodes.Count; i++)
-            {
-                HtmlNode link = bookNodes[i];
-                HtmlNode hrefNode = link.SelectSingleNode(".//h2/a");
-                string href = hrefNode.GetAttributeValue("href", "not found");
-                string title = hrefNode.InnerText;
-                HtmlNode descriptionNode = link.SelectSingleNode("./table[2]//p");
-                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
-                string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-
-                links.Add(new Link
-                {
-                    URL = href,
-                    Title = title,
-                    Description = descriptionText,
-                    LinkOrder = linkPosition,
-                    Digest = digest
-                });
-                linkPosition++;
-            }
-
-            //Overheard on Twitter + Food For Thought
-            HtmlNodeCollection foodNodes = digestDocument.DocumentNode.SelectNodes("//tr[preceding-sibling::comment()[contains(.,'BOX TWEET Start')]][following-sibling::comment()[contains(.,'FOOD FOR THOUGHT End')]]/td[not(contains(@class,'spacer') or contains(@class,'headline'))]");
-            for (int i = 0; i < foodNodes.Count; i++)
-            {
-                HtmlNode link = foodNodes[i];
-                HtmlNode hrefNode = link.SelectSingleNode(".//h2/a");
-                string href = hrefNode.GetAttributeValue("href", "not found");
-                string title = hrefNode.InnerText;
-                HtmlNode descriptionNode = link.SelectSingleNode(".//p");
-                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
-                string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-
-                links.Add(new Link
-                {
-                    URL = href,
-                    Title = title,
-                    Description = descriptionText,
-                    LinkOrder = linkPosition,
-                    Digest = digest
-                });
-                linkPosition++;
-            }
-
-            //Aesthetically Pleasing
-            HtmlNodeCollection aestheticNodes = digestDocument.DocumentNode.SelectNodes("//tr[preceding-sibling::comment()[contains(.,'BOX VISUAL INSP Start')]][following-sibling::comment()[contains(.,'BOX VISUAL INSP End')]]/td[not(contains(@class,'spacer') or contains(@class,'headline'))]");
-            for (int i = 0; i < aestheticNodes.Count; i++)
-            {
-                HtmlNode link = aestheticNodes[i];
-                HtmlNode hrefNode = link.SelectSingleNode("./table[2]//p//b/..");
-                string href = hrefNode.GetAttributeValue("href", "not found");
-                string title = hrefNode.InnerText;
-                HtmlNode descriptionNode = link.SelectSingleNode("./table[2]//p");
-                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
-                string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-                links.Add(new Link
-                {
-                    URL = href,
-                    Title = title,
-                    Description = descriptionText,
-                    LinkOrder = linkPosition,
-                    Digest = digest
-                });
-                linkPosition++;
-
-                //images for this link
-                HtmlNodeCollection images = link.SelectNodes(".//img");
-                for (int j = 0; j < images.Count; j++)
-                {
-                    HtmlNode img = images[j];
-                    string imgHref = img.GetAttributeValue("src", "not found");
-                    imgHref = new Uri(new Uri(realLink), imgHref).AbsoluteUri;
+                    var descriptionNode = HtmlNode.CreateNode("<div></div>");
+                    descriptionNode.AppendChild(currentNode.Clone());
+                    descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
+                    string normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
+                    var images = currentNode.SelectNodes(".//img[contains(@class,'img')]");
+                  
+                    if(normalizedDescription == "")
+                    {
+                        currentNode = currentNode.NextSibling;
+                        continue;
+                    }
                     links.Add(new Link
                     {
-                        URL = imgHref,
-                        Title = "",
-                        Description = "",
-                        LinkOrder = linkPosition,
+                        URL = $"{digest.DigestURL}#section{i}", // we'll not be saving real links in sake of simplicity
+                        Title = "", // Title skipped as well
+                        Category = cat.InnerText.Trim(),
+                        Description = normalizedDescription,
+                        LinkOrder = i,
                         Digest = digest
                     });
-                    linkPosition++;
+                    i++;
+                    if (images != null)
+                    {
+                        for (int j = 0; j < images.Count; j++)
+                        {
+                            HtmlNode img = images[j];
+                            string imgHref = img.GetAttributeValue("src", "not found");
+                            imgHref = new Uri(new Uri(realLink), imgHref).AbsoluteUri;
+                            links.Add(new Link
+                            {
+                                URL = imgHref,
+                                Title = "SINGLE_IMAGE",
+                                Description = "",
+                                LinkOrder = i,
+                                Digest = digest
+                            });
+                            i++;
+                        }
+                    }
+                    currentNode = currentNode.NextSibling;
                 }
             }
-            //The Week in a GIF
 
-            var gifImageLink = new Uri(baseUri, "gif.gif").AbsoluteUri;
-            links.Add(new Link
-            {
-                URL = gifImageLink,
-                Title = "The Week in a GIF",
-                Description = "",
-                LinkOrder = linkPosition,
-                Digest = digest
-            });
+
             return links;
         }
     }
