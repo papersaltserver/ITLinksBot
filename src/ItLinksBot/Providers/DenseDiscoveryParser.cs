@@ -143,8 +143,8 @@ namespace ItLinksBot.Providers
                     descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
                     string normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
                     var images = currentNode.SelectNodes(".//img[contains(@class,'img')]");
-                  
-                    if(normalizedDescription == "")
+
+                    if (normalizedDescription == "")
                     {
                         currentNode = currentNode.NextSibling;
                         continue;
