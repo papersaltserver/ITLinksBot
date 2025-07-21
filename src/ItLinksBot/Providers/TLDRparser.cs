@@ -82,13 +82,13 @@ namespace ItLinksBot.Providers
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            var categories = linksHtml.DocumentNode.SelectNodes(".//div[div[h6]]");
+            var categories = linksHtml.DocumentNode.SelectNodes(".//section[header[h3]]");
             int linkOrder = 0;
             foreach (var category in categories)
             {
-                var categoryNode = category.SelectSingleNode("./div[h6]");
+                var categoryNode = category.SelectSingleNode("./header");
                 var categoryText = categoryNode?.InnerText.Replace("\r\n", "\n").Replace("\n", "").Trim();
-                var linkNodes = category.SelectNodes("./div[a]");
+                var linkNodes = category.SelectNodes("./article");
                 foreach (var link in linkNodes)
                 {
                     var hrefNode = link.SelectSingleNode("./a");
