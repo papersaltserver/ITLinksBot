@@ -13,7 +13,7 @@ namespace ItLinksBot.Providers
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "c# digest";
-        readonly Uri baseUri = new("https://newsletter.csharpdigest.net/");
+        readonly Uri baseUri = new("https://csharpdigest.net/");
         public CSharpDigestParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
             htmlContentGetter = cg;
@@ -22,7 +22,7 @@ namespace ItLinksBot.Providers
         }
         public string FormatDigestPost(Digest digest)
         {
-            return $"<b>{digest.DigestName} - {digest.DigestDay}</b>\n{digest.DigestDescription}\n{digest.DigestURL}";
+            return $"<b>{digest.DigestName} - {digest.DigestDay:yyyy-MM-dd}</b>\n{digest.DigestDescription}\n{digest.DigestURL}";
         }
 
         public string FormatLinkPost(Link link)
@@ -36,22 +36,21 @@ namespace ItLinksBot.Providers
             var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[contains(@class,'group')][.//figure]").Take(6);
+            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[h2[a]]").Take(5);
             foreach (var digestNode in digestsInArchive)
             {
-                var urlNode = digestNode.SelectSingleNode("./a");
+                var urlNode = digestNode.SelectSingleNode("./h2/a");
                 var href = urlNode.GetAttributeValue("href", "Not found");
                 if (!href.Contains("://") && href.Contains('/'))
                 {
-                    href = (new Uri(baseUri, href)).AbsoluteUri;
+                    href = new Uri(baseUri, href).AbsoluteUri;
                 }
 
-                var dateNode = urlNode.SelectSingleNode(".//time");
-                var digestDate = DateTime.Parse(dateNode.GetAttributeValue("datetime", "not found"));
+                var dateNode = digestNode.SelectSingleNode(".//small");
+                var digestDate = DateTime.Parse(dateNode.InnerText);
 
-                var textNode = urlNode.SelectSingleNode(".//div[h2]");
-                var titleNode = textNode.SelectSingleNode("./h2");
-                var descriptionNode = textNode.SelectSingleNode("./p");
+                var titleNode = digestNode.SelectSingleNode("./h2");
+                var descriptionNode = digestNode.SelectSingleNode("./p");
 
 
                 var currentDigest = new Digest
@@ -79,12 +78,12 @@ namespace ItLinksBot.Providers
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            var currentNode = linksHtml.DocumentNode.SelectSingleNode("//div[@id='content-blocks']/div[1]");
+            var currentNode = linksHtml.DocumentNode.SelectSingleNode("//div[contains(@class,'campaign')]/p[1]");
             int i = 0;
-            while (currentNode != null && !currentNode.InnerText.Contains("how did you like this issue?"))
+            while (currentNode != null)
             {
                 // Mostly now Programming digest built as Header node -> Tldr node, but not every header contains link
-                var hrefNode = currentNode.SelectSingleNode("./p/a[contains(@class,'link')]");
+                var hrefNode = currentNode.SelectSingleNode("./a");
                 string href;
                 string title;
                 var descriptionNode = HtmlNode.CreateNode("<div></div>");
@@ -94,7 +93,7 @@ namespace ItLinksBot.Providers
                     href = hrefNode.GetAttributeValue("href", "Not found");
                     href = Utils.UnshortenLink(href);
                     title = hrefNode.InnerText;
-                    var subTitle = hrefNode.NextSibling;
+                    var subTitle = currentNode.SelectSingleNode("./em");
                     while (subTitle != null)
                     {
                         descriptionNode.AppendChild(subTitle.Clone());
@@ -115,7 +114,7 @@ namespace ItLinksBot.Providers
                     descriptionNode.AppendChild(currentNode.Clone());
                     currentNode = currentNode.NextSibling;
                 }
-                while (currentNode != null && currentNode.SelectSingleNode("./p/a[contains(@class,'link')]") == null && !currentNode.InnerText.Contains("how did you like this issue?"));
+                while (currentNode != null && currentNode.SelectSingleNode("./a") == null);
 
                 descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
                 string normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
