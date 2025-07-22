@@ -25,7 +25,7 @@ namespace ItLinksBot.Providers
         }
         public string FormatDigestPost(Digest digest)
         {
-            return $"<b>[{digest.DigestDay}] {digest.DigestName}</b>\n{digest.DigestURL}";
+            return $"<b>[{digest.DigestDay:yyyy-MM-dd}] {digest.DigestName}</b>\n{digest.DigestURL}";
         }
 
         public string FormatLinkPost(Link link)
