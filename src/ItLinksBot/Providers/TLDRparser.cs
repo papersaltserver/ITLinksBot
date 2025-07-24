@@ -4,10 +4,7 @@ using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
-using System.Web;
 using System.Xml;
-using Newtonsoft.Json.Linq;
 using System.IO;
 using System.ServiceModel.Syndication;
 
@@ -65,32 +62,6 @@ namespace ItLinksBot.Providers
                 };
                 digests.Add(currentDigest);
             }
-/*
-            var digestArchiveHtml = new HtmlDocument();
-            digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes(".//a[div[contains(@class,'mb-4')]]").Take(5);
-            foreach (var digestNode in digestsInArchive)
-            {
-                var urlNode = digestNode;
-                var href = urlNode.GetAttributeValue("href", "Not found");
-                Uri digestUri = new Uri(baseUri, href);
-                if (!href.Contains("://") && href.Contains('/'))
-                {
-                    href = (new Uri(baseUri, href)).AbsoluteUri;
-                }
-
-                var dateText = digestUri.Segments.LastOrDefault().TrimEnd('/');
-                var digestDate = DateTime.Parse(dateText);
-                var currentDigest = new Digest
-                {
-                    DigestDay = digestDate,
-                    DigestName = urlNode.InnerText.Trim(),
-                    DigestDescription = "", //no description for this digest
-                    DigestURL = href,
-                    Provider = provider
-                };
-                digests.Add(currentDigest);
-            }*/
 
             return digests;
         }
