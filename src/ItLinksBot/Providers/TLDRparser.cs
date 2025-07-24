@@ -6,7 +6,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
+using System.Xml;
 using Newtonsoft.Json.Linq;
+using System.IO;
+using System.ServiceModel.Syndication;
 
 namespace ItLinksBot.Providers
 {
@@ -42,8 +45,27 @@ namespace ItLinksBot.Providers
 
         public List<Digest> GetCurrentDigests(Provider provider)
         {
-            List<Digest> digests = new();
+            List<Digest> digests = [];
             var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
+            XmlReader reader = XmlReader.Create(new StringReader(stringResult));
+            var feed = SyndicationFeed.Load(reader);
+            foreach (var feedItem in feed.Items.Take(5))
+            {
+                var href = feedItem.Links[0].Uri.AbsoluteUri;
+                var digestUri = new Uri(href);
+                var dateText = digestUri.Segments.LastOrDefault().TrimEnd('/');
+                var digestDate = DateTime.Parse(dateText);
+                var currentDigest = new Digest
+                {
+                    DigestDay = digestDate,
+                    DigestName = feedItem.Title.Text.Trim(),
+                    DigestDescription = "", //no description for this digest
+                    DigestURL = href,
+                    Provider = provider
+                };
+                digests.Add(currentDigest);
+            }
+/*
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
             var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes(".//a[div[contains(@class,'mb-4')]]").Take(5);
@@ -68,7 +90,7 @@ namespace ItLinksBot.Providers
                     Provider = provider
                 };
                 digests.Add(currentDigest);
-            }
+            }*/
 
             return digests;
         }
