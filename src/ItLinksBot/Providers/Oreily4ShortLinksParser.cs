@@ -12,21 +12,21 @@ namespace ItLinksBot.Providers
 {
     class Oreily4ShortLinksParser : IParser
     {
-        private readonly IContentGetter<string> htlmContentGetter;
+        private readonly IContentGetter<string> htmlContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "O'Reily Four Short Links";
         readonly Uri baseUri = new("https://www.oreilly.com/");
         public Oreily4ShortLinksParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            htlmContentGetter = cg;
+            htmlContentGetter = cg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = htlmContentGetter.GetContent(provider.DigestURL);
+            var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             XmlReader reader = XmlReader.Create(new StringReader(stringResult));
             var feed = SyndicationFeed.Load(reader);
             foreach (var feedItem in feed.Items.Take(50))
@@ -56,10 +56,10 @@ namespace ItLinksBot.Providers
             var feedElementContent = digestNode.ElementExtensions.ReadElementExtensions<string>("encoded", "http://purl.org/rss/1.0/modules/content/").FirstOrDefault();
             var htmlLinks = new HtmlDocument();
             htmlLinks.LoadHtml(feedElementContent);
-            var listItmesArray = htmlLinks.DocumentNode.Descendants("li").ToArray();
-            for (int i = 0; i < listItmesArray.Length; i++)
+            var listItemsArray = htmlLinks.DocumentNode.Descendants("li").ToArray();
+            for (int i = 0; i < listItemsArray.Length; i++)
             {
-                HtmlNode listItem = listItmesArray[i];
+                HtmlNode listItem = listItemsArray[i];
                 var linkTag = listItem.Descendants("a").FirstOrDefault();
                 if (linkTag != null)
                 {
