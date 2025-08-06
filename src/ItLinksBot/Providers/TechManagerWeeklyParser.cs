@@ -74,17 +74,25 @@ namespace ItLinksBot.Providers
             var digestContent = htlmContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            HtmlNodeCollection linksInDigest = linksHtml.DocumentNode.SelectNodes("//main/article/.//figure");
+            HtmlNodeCollection linksInDigest = linksHtml.DocumentNode.SelectNodes("//main/article//figure");
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode linkNode = linksInDigest[i];
 
-                var titleNode = linkNode.SelectSingleNode(".//div[contains(@class,'kg-bookmark-title')]");
-                var title = titleNode.InnerText.Trim();
                 var hrefNode = linkNode.SelectSingleNode("./a");
+                if (hrefNode == null)
+                {
+                    continue;
+                }
                 var href = hrefNode.GetAttributeValue("href", "Not found");
                 Uri uriHref = new(baseUri, href);
                 href = Utils.UnshortenLink(uriHref.AbsoluteUri);
+                var titleNode = linkNode.SelectSingleNode(".//div[contains(@class,'kg-bookmark-title')]");
+                if (titleNode == null)
+                {
+                    continue;
+                }
+                var title = titleNode.InnerText.Trim();
 
                 var descriptionNodeOriginal = linkNode.SelectSingleNode(".//div[contains(@class,'kg-bookmark-description')]");
                 var descriptionNode = contentNormalizer.NormalizeDom(descriptionNodeOriginal);
