@@ -13,7 +13,7 @@ namespace ItLinksBot.Providers
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "Tech Manager Weekly";
-        readonly Uri baseUri = new("https://www.getrevue.co/");
+        readonly Uri baseUri = new("https://www.techmanagerweekly.com/");
 
         public TechManagerWeeklyParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
@@ -37,18 +37,24 @@ namespace ItLinksBot.Providers
             var stringResult = htlmContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//section[@id='issues']/div[@id='issues-covers' or @id='issues-holder']//a|//div[contains(@class,'component__profile-issues-list')]/a").Take(5);
+            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[contains(@class,'post')]/article").Take(5);
             foreach (var digestNode in digestsInArchive)
             {
-                var digestDate = new DateTime(1900, 1, 1);
-                var digestHref = digestNode.GetAttributeValue("href", "Not found");
+                var dateNode = digestNode.SelectSingleNode(".//time");
+                var digestDate = DateTime.Parse(dateNode.GetAttributeValue("datetime", "not found"));
+                var titleNode = digestNode.SelectSingleNode(".//h2");
+                var digestTitle = titleNode.InnerText.Trim();
+                var descriptionNode = digestNode.SelectSingleNode(".//div[contains(@class,'feed-excerpt')]");
+                var digestDetails = descriptionNode.InnerText.Trim();
+                var linkNode = digestNode.SelectSingleNode("./a");
+                var digestHref = linkNode.GetAttributeValue("href", "Not found");
                 var digestUrl = new Uri(baseUri, digestHref);
 
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
-                    DigestName = "", //will be added during next request
-                    DigestDescription = "", //description will be added later
+                    DigestName = digestTitle,
+                    DigestDescription = digestDetails,
                     DigestURL = digestUrl.AbsoluteUri,
                     Provider = provider
                 };
@@ -59,35 +65,7 @@ namespace ItLinksBot.Providers
 
         public Digest GetDigestDetails(Digest digest)
         {
-            var digestContent = htlmContentGetter.GetContent(digest.DigestURL);
-            var digestDetails = new HtmlDocument();
-            digestDetails.LoadHtml(digestContent);
-            var dateNode = digestDetails.DocumentNode.SelectSingleNode("//section[@id='issue-display']//time");
-            var digestDate = DateTime.Parse(dateNode.GetAttributeValue("datetime", "not found"));
-            var nameNode = digestDetails.DocumentNode.SelectSingleNode("//section[@id='issue-display']/header/h1");
-            var nameText = nameNode.InnerText.Trim();
-
-            var descriptionNodeOriginal = digestDetails.DocumentNode.SelectSingleNode("//div[contains(@class,'introduction')]");
-            string normalizedDescription;
-            if (descriptionNodeOriginal != null)
-            {
-                var descriptionNode = contentNormalizer.NormalizeDom(descriptionNodeOriginal);
-                normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-            }
-            else
-            {
-                normalizedDescription = "";
-            }
-
-            var currentDigest = new Digest
-            {
-                DigestDay = digestDate,
-                DigestName = nameText,
-                DigestDescription = normalizedDescription,
-                DigestURL = digest.DigestURL,
-                Provider = digest.Provider
-            };
-            return currentDigest;
+            return digest;
         }
 
         public List<Link> GetDigestLinks(Digest digest)
@@ -96,33 +74,32 @@ namespace ItLinksBot.Providers
             var digestContent = htlmContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            HtmlNodeCollection linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[@id='issue-frame']/div/div[position()>4]//div[contains(@class,'revue-p')]/../../../..|//div[@id='issue-frame']//body/div/div[position()>4]//div[contains(@class,'revue-p')]/../../../..|//div[contains(@class,'text-description')]//ul[contains(@class,'revue-ul')]/li/a");
+            HtmlNodeCollection linksInDigest = linksHtml.DocumentNode.SelectNodes("//main/article/.//figure");
             for (int i = 0; i < linksInDigest.Count; i++)
             {
-                HtmlNode link = linksInDigest[i];
-                HtmlNode linkNode;
-                if (link.Name.ToUpper() == "A")
-                {
-                    linkNode = link;
-                }
-                else
-                {
-                    linkNode = link.SelectSingleNode(".//a[not(img)][1]|./tr[2]//a|.//div[@class='link-title']//a");
-                }
-                if (linkNode == null) continue;
-                var title = linkNode.InnerText.Trim();
-                var href = linkNode.GetAttributeValue("href", "Not found");
-                if (href == "Not found") continue;
+                HtmlNode linkNode = linksInDigest[i];
 
+                var titleNode = linkNode.SelectSingleNode(".//div[contains(@class,'kg-bookmark-title')]");
+                var title = titleNode.InnerText.Trim();
+                var hrefNode = linkNode.SelectSingleNode("./a");
+                var href = hrefNode.GetAttributeValue("href", "Not found");
                 Uri uriHref = new(baseUri, href);
                 href = Utils.UnshortenLink(uriHref.AbsoluteUri);
 
-                var descriptionNodeOriginal = link.SelectSingleNode(".//div[@class='revue-p']/..");
+                var descriptionNodeOriginal = linkNode.SelectSingleNode(".//div[contains(@class,'kg-bookmark-description')]");
                 var descriptionNode = contentNormalizer.NormalizeDom(descriptionNodeOriginal);
                 string normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
+
+                var categoryNode = linkNode.SelectSingleNode("./preceding-sibling::h2[1]");
+                string categoryText = null;
+                if (categoryNode != null)
+                {
+                    categoryText = categoryNode.InnerText.Trim();
+                }
                 links.Add(new Link
                 {
                     URL = href,
+                    Category = categoryText,
                     Title = title,
                     Description = normalizedDescription,
                     LinkOrder = i,
