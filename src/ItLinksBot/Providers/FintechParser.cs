@@ -68,40 +68,39 @@ namespace ItLinksBot.Providers
             List<Link> links = new();
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             JObject digestObject = JObject.Parse(digestContent);
-            JArray sections = JArray.Parse((string)digestObject["sections"]);
+            JArray blocks = JArray.Parse((string)digestObject["blocks"]);
             int entries = 0;
-            foreach (JObject section in sections)
+            foreach (JObject block in blocks)
             {
-                JArray columns = (JArray)section["columns"];
-                if (columns.Count == 0)
+                string type = (string)block["type"];
+                if (type != "paragraph")
                 {
                     continue;
                 }
                 // theoretically there could be multiple columns in one section, but practically it's always one
-                foreach (JObject column in columns)
+
+                JArray deltaOps = (JArray)block["delta"]["ops"];
+                // Letterhead uses Quill as their editor, so we could convert Quill DeltaOps to HTML
+                var htmlConverter = new HtmlConverter(deltaOps);
+                string html = htmlConverter.Convert();
+                var linksHtml = new HtmlDocument();
+                linksHtml.LoadHtml(html);
+                var descriptionNode = contentNormalizer.NormalizeDom(linksHtml.DocumentNode);
+                string normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
+                if (normalizedDescription == "")
                 {
-                    JArray deltaOps = (JArray)column["delta"]["ops"];
-                    // Letterhead uses Quill as their editor, so we could convert Quill DeltaOps to HTML
-                    var htmlConverter = new HtmlConverter(deltaOps);
-                    string html = htmlConverter.Convert();
-                    var linksHtml = new HtmlDocument();
-                    linksHtml.LoadHtml(html);
-                    var descriptionNode = contentNormalizer.NormalizeDom(linksHtml.DocumentNode);
-                    string normalizedDescription = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-                    if (normalizedDescription == "")
-                    {
-                        continue;
-                    }
-                    links.Add(new Link
-                    {
-                        URL = $"{digest.DigestURL}#section{entries}",
-                        Title = "", // no specific title for sections
-                        Description = normalizedDescription,
-                        LinkOrder = entries,
-                        Digest = digest
-                    });
-                    entries++;
+                    continue;
                 }
+                links.Add(new Link
+                {
+                    URL = $"{digest.DigestURL}#section{entries}",
+                    Title = "", // no specific title for sections
+                    Description = normalizedDescription,
+                    LinkOrder = entries,
+                    Digest = digest
+                });
+                entries++;
+
             }
             return links;
         }
