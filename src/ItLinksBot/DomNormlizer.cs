@@ -6,9 +6,9 @@ namespace ItLinksBot
 {
     public class DomNormlizer : IContentNormalizer
     {
-        private string[] acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre", "br" };
+        private string[] acceptableTags = new string[] { "strong", "em", "u", "b", "i", "a", "ins", "s", "strike", "del", "code", "pre" };
         private string[] nodesProhibited = new string[] { "style", "script" };
-        private string[] nodesNewLines = new string[] { "div", "p", "h1", "h2", "h3", "h4", "li", "td" };
+        private string[] nodesNewLines = new string[] { "div", "p", "h1", "h2", "h3", "h4", "li", "td", "br" };
         public HtmlNode NormalizeDom(HtmlNode originalNode, string[] accptableTags, string[] nodesProhibited, string[] nodesNewLines)
         {
             acceptableTags = accptableTags;
