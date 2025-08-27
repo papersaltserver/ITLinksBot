@@ -94,7 +94,7 @@ namespace ItLinksBot.Providers
 
             //very dirty hack to get date, may be broken any time, no way to get something more suitable so far
             HttpClient imgClient = new();
-            imgClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75");
+            imgClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0");
             var baseUri = new Uri(realLink);
             var headImageLink = new Uri(baseUri, "head.jpg").AbsoluteUri;
             var imgContent = imgClient.GetAsync(headImageLink).Result;

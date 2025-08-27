@@ -49,7 +49,7 @@ namespace ItLinksBot
                     }
                     else
                     {
-                        req.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36 Edg/87.0.664.75");
+                        req.Headers.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0");
                     }
                     var resp = httpClient.Send(req);
                     if (resp.StatusCode == HttpStatusCode.Ambiguous ||
