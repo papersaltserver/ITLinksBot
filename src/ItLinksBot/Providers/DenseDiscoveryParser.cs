@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.ServiceModel.Syndication;
+using System.Text.RegularExpressions;
 using System.Xml;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -27,7 +28,7 @@ namespace ItLinksBot.Providers
 
         public string FormatDigestPost(Digest digest)
         {
-            return string.Format("<b>{0} - {1}</b>\n{2}\n{3}", digest.DigestName, digest.DigestDay.ToString("yyyy-MM-dd"), digest.DigestDescription, digest.DigestURL);
+            return string.Format($"<b>{digest.DigestName} - {digest.DigestDay:yyyy-MM-dd}</b>\n{digest.DigestDescription}\n{digest.DigestURL}");
         }
 
         public string FormatLinkPost(Link link)
@@ -68,13 +69,9 @@ namespace ItLinksBot.Providers
 
         public Digest GetDigestDetails(Digest digest)
         {
-            //Initial link leading to a decorated page with iframe, let's get actual link
-            string stubContent = htmlContentGetter.GetContent(digest.DigestURL);
-            HtmlDocument stubDocument = new();
-            stubDocument.LoadHtml(stubContent);
-            HtmlNode iframeNode = stubDocument.DocumentNode.SelectSingleNode("//iframe[@id='iframe']");
-            string realLink = iframeNode.GetAttributeValue("src", "not found");
-            realLink = realLink.EndsWith('/') ? realLink : $"{realLink}/";
+            //Initial link leading to a loader page, let's get actual link
+            var issueNumber = Regex.Matches(digest.DigestURL, @"https:\/\/www\.densediscovery\.com\/issues\/(\d+)")[0].Groups[1].Value;
+            string realLink = $"https://www.densediscovery.com/archive/{issueNumber}/";
 
             //getting real content
             string digestContent = htmlContentGetter.GetContent(realLink);
