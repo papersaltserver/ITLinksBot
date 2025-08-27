@@ -115,13 +115,9 @@ namespace ItLinksBot.Providers
         {
             List<Link> links = new();
             //this provider has many different sections with different content, so it should be processed separately
-            //Initial link leading to a decorated page with iframe, let's get actual link
-            string stubContent = htmlContentGetter.GetContent(digest.DigestURL);
-            HtmlDocument stubDocument = new();
-            stubDocument.LoadHtml(stubContent);
-            HtmlNode iframeNode = stubDocument.DocumentNode.SelectSingleNode("//iframe[@id='iframe']");
-            string realLink = iframeNode.GetAttributeValue("src", "not found");
-            realLink = realLink.EndsWith('/') ? realLink : $"{realLink}/";
+            //Initial link leading to a loader page, let's get actual link
+            var issueNumber = Regex.Matches(digest.DigestURL, @"https:\/\/www\.densediscovery\.com\/issues\/(\d+)")[0].Groups[1].Value;
+            string realLink = $"https://www.densediscovery.com/archive/{issueNumber}/";
 
             //getting real content
             string digestContent = htmlContentGetter.GetContent(realLink);
