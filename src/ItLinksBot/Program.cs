@@ -64,6 +64,7 @@ namespace ItLinksBot
             services.AddTransient<IParser, HowCuriousParser>();
             services.AddTransient<IParser, TheLongGameParser>();
             services.AddTransient<IParser, NodeWeeklyParser>();
+            services.AddTransient<IParser, WroclawPlDlaMieszkancaParser>();
             services.AddAutoMapper(cfg =>
             {
                 cfg.CreateMap<Photo, PhotoDTO>();
