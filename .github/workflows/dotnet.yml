@@ -69,7 +69,7 @@ jobs:
       if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
       run: |
         mkdir -p ./.sonar/scanner
-        dotnet tool update dotnet-sonarscanner --tool-path ./.sonar/scanner
+        dotnet tool update dotnet-sonarscanner --tool-path ./.sonar/scanner --version 8.0.3
     - name: Start Sonar
       working-directory: ./src
       env:
@@ -115,7 +115,7 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
     # So now you can use Actions' own caching!
-    
+
     - name: Login to DockerHub
       uses: docker/login-action@v3
       with:
@@ -155,5 +155,5 @@ jobs:
           sudo /usr/bin/docker pull papersaltserver/itlinksbot:latest
           sudo /usr/bin/docker rm -f oci-linksbot
           sudo /usr/bin/docker run -d --restart unless-stopped -v /home/ubuntu/linksbot/db/:/app/db --env-file /home/ubuntu/linksbot/env.list --name oci-linksbot papersaltserver/itlinksbot:latest
-    
-      
+
+
