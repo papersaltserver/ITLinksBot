@@ -79,16 +79,7 @@ namespace ItLinksBot.Providers
             digestDocument.LoadHtml(digestContent);
 
             //getting description of the digest
-            var descriptionCurrentNode = digestDocument.DocumentNode.SelectSingleNode("//table[contains(@class,'body')]//tr[td[contains(@class,'spacer') or contains(@class,'spc')]]/following-sibling::tr[.//h1]");
-            // this will throw if description was not found, let it be this way
-            descriptionCurrentNode = descriptionCurrentNode.NextSibling;
-            var descriptionNode = HtmlNode.CreateNode("<div></div>");
-            while (descriptionCurrentNode != null && descriptionCurrentNode.SelectSingleNode("./td[contains(@class,'spacer') or contains(@class,'spc')]") == null)
-            {
-                descriptionNode.AppendChild(descriptionCurrentNode.Clone());
-                descriptionCurrentNode = descriptionCurrentNode.NextSibling;
-            }
-
+            var descriptionNode = digestDocument.DocumentNode.SelectSingleNode("//table[contains(@class,'body')]//tr[td[contains(@class,'intro')]]");
             descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
             string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
@@ -124,12 +115,12 @@ namespace ItLinksBot.Providers
             HtmlDocument digestDocument = new();
             digestDocument.LoadHtml(digestContent);
 
-            var categories = digestDocument.DocumentNode.SelectNodes("//table[contains(@class,'body')]//tr[td[contains(@class,'space') or contains(@class,'spc')]][count(preceding-sibling::tr[td[contains(@class,'space') or contains(@class,'spc')]])>1]/following-sibling::tr[.//h1][1]");
+            var categories = digestDocument.DocumentNode.SelectNodes("//table[contains(@class,'body')]//tr[td[contains(@class,'title')]]");
             int i = 0;
             foreach (var cat in categories)
             {
                 var currentNode = cat.NextSibling;
-                while (currentNode != null && currentNode.SelectSingleNode("./td[contains(@class,'spacer') or contains(@class,'spc')]") == null)
+                while (currentNode != null && currentNode.SelectSingleNode("./td[contains(@class,'title') or contains(@class,'spc')]") == null)
                 {
                     var descriptionNode = HtmlNode.CreateNode("<div></div>");
                     descriptionNode.AppendChild(currentNode.Clone());
