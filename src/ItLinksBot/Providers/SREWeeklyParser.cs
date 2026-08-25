@@ -3,21 +3,24 @@ using ItLinksBot.ContentGetters;
 using ItLinksBot.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.ServiceModel.Syndication;
+using System.Xml;
 
 namespace ItLinksBot.Providers
 {
     class SREWeeklyParser : IParser
     {
-        private readonly IContentGetter<string> htlmContentGetter;
+        private readonly IContentGetter<string> htmlContentGetter;
         private readonly IContentNormalizer contentNormalizer;
         private readonly ITextSanitizer textSanitizer;
         public string CurrentProvider => "SRE Weekly";
-        readonly Uri baseUri = new("http://sreweekly.com/");
+        readonly Uri baseUri = new("https://sreweekly.com/");
 
         public SREWeeklyParser(IContentGetter<string> cg, IContentNormalizer cn, ITextSanitizer ts)
         {
-            htlmContentGetter = cg;
+            htmlContentGetter = cg;
             contentNormalizer = cn;
             textSanitizer = ts;
         }
@@ -34,39 +37,22 @@ namespace ItLinksBot.Providers
         public List<Digest> GetCurrentDigests(Provider provider)
         {
             List<Digest> digests = new();
-            var stringResult = htlmContentGetter.GetContent(provider.DigestURL);
-            var digestArchiveHtml = new HtmlDocument();
-            digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//article").Take(50);
-            foreach (var digestNode in digestsInArchive)
+            var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
+            XmlReader reader = XmlReader.Create(new StringReader(stringResult));
+            var feed = SyndicationFeed.Load(reader);
+            foreach (var feedItem in feed.Items.Take(5))
             {
-                var dateNode = digestNode.SelectSingleNode(".//div[contains(@class,'entry-date')]");
-                var digestDate = DateTime.Parse(dateNode.InnerText.Trim());
-                var linkNode = digestNode.SelectSingleNode(".//header//a");
-                var digestName = linkNode.InnerText.Trim();
-                var digestHref = linkNode.GetAttributeValue("href", "Not found");
-                var digestUrl = new Uri(baseUri, digestHref);
-                var descriptionNode = digestNode.SelectSingleNode(".//div[contains(@class,'entry-content')]/p");
-                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
-                string description;
-                if (descriptionNode != null)
+                Digest currentDigest = new()
                 {
-                    description = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-                }
-                else
-                {
-                    description = "";
-                }
-                var currentDigest = new Digest
-                {
-                    DigestDay = digestDate,
-                    DigestName = digestName,
-                    DigestDescription = description,
-                    DigestURL = digestUrl.AbsoluteUri,
+                    DigestDay = feedItem.PublishDate.DateTime,
+                    DigestName = feedItem.Title.Text,
+                    DigestDescription = feedItem.Summary.Text,
+                    DigestURL = feedItem.Links[0].Uri.AbsoluteUri,
                     Provider = provider
                 };
                 digests.Add(currentDigest);
             }
+
             return digests;
         }
 
@@ -78,35 +64,39 @@ namespace ItLinksBot.Providers
         public List<Link> GetDigestLinks(Digest digest)
         {
             List<Link> links = new();
-            var digestContent = htlmContentGetter.GetContent(digest.DigestURL);
-            var linksHtml = new HtmlDocument();
-            linksHtml.LoadHtml(digestContent);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'sreweekly-entry')]");
-            for (int i = 0; i < linksInDigest.Count; i++)
+            var reader = XmlReader.Create(digest.Provider.DigestURL);
+            var feed = SyndicationFeed.Load(reader);
+            var digestNode = feed.Items.SingleOrDefault(n => n.Title.Text == digest.DigestName && n.Links[0].Uri.AbsoluteUri == digest.DigestURL);
+            var feedElementContent = digestNode.ElementExtensions.ReadElementExtensions<string>("encoded", "http://purl.org/rss/1.0/modules/content/").FirstOrDefault();
+            var htmlLinks = new HtmlDocument();
+            htmlLinks.LoadHtml(feedElementContent);
+            var listItemsArray = htmlLinks.DocumentNode.SelectNodes("//div[contains(@class,'sreweekly-entry')]");
+            for (int i = 0; i < listItemsArray.Count; i++)
             {
-                HtmlNode link = linksInDigest[i];
-                var linkNode = link.SelectSingleNode(".//div[contains(@class,'sreweekly-title')]/a");
-                var title = linkNode.InnerText;
-                var href = linkNode?.GetAttributeValue("href", "Not found");
-                if (href == null) continue;
-                if (!href.Contains("://") && href.Contains('/'))
+                HtmlNode listItem = listItemsArray[i];
+                HtmlNode linkTag = listItem.SelectSingleNode(".//div[contains(@class,'sreweekly-title')]//a");
+                if (linkTag != null)
                 {
-                    var digestUrl = new Uri(digest.DigestURL);
-                    var digestBase = new Uri(digestUrl.Scheme + "://" + digestUrl.Authority);
-                    href = (new Uri(digestBase, href)).AbsoluteUri;
+                    var href = linkTag.GetAttributeValue("href", "Not found");
+                    if (!href.Contains("://") && href.Contains('/'))
+                    {
+                        href = new Uri(baseUri, href).AbsoluteUri;
+                    }
+                    href = Utils.UnshortenLink(href);
+
+                    var descriptionNode = listItem.SelectSingleNode(".//div[contains(@class,'sreweekly-description')]");
+                    var normalizedDescriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
+                    var descriptionText = textSanitizer.Sanitize(normalizedDescriptionNode.InnerHtml.Trim());
+
+                    links.Add(new Link
+                    {
+                        URL = href,
+                        Title = linkTag.InnerText,
+                        Description = descriptionText,
+                        LinkOrder = i,
+                        Digest = digest
+                    });
                 }
-                href = Utils.UnshortenLink(href);
-                var descriptionNodeOriginal = link.SelectSingleNode(".//div[contains(@class,'sreweekly-description')]");
-                var descriptionNode = contentNormalizer.NormalizeDom(descriptionNodeOriginal);
-                var descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
-                links.Add(new Link
-                {
-                    URL = href,
-                    Title = title,
-                    Description = descriptionText,
-                    LinkOrder = i,
-                    Digest = digest
-                });
             }
             return links;
         }

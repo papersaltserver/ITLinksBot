@@ -1,0 +1,156 @@
+{
+  "Providers": [
+    {
+      "Name": "Artificial Intelligence Weekly",
+      "DigestURL": "https://www.getrevue.co/profile/artificial-intelligence"
+    },
+    {
+      "Name": "Awesome SysAdmin Newsletter",
+      "DigestURL": "https://sysadmin.libhunt.com/newsletter/archive"
+    },
+    {
+      "Name": "Bizarro Devs",
+      "DigestURL": "http://bizzarodevs.com/issues"
+    },
+    {
+      "Name": "Better Dev Link",
+      "DigestURL": "https://betterdev.link/issues"
+    },
+    {
+      "Name": "Changelog Weekly",
+      "DigestURL": "https://changelog.com/news/feed"
+    },
+    {
+      "Name": "corey.tech",
+      "DigestURL": "https://corey.tech/feed.xml"
+    },
+    {
+      "Name": "c# digest",
+      "DigestURL": "https://csharpdigest.net/newsletters"
+    },
+    {
+      "Name": "CSS Weekly",
+      "DigestURL": "https://css-weekly.com/archives/"
+    },
+    {
+      "Name": "DB Weekly",
+      "DigestURL": "https://dbweekly.com/issues"
+    },
+    {
+      "Name": "Data Is Plural",
+      "DigestURL": "https://www.data-is-plural.com/archive/"
+    },
+    {
+      "Name": "Dense Discovery",
+      "DigestURL": "https://www.densediscovery.com/feed/"
+    },
+    {
+      "Name": "Dev Awesome",
+      "DigestURL": "https://devawesome.io/archive"
+    },
+    {
+      "Name": "DevOps'ish",
+      "DigestURL": "https://devopsish.com/archive/"
+    },
+    {
+      "Name": "Devops Weekly",
+      "DigestURL": "https://us2.campaign-archive.com/home/?u=b6635e37e35fa5eff0c2a947a&id=a63f24d068"
+    },
+    {
+      "Name": "Fintech",
+      "DigestURL": "https://teal.api.tryletterhead.com/api/v2/channels/techstars-fintech/letters/archive?page=1&records=5"
+    },
+    {
+      "Name": "How Curious!",
+      "DigestURL": "https://www.getrevue.co/profile/HowCurious"
+    },
+    {
+      "Name": "Inside Cryptocurrency",
+      "DigestURL": "https://community-api.inside.com/v1/sections/?list=cryptocurrency&page=1"
+    },
+    {
+      "Name": "JavaScript Weekly",
+      "DigestURL": "https://javascriptweekly.com/issues"
+    },
+    {
+      "Name": "KubeWeekly",
+      "DigestURL": "https://www.cncf.io/kubeweekly/"
+    },
+    {
+      "Name": "Node Weekly",
+      "DigestURL": "https://nodeweekly.com/issues"
+    },
+    {
+      "Name": "O'Reily Four Short Links",
+      "DigestURL": "https://www.oreilly.com/radar/topics/four-short-links/feed/index.xml"
+    },
+    {
+      "Name": "Product",
+      "DigestURL": "https://www.getrevue.co/profile/product"
+    },
+    {
+      "Name": "ProductiveGrowth",
+      "DigestURL": "https://productivegrowth.substack.com/archive"
+    },
+    {
+      "Name": "programming digest",
+      "DigestURL": "https://programmingdigest.net/newsletters"
+    },
+    {
+      "Name": "React Newsletter",
+      "DigestURL": "https://reactnewsletter.com/issues"
+    },
+    {
+      "Name": "SRE Weekly",
+      "DigestURL": "https://sreweekly.com/feed/"
+    },
+    {
+      "Name": "Smashing Email Newsletter",
+      "DigestURL": "https://www.smashingmagazine.com/the-smashing-newsletter/"
+    },
+    {
+      "Name": "Software Lead Weekly",
+      "DigestURL": "https://softwareleadweekly.com/issues/"
+    },
+    {
+      "Name": "Space",
+      "DigestURL": "https://www.getrevue.co/profile/space"
+    },
+    {
+      "Name": "StatusCode Weekly",
+      "DigestURL": "https://weekly.statuscode.com/issues"
+    },
+    {
+      "Name": "Tech Manager Weekly",
+      "DigestURL": "http://www.techmanagerweekly.com/"
+    },
+    {
+      "Name": "Tech Productivity",
+      "DigestURL": "https://us5.campaign-archive.com/home/?u=ea228d7061e8bbfa8639666ad&id=aa93122b21"
+    },
+    {
+      "Name": "Techmeme",
+      "DigestURL": "https://us14.campaign-archive.com/home/?u=94ccd3ae223561415b05892ab&id=976a1cbc1f"
+    },
+    {
+      "Name": "The Long Game",
+      "DigestURL": "https://www.getrevue.co/profile/taylor-somerville"
+    },
+    {
+      "Name": "THE PROTOCOL",
+      "DigestURL": "https://us13.campaign-archive.com/home/?u=34e123a6cb927c8855702db9e&id=a42dcec0bd"
+    },
+    {
+      "Name": "Timeless & Timely",
+      "DigestURL": "https://www.timelesstimely.com/archive"
+    },
+    {
+      "Name": "TLDR",
+      "DigestURL": "https://tldr.tech/api/rss/tech"
+    },
+    {
+      "Name": "Wroclaw.pl-dla-mieszkanca",
+      "DigestURL": "https://www.wroclaw.pl/dla-mieszkanca/rss"
+    }
+  ]
+}

@@ -29,7 +29,7 @@ namespace ItLinksBot.Providers
             var stringResult = htmlContentGetter.GetContent(provider.DigestURL);
             XmlReader reader = XmlReader.Create(new StringReader(stringResult));
             var feed = SyndicationFeed.Load(reader);
-            foreach (var feedItem in feed.Items.Take(50))
+            foreach (var feedItem in feed.Items.Take(5))
             {
                 Digest currentDigest = new()
                 {

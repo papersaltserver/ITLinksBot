@@ -1,0 +1,156 @@
+{
+  "Providers": [
+    {
+      "Name": "Artificial Intelligence Weekly",
+      "Enabled": false
+    },
+    {
+      "Name": "Awesome SysAdmin Newsletter",
+      "Enabled": false
+    },
+    {
+      "Name": "Bizarro Devs",
+      "Enabled": false
+    },
+    {
+      "Name": "Better Dev Link",
+      "Enabled": false
+    },
+    {
+      "Name": "Changelog Weekly",
+      "Enabled": false
+    },
+    {
+      "Name": "corey.tech",
+      "Enabled": false
+    },
+    {
+      "Name": "c# digest",
+      "Enabled": false
+    },
+    {
+      "Name": "CSS Weekly",
+      "Enabled": false
+    },
+    {
+      "Name": "DB Weekly",
+      "Enabled": false
+    },
+    {
+      "Name": "Data Is Plural",
+      "Enabled": false
+    },
+    {
+      "Name": "Dense Discovery",
+      "Enabled": false
+    },
+    {
+      "Name": "Dev Awesome",
+      "Enabled": false
+    },
+    {
+      "Name": "DevOps'ish",
+      "Enabled": true
+    },
+    {
+      "Name": "Devops Weekly",
+      "Enabled": false
+    },
+    {
+      "Name": "Fintech",
+      "Enabled": false
+    },
+    {
+      "Name": "How Curious!",
+      "Enabled": false
+    },
+    {
+      "Name": "Inside Cryptocurrency",
+      "Enabled": false
+    },
+    {
+      "Name": "JavaScript Weekly",
+      "Enabled": false
+    },
+    {
+      "Name": "KubeWeekly",
+      "Enabled": false
+    },
+    {
+      "Name": "Node Weekly",
+      "Enabled": false
+    },
+    {
+      "Name": "O'Reily Four Short Links",
+      "Enabled": false
+    },
+    {
+      "Name": "Product",
+      "Enabled": false
+    },
+    {
+      "Name": "ProductiveGrowth",
+      "Enabled": false
+    },
+    {
+      "Name": "programming digest",
+      "Enabled": false
+    },
+    {
+      "Name": "React Newsletter",
+      "Enabled": false
+    },
+    {
+      "Name": "SRE Weekly",
+      "Enabled": false
+    },
+    {
+      "Name": "Smashing Email Newsletter",
+      "Enabled": false
+    },
+    {
+      "Name": "Software Lead Weekly",
+      "Enabled": false
+    },
+    {
+      "Name": "Space",
+      "Enabled": false
+    },
+    {
+      "Name": "StatusCode Weekly",
+      "Enabled": false
+    },
+    {
+      "Name": "Tech Manager Weekly",
+      "Enabled": false
+    },
+    {
+      "Name": "Techmeme",
+      "Enabled": false
+    },
+    {
+      "Name": "Tech Productivity",
+      "Enabled": false
+    },
+    {
+      "Name": "THE PROTOCOL",
+      "Enabled": false
+    },
+    {
+      "Name": "The Long Game",
+      "Enabled": false
+    },
+    {
+      "Name": "Timeless & Timely",
+      "Enabled": false
+    },
+    {
+      "Name": "TLDR",
+      "Enabled": false
+    },
+    {
+      "Name": "Wroclaw.pl-dla-mieszkanca",
+      "Enabled": false
+    }
+  ]
+}

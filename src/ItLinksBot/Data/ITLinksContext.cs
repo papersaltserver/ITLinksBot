@@ -16,6 +16,13 @@ namespace ItLinksBot.Data
             optionsBuilder.UseSqlite(configuration.GetConnectionString("DefaultConnection"));
         }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            //ProviderName is the join key between config/providers.json, parser classes and DB rows.
+            //The index is also ensured at startup via raw SQL until a migration picks it up from here.
+            modelBuilder.Entity<Provider>().HasIndex(p => p.ProviderName).IsUnique();
+        }
+
         public DbSet<Digest> Digests { get; set; }
         public DbSet<Link> Links { get; set; }
         public DbSet<LinkPost> Posts { get; set; }

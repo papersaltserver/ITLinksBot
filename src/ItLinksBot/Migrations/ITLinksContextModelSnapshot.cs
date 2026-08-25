@@ -199,6 +199,9 @@ namespace ItLinksBot.Migrations
 
                     b.HasKey("ProviderID");
 
+                    b.HasIndex("ProviderName")
+                        .IsUnique();
+
                     b.ToTable("Providers");
                 });
 

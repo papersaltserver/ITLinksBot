@@ -41,6 +41,15 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+    <None Update="providers.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Update="providers.debug.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Update="providers.prod.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <PropertyGroup>
@@ -54,6 +63,9 @@
     <Copy Condition="'$(Configuration)'=='Debug' And Exists('appsettings.debug.json')" SourceFiles="appsettings.debug.json" DestinationFiles="$(TargetDir)config\appsettings.json" />
     <Copy Condition="'$(Configuration)'=='Debug' And !Exists('appsettings.debug.json')" SourceFiles="appsettings.json" DestinationFiles="$(TargetDir)config\appsettings.json" />
     <Copy Condition="'$(Configuration)'=='Release' And !Exists('$(TargetDir)config\appsettings.json')" SourceFiles="appsettings.json" DestinationFiles="$(TargetDir)config\appsettings.json" />
+    <Copy Condition="Exists('providers.json')" SourceFiles="providers.json" DestinationFolder="$(TargetDir)config\" />
+    <Copy Condition="'$(Configuration)'=='Debug' And Exists('providers.debug.json')" SourceFiles="providers.debug.json" DestinationFiles="$(TargetDir)config\providers.settings.json" />
+    <Copy Condition="'$(Configuration)'!='Debug' And Exists('providers.prod.json')" SourceFiles="providers.prod.json" DestinationFiles="$(TargetDir)config\providers.settings.json" />
   </Target>
 
   <Target Name="CopyConfigurationPublish" AfterTargets="Publish">
@@ -63,6 +75,8 @@
     <Copy Condition="'$(Configuration)'=='Debug' And Exists('appsettings.debug.json')" SourceFiles="appsettings.debug.json" DestinationFiles="$(PublishDir)config\appsettings.json" />
     <Copy Condition="'$(Configuration)'=='Debug' And !Exists('appsettings.debug.json')" SourceFiles="appsettings.json" DestinationFiles="$(PublishDir)config\appsettings.json" />
     <Copy Condition="'$(Configuration)'=='Release'  And !Exists('$(PublishDir)config\appsettings.json')" SourceFiles="appsettings.json" DestinationFiles="$(PublishDir)config\appsettings.json" />
+    <Copy Condition="Exists('providers.json')" SourceFiles="providers.json" DestinationFolder="$(PublishDir)config\" />
+    <Copy Condition="Exists('providers.prod.json')" SourceFiles="providers.prod.json" DestinationFiles="$(PublishDir)config\providers.settings.json" />
   </Target>
 
 </Project>

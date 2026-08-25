@@ -11,7 +11,9 @@ using Serilog;
 using Serilog.Events;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 
 namespace ItLinksBot
 {
@@ -113,6 +115,8 @@ namespace ItLinksBot
             }
             context.SaveChanges();
 
+            SyncProvidersWithConfig(context);
+
             while (true)
             {
                 var activeProviders = context.Providers.Where(pr => pr.ProviderEnabled);
@@ -189,6 +193,144 @@ namespace ItLinksBot
                 context.SaveChanges();
                 Log.Information("Nothing to post. Sleeping for 1 hour");
                 System.Threading.Thread.Sleep(1000 * 60 * 60);
+            }
+        }
+
+        private sealed class ProviderConfigEntry
+        {
+            public string Name { get; set; }
+            public string DigestURL { get; set; }
+            //null/omitted means "leave the DB value as is" - only explicit true/false is enforced
+            public bool? Enabled { get; set; }
+        }
+
+        private sealed class ProvidersConfigFile
+        {
+            public List<ProviderConfigEntry> Providers { get; set; } = new List<ProviderConfigEntry>();
+        }
+
+        private static readonly JsonSerializerOptions ProvidersJsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            WriteIndented = true
+        };
+
+        private static string GetConfigFilePath(string fileName)
+        {
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config", fileName);
+        }
+
+        /// <summary>
+        /// The Providers table is an FK anchor for digests history and holds runtime state,
+        /// but its configuration belongs to the repository: providers.json carries the common
+        /// part (names, digest urls), while providers.debug.json / providers.prod.json carry
+        /// per-environment overrides (enabled flags etc.) and are selected at build time -
+        /// the same way appsettings.debug.json is. This way a parser class and its settings
+        /// travel in one commit instead of spawning a data-only migration.
+        /// </summary>
+        private static void SyncProvidersWithConfig(ITLinksContext context)
+        {
+            string configPath = GetConfigFilePath("providers.json");
+            string settingsPath = GetConfigFilePath("providers.settings.json");
+            try
+            {
+                if (!File.Exists(configPath))
+                {
+                    //First run bootstrap: export current DB state as a starting point to review and commit.
+                    var exported = new ProvidersConfigFile
+                    {
+                        Providers = context.Providers
+                            .OrderBy(p => p.ProviderName)
+                            .Select(p => new ProviderConfigEntry { Name = p.ProviderName, DigestURL = p.DigestURL, Enabled = p.ProviderEnabled })
+                            .ToList()
+                    };
+                    File.WriteAllText(configPath, JsonSerializer.Serialize(exported, ProvidersJsonOptions));
+                    Log.Information("providers.json was not found, exported {providersCount} existing providers to {configPath}. Review it and commit to the repository.",
+                        exported.Providers.Count, configPath);
+                    return;
+                }
+
+                var config = JsonSerializer.Deserialize<ProvidersConfigFile>(File.ReadAllText(configPath), ProvidersJsonOptions);
+
+                //Per-environment overrides are matched by provider name and win over the base file.
+                //An omitted field in the override keeps the base value; an omitted Enabled means
+                //"do not touch whatever the database has".
+                if (File.Exists(settingsPath))
+                {
+                    var settings = JsonSerializer.Deserialize<ProvidersConfigFile>(File.ReadAllText(settingsPath), ProvidersJsonOptions);
+                    var entriesByName = config.Providers.ToDictionary(p => p.Name, StringComparer.Ordinal);
+                    foreach (var overrideEntry in settings.Providers)
+                    {
+                        if (entriesByName.TryGetValue(overrideEntry.Name, out var baseEntry))
+                        {
+                            if (!string.IsNullOrWhiteSpace(overrideEntry.DigestURL))
+                            {
+                                baseEntry.DigestURL = overrideEntry.DigestURL;
+                            }
+                            baseEntry.Enabled = overrideEntry.Enabled;
+                        }
+                        else
+                        {
+                            entriesByName.Add(overrideEntry.Name, overrideEntry);
+                        }
+                    }
+                    config.Providers = entriesByName.Values.ToList();
+                }
+
+                bool changed = false;
+                foreach (var entry in config.Providers)
+                {
+                    Provider existing = context.Providers.FirstOrDefault(p => p.ProviderName == entry.Name);
+                    if (existing == null)
+                    {
+                        context.Providers.Add(new Provider
+                        {
+                            ProviderName = entry.Name,
+                            DigestURL = entry.DigestURL,
+                            ProviderEnabled = entry.Enabled ?? true,
+                            LatestSync = new DateTime(1900, 1, 1),
+                            LatestIssue = new DateTime(1900, 1, 1),
+                            SubsequentErrors = 0
+                        });
+                        Log.Information("Provider {providerName} added from providers.json", entry.Name);
+                        changed = true;
+                    }
+                    else
+                    {
+                        //An empty url in the config must never blank out a working value.
+                        if (!string.IsNullOrWhiteSpace(entry.DigestURL) && existing.DigestURL != entry.DigestURL)
+                        {
+                            existing.DigestURL = entry.DigestURL;
+                            Log.Information("Digest URL for {providerName} updated from providers.json", entry.Name);
+                            changed = true;
+                        }
+                        if (entry.Enabled.HasValue && existing.ProviderEnabled != entry.Enabled.Value)
+                        {
+                            existing.ProviderEnabled = entry.Enabled.Value;
+                            Log.Information("Provider {providerName} enabled state set to {enabledState}", entry.Name, entry.Enabled.Value);
+                            changed = true;
+                        }
+                    }
+                }
+                //EF cannot translate an in-memory collection inside a SQL subquery,
+                //so compare against a locally materialized set instead.
+                var configuredNames = config.Providers.Select(c => c.Name).ToHashSet(StringComparer.Ordinal);
+                foreach (var dbOnly in context.Providers.ToList())
+                {
+                    if (!configuredNames.Contains(dbOnly.ProviderName))
+                    {
+                        Log.Warning("Provider {providerName} exists in the database but is missing in providers.json. It will not be removed; add it to the config or keep it disabled on purpose.",
+                            dbOnly.ProviderName);
+                    }
+                }
+                if (changed)
+                {
+                    context.SaveChanges();
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Failed to sync providers with {configPath}, continuing with the current database state", configPath);
             }
         }
 

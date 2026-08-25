@@ -25,12 +25,12 @@ namespace ItLinksBot.Providers
 
         public string FormatDigestPost(Digest digest)
         {
-            return string.Format("<b>{0} - {1}</b>\n{2}\n{3}", digest.DigestName, digest.DigestDay.ToString("yyyy-MM-dd"), digest.DigestDescription, digest.DigestURL);
+            return $"<b>{digest.DigestName} - {digest.DigestDay.ToString("yyyy-MM-dd")}</b>\n{digest.DigestDescription}\n{digest.DigestURL}";
         }
 
         public string FormatLinkPost(Link link)
         {
-            return string.Format("<strong>{0}</strong>\n\n{1}\n{2}", link.Title, link.Description, link.URL);
+            return link.Description;
         }
 
         public List<Digest> GetCurrentDigests(Provider provider)
@@ -44,7 +44,7 @@ namespace ItLinksBot.Providers
             {
                 var hrefNode = digestNode.SelectSingleNode("./a");
                 var digestHref = hrefNode.GetAttributeValue("href", "Not found");
-                var titleNode = digestNode.SelectSingleNode("./h2");
+                var titleNode = digestNode.SelectSingleNode(".//h2[contains(@class,'entry-hint-parent')]");
                 var digestName = titleNode.InnerText.Trim();
                 var digestUrl = new Uri(baseUri, digestHref);
                 var fullHref = Utils.UnshortenLink(digestUrl.AbsoluteUri);
@@ -68,7 +68,7 @@ namespace ItLinksBot.Providers
             string digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             HtmlDocument digestDocument = new();
             digestDocument.LoadHtml(digestContent);
-            HtmlNodeCollection digestDescription = digestDocument.DocumentNode.SelectNodes("//section[contains(@class,'post-content')]/p[count(preceding-sibling::h2)=0]");
+            HtmlNodeCollection digestDescription = digestDocument.DocumentNode.SelectNodes("//section[contains(@class,'post-description')]");
             HtmlNode descriptionNode = HtmlNode.CreateNode("<div></div>");
             string descriptionText = "";
             if (digestDescription != null)
@@ -81,7 +81,7 @@ namespace ItLinksBot.Providers
                 descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
             }
 
-            var dateNode = digestDocument.DocumentNode.SelectSingleNode("//header[contains(@class,'post-title')]//time");
+            var dateNode = digestDocument.DocumentNode.SelectSingleNode("//div[contains(@class,'post-meta')]/span[1]");
             string dateText = dateNode.InnerText.Trim();
             var digestDate = DateTime.Parse(dateText);
 
@@ -97,32 +97,17 @@ namespace ItLinksBot.Providers
             var digestContent = htmlContentGetter.GetContent(digest.DigestURL);
             var linksHtml = new HtmlDocument();
             linksHtml.LoadHtml(digestContent);
-            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//section[contains(@class,'post-content')]/p[count(preceding-sibling::h2)>0]");
+            var linksInDigest = linksHtml.DocumentNode.SelectNodes("//div[contains(@class,'post-content')]/p");
             for (int i = 0; i < linksInDigest.Count; i++)
             {
                 HtmlNode link = linksInDigest[i];
-                string title = ""; //no separate titles in devopsish
-
-                HtmlNode hrefNode = link.SelectSingleNode(".//a[1]");
-                if (hrefNode == null)
-                {
-                    Log.Warning("Unable to find <a> element in the following block:\n{href}\n", link.InnerText);
-                    continue;
-                }
-                var href = hrefNode.GetAttributeValue("href", "Not found");
-                href = new Uri(baseUri, href).AbsoluteUri;
-                href = Utils.UnshortenLink(href);
-
-                string descriptionText;
-                var descriptionNode = HtmlNode.CreateNode("<div></div>");
-                descriptionNode.AppendChild(link);
-                descriptionNode = contentNormalizer.NormalizeDom(descriptionNode);
-                descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
+                var descriptionNode = contentNormalizer.NormalizeDom(link);
+                string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
                 links.Add(new Link
                 {
-                    URL = href,
-                    Title = title,
+                    URL = $"{digest.DigestURL}#section{i}", // we'll not be saving real links in sake of simplicity
+                    Title = "",
                     Description = descriptionText,
                     LinkOrder = i,
                     Digest = digest
