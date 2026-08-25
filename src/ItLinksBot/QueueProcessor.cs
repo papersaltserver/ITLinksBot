@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using HtmlAgilityPack;
+﻿using HtmlAgilityPack;
 using ItLinksBot.DTO;
 using ItLinksBot.Models;
 using ItLinksBot.TelegramDTO;
@@ -10,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Web;
 
 namespace ItLinksBot
 {
@@ -197,7 +195,6 @@ namespace ItLinksBot
         public static List<LinkPost> AddLinkPost(TelegramChannel tgChannel, Link link, TelegramAPI bot, IServiceProvider serviceProvider)
         {
             IEnumerable<IParser> serviceCollection = serviceProvider.GetServices<IParser>();
-            IMapper mapper = serviceProvider.GetService<IMapper>();
             var parser = serviceCollection.FirstOrDefault(p => p.CurrentProvider == tgChannel.Provider.ProviderName);
             string message = HtmlEntityText.ToHtmlCode(parser.FormatLinkPost(link));
             List<string> messageChunks = new();
@@ -237,7 +234,11 @@ namespace ItLinksBot
                                     caption = currentCaption,
                                     media = $"attach://{m.FileName}"
                                 };
-                                mediaDTOs[mediaIndex] = mapper.Map<PhotoDTO>(m);
+                                mediaDTOs[mediaIndex] = new PhotoDTO
+                                {
+                                    FileName = m.FileName,
+                                    ContentBytes = m.ContentBytes
+                                };
                                 break;
                             default:
                                 throw new NotImplementedException();

@@ -51,7 +51,7 @@ namespace ItLinksBot.Providers
             {
                 var relativePathNode = digestNode.SelectSingleNode(".//a");
                 var digestUrl = new Uri(baseUri, relativePathNode.GetAttributeValue("href", "Not found"));
-                var dateNode = digestNode.SelectSingleNode(".//div[@class='issue-date']");
+                var dateNode = digestNode.SelectSingleNode(".//span[@class='issue-date']");
                 var digestDate = DateTime.Parse(dateNode.InnerText.Trim());
                 var currentDigest = new Digest
                 {

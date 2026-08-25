@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using ItLinksBot.ContentGetters;
+﻿using ItLinksBot.ContentGetters;
 using ItLinksBot.Data;
 using ItLinksBot.DTO;
 using ItLinksBot.Models;
@@ -65,10 +64,6 @@ namespace ItLinksBot
             services.AddTransient<IParser, TheLongGameParser>();
             services.AddTransient<IParser, NodeWeeklyParser>();
             services.AddTransient<IParser, WroclawPlDlaMieszkancaParser>();
-            services.AddAutoMapper(cfg =>
-            {
-                cfg.CreateMap<Photo, PhotoDTO>();
-            });
             serviceProvider = services.BuildServiceProvider();
         }
         static void Main()
