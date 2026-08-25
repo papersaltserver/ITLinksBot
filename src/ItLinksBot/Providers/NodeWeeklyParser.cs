@@ -46,17 +46,18 @@ namespace ItLinksBot.Providers
             var stringResult = htlmContentGetter.GetContent(provider.DigestURL);
             var digestArchiveHtml = new HtmlDocument();
             digestArchiveHtml.LoadHtml(stringResult);
-            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@class='issue']").Take(5);
+            var digestsInArchive = digestArchiveHtml.DocumentNode.SelectNodes("//div[@class='issue-card']").Take(5);
             foreach (var digestNode in digestsInArchive)
             {
                 var relativePathNode = digestNode.SelectSingleNode(".//a");
                 var digestUrl = new Uri(baseUri, relativePathNode.GetAttributeValue("href", "Not found"));
-                var digestDate = DateTime.Parse(HttpUtility.HtmlDecode(digestNode.InnerText).Split('—')[1].Trim());
+                var dateNode = digestNode.SelectSingleNode(".//span[@class='issue-date']");
+                var digestDate = DateTime.Parse(dateNode.InnerText.Trim());
                 var currentDigest = new Digest
                 {
                     DigestDay = digestDate,
                     DigestName = relativePathNode.InnerText,
-                    DigestDescription = "", //node weekly doesn't have description for digest itself
+                    DigestDescription = "", //javascript weekly doesn't have description for digest itself
                     DigestURL = digestUrl.AbsoluteUri,
                     Provider = provider
                 };
