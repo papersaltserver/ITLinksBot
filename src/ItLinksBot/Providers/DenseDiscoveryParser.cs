@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.ServiceModel.Syndication;
 using System.Text.RegularExpressions;
@@ -84,11 +85,15 @@ namespace ItLinksBot.Providers
             string descriptionText = textSanitizer.Sanitize(descriptionNode.InnerHtml.Trim());
 
             //very dirty hack to get date, may be broken any time, no way to get something more suitable so far
-            HttpClient imgClient = new();
-            imgClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36");
+            using HttpClient imgClient = new()
+            {
+                DefaultRequestVersion = HttpVersion.Version20,
+                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower
+            };
+            imgClient.DefaultRequestHeaders.Add("User-Agent", HtmlContentGetter.BrowserUserAgent);
             var baseUri = new Uri(realLink);
             var headImageLink = new Uri(baseUri, "head.jpg").AbsoluteUri;
-            var imgContent = imgClient.GetAsync(headImageLink).Result;
+            using var imgContent = imgClient.GetAsync(headImageLink).Result;
             var fileModifiedDate = imgContent.Content.Headers.LastModified.Value.DateTime;
 
             var currentDigest = new Digest

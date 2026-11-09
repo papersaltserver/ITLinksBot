@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 
@@ -9,7 +10,25 @@ namespace ItLinksBot.ContentGetters
 {
     class HtmlContentGetter : IContentGetter<string>
     {
+        internal const string BrowserUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0";
         private const int MaxLoggedBodyLength = 8192;
+        private static readonly Dictionary<string, string> BrowserRequestHeaders = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            ["Accept-Language"] = "en-US,en;q=0.9",
+            ["Cache-Control"] = "no-cache",
+            ["Pragma"] = "no-cache",
+            ["Priority"] = "u=0, i",
+            ["Sec-CH-UA"] = "\"Not-A.Brand\";v=\"99\", \"Microsoft Edge\";v=\"157\", \"Chromium\";v=\"157\"",
+            ["Sec-CH-UA-Mobile"] = "?0",
+            ["Sec-CH-UA-Platform"] = "\"macOS\"",
+            ["Sec-Fetch-Dest"] = "document",
+            ["Sec-Fetch-Mode"] = "navigate",
+            ["Sec-Fetch-Site"] = "none",
+            ["Sec-Fetch-User"] = "?1",
+            ["Upgrade-Insecure-Requests"] = "1",
+            ["User-Agent"] = BrowserUserAgent
+        };
         private static readonly HashSet<string> SensitiveHeaders = new(StringComparer.OrdinalIgnoreCase)
         {
             "Authorization", "Proxy-Authorization", "Cookie", "Set-Cookie", "X-Api-Key", "Api-Key"
@@ -19,12 +38,24 @@ namespace ItLinksBot.ContentGetters
         {
             try
             {
-                using HttpClient httpClient = new();
-                httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36");
+                using var handler = new HttpClientHandler
+                {
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli
+                };
+                using HttpClient httpClient = new(handler)
+                {
+                    DefaultRequestVersion = HttpVersion.Version20,
+                    DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower
+                };
+                foreach (KeyValuePair<string, string> hdr in BrowserRequestHeaders)
+                {
+                    httpClient.DefaultRequestHeaders.Add(hdr.Key, hdr.Value);
+                }
                 if (requestHeaders != null)
                 {
                     foreach (KeyValuePair<string, string> hdr in requestHeaders)
                     {
+                        httpClient.DefaultRequestHeaders.Remove(hdr.Key);
                         httpClient.DefaultRequestHeaders.Add(hdr.Key, hdr.Value);
                     }
                 }
@@ -63,7 +94,8 @@ namespace ItLinksBot.ContentGetters
         {
             return headers.ToDictionary(
                 header => header.Key,
-                header => SensitiveHeaders.Contains(header.Key) ? "[REDACTED]" : string.Join(", ", header.Value));
+                header => SensitiveHeaders.Contains(header.Key) ? "[REDACTED]" :
+                    string.Join(header.Key.Equals("User-Agent", StringComparison.OrdinalIgnoreCase) ? " " : ", ", header.Value));
         }
     }
 }
