@@ -20,7 +20,7 @@ namespace ItLinksBot.ContentGetters
             try
             {
                 using HttpClient httpClient = new();
-                httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0");
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36");
                 if (requestHeaders != null)
                 {
                     foreach (KeyValuePair<string, string> hdr in requestHeaders)
